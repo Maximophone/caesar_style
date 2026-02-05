@@ -1,5 +1,5 @@
 export class Walker {
-    constructor(x, y, path, originBuilding) {
+    constructor(x, y, path, originBuilding, coverageType = null, color = '#ff0000') {
         // Position (sub-tile precision for smooth movement)
         this.x = x;
         this.y = y;
@@ -21,6 +21,8 @@ export class Walker {
 
         // Coverage emission
         this.coverageRadius = 1;
+        this.coverageType = coverageType;  // water, food, religion, or null
+        this.color = color;
     }
 
     update(deltaTime, roadNetwork, entityManager, grid) {
@@ -86,11 +88,11 @@ export class Walker {
     }
 
     emitCoverage(grid) {
-        if (!grid) return;
+        if (!grid || !this.coverageType) return;
 
         const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
         for (const building of nearbyBuildings) {
-            building.receiveCoverage();
+            building.receiveCoverage(this.coverageType);
         }
     }
 

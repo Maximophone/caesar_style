@@ -1,3 +1,5 @@
+import { BUILDING_TYPES, getBuildingTypeByKey } from './world/BuildingTypes.js';
+
 export class Input {
     constructor(canvas, tileSize, game) {
         this.canvas = canvas;
@@ -6,6 +8,7 @@ export class Input {
 
         // Current placement mode
         this.mode = 'road'; // 'road' or 'building'
+        this.selectedBuildingType = BUILDING_TYPES.house;
 
         // Mouse state
         this.mouseX = 0;
@@ -57,13 +60,23 @@ export class Input {
     }
 
     onKeyDown(e) {
-        switch (e.key) {
-            case '1':
-                this.mode = 'road';
-                break;
-            case '2':
-                this.mode = 'building';
-                break;
+        if (e.key === '1') {
+            this.mode = 'road';
+            return;
         }
+
+        // Check for building type keys
+        const buildingType = getBuildingTypeByKey(e.key);
+        if (buildingType) {
+            this.mode = 'building';
+            this.selectedBuildingType = buildingType;
+        }
+    }
+
+    getModeDisplay() {
+        if (this.mode === 'road') {
+            return 'ROAD';
+        }
+        return this.selectedBuildingType.name.toUpperCase();
     }
 }

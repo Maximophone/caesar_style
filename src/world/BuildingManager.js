@@ -1,5 +1,6 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
+import { BUILDING_TYPES } from './BuildingTypes.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -9,9 +10,9 @@ export class BuildingManager {
         this.buildings = [];
     }
 
-    placeBuilding(x, y) {
-        const width = 2;
-        const height = 2;
+    placeBuilding(x, y, type = BUILDING_TYPES.house) {
+        const width = type.width;
+        const height = type.height;
 
         // Check if area is empty
         if (!this.grid.isAreaEmpty(x, y, width, height)) {
@@ -25,7 +26,7 @@ export class BuildingManager {
         }
 
         // Create building
-        const building = new Building(x, y, width, height);
+        const building = new Building(x, y, type);
         building.doorX = doorPos.x;
         building.doorY = doorPos.y;
         building.roadAccessX = doorPos.roadX;
@@ -126,7 +127,9 @@ export class BuildingManager {
                 building.roadAccessX,
                 building.roadAccessY,
                 path,
-                building
+                building,
+                building.type.coverageType,
+                building.type.walkerColor || '#ff0000'
             );
             this.entityManager.addEntity(walker);
         }

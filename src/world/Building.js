@@ -1,9 +1,12 @@
+import { BUILDING_TYPES } from './BuildingTypes.js';
+
 export class Building {
-    constructor(x, y, width = 2, height = 2) {
+    constructor(x, y, type = BUILDING_TYPES.house) {
         this.x = x;
         this.y = y;
-        this.width = width;
-        this.height = height;
+        this.type = type;
+        this.width = type.width;
+        this.height = type.height;
 
         // Door position (set by BuildingManager)
         this.doorX = undefined;
@@ -11,29 +14,39 @@ export class Building {
         this.roadAccessX = undefined;
         this.roadAccessY = undefined;
 
-        // Walker spawning
+        // Walker spawning (only for service buildings)
         this.spawnInterval = 5; // seconds
         this.spawnTimer = 2;    // Start with a short delay
         this.maxWalkers = 3;
         this.activeWalkers = 0;
 
-        // Service coverage
-        this.coverage = 0;           // 0-100
-        this.maxCoverage = 100;
-        this.coverageDecayRate = 5;  // per second (~20 sec to empty)
+        // Service coverage - houses have multiple needs
+        if (type.coverageNeeds) {
+            // House: needs multiple coverage types
+            this.coverageNeeds = {};
+            for (const need of type.coverageNeeds) {
+                this.coverageNeeds[need] = 0;
+            }
+            this.maxCoverage = 100;
+            this.coverageDecayRate = 5;
+        }
     }
 
     update(deltaTime) {
         this.spawnTimer -= deltaTime;
 
         // Decay coverage over time
-        if (this.coverage > 0) {
-            this.coverage = Math.max(0, this.coverage - this.coverageDecayRate * deltaTime);
+        if (this.coverageNeeds) {
+            for (const need of Object.keys(this.coverageNeeds)) {
+                if (this.coverageNeeds[need] > 0) {
+                    this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);
+                }
+            }
         }
     }
 
     shouldSpawnWalker() {
-        return this.spawnTimer <= 0 && this.activeWalkers < this.maxWalkers;
+        return this.type.spawnsWalker && this.spawnTimer <= 0 && this.activeWalkers < this.maxWalkers;
     }
 
     onWalkerSpawned() {
@@ -46,12 +59,31 @@ export class Building {
     }
 
     // Called when a walker passes nearby
-    receiveCoverage() {
-        this.coverage = this.maxCoverage;
+    receiveCoverage(coverageType) {
+        if (this.coverageNeeds && coverageType in this.coverageNeeds) {
+            this.coverageNeeds[coverageType] = this.maxCoverage;
+        }
     }
 
-    // Get coverage as 0-1 for rendering
+    // Get average coverage as 0-1 for rendering (houses only)
     getCoveragePercent() {
-        return this.coverage / this.maxCoverage;
+        if (!this.coverageNeeds) return 1; // Service buildings always show full
+
+        const values = Object.values(this.coverageNeeds);
+        if (values.length === 0) return 1;
+
+        const sum = values.reduce((a, b) => a + b, 0);
+        return sum / (values.length * this.maxCoverage);
+    }
+
+    // Get individual coverage levels for detailed display
+    getCoverageLevels() {
+        if (!this.coverageNeeds) return null;
+
+        const levels = {};
+        for (const [type, value] of Object.entries(this.coverageNeeds)) {
+            levels[type] = value / this.maxCoverage;
+        }
+        return levels;
     }
 }

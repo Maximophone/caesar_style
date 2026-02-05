@@ -9,7 +9,6 @@ export class Renderer {
         this.sprites = {
             grass: new ColorSprite('#2d5a27'),
             road: new ColorSprite('#8b7355'),
-            walker: new ColorSprite('#e74c3c'),
         };
     }
 
@@ -53,15 +52,20 @@ export class Renderer {
             const w = building.width * ts;
             const h = building.height * ts;
 
-            // Get coverage-based color (green -> yellow -> red)
-            const coverage = building.getCoveragePercent();
-            const color = this.getCoverageColor(coverage);
+            // Get building type color
+            let color = building.type.color;
 
-            // Building body with coverage color
+            // For houses, apply coverage-based tint
+            if (building.coverageNeeds) {
+                const coverage = building.getCoveragePercent();
+                color = this.applyFadeTint(building.type.color, coverage);
+            }
+
+            // Building body
             ctx.fillStyle = color;
             ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
 
-            // Building outline (darker version)
+            // Building outline (darker)
             ctx.strokeStyle = this.darkenColor(color, 0.3);
             ctx.lineWidth = 2;
             ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
@@ -74,34 +78,34 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
-            // Coverage bar above building
-            this.renderCoverageBar(ctx, x, y - 8, w, 4, coverage);
+            // Coverage bars for houses - show each type separately
+            if (building.coverageNeeds) {
+                const levels = building.getCoverageLevels();
+                this.renderMultiCoverageBar(ctx, x, y - 10, w, 6, levels);
+            }
         }
     }
 
-    getCoverageColor(coverage) {
-        // Lerp from red (0%) -> yellow (50%) -> green (100%)
-        if (coverage <= 0) {
-            return '#c0392b'; // Red
-        } else if (coverage < 0.5) {
-            // Red to yellow
-            const t = coverage * 2;
-            const r = Math.round(192 + (241 - 192) * t);
-            const g = Math.round(57 + (196 - 57) * t);
-            const b = Math.round(43 + (15 - 43) * t);
-            return `rgb(${r},${g},${b})`;
-        } else {
-            // Yellow to green
-            const t = (coverage - 0.5) * 2;
-            const r = Math.round(241 + (39 - 241) * t);
-            const g = Math.round(196 + (174 - 196) * t);
-            const b = Math.round(15 + (96 - 15) * t);
-            return `rgb(${r},${g},${b})`;
-        }
+    // Apply fade from full color (100% coverage) to gray (0% coverage)
+    applyFadeTint(hexColor, coverage) {
+        // Parse hex color
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+
+        // Gray target
+        const gray = 80;
+
+        // Lerp each channel
+        const newR = Math.round(gray + (r - gray) * coverage);
+        const newG = Math.round(gray + (g - gray) * coverage);
+        const newB = Math.round(gray + (b - gray) * coverage);
+
+        return `rgb(${newR},${newG},${newB})`;
     }
 
     darkenColor(color, amount) {
-        // Simple darkening for outline
+        // Handle rgb format
         if (color.startsWith('rgb')) {
             const match = color.match(/rgb\((\d+),(\d+),(\d+)\)/);
             if (match) {
@@ -121,7 +125,8 @@ export class Renderer {
 
         // Fill
         if (coverage > 0) {
-            ctx.fillStyle = this.getCoverageColor(coverage);
+            const barColor = coverage > 0.6 ? '#27ae60' : coverage > 0.3 ? '#f1c40f' : '#c0392b';
+            ctx.fillStyle = barColor;
             ctx.fillRect(x, y, width * coverage, height);
         }
 
@@ -129,6 +134,40 @@ export class Renderer {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, width, height);
+    }
+
+    // Render 3 separate bars for water, food, religion
+    renderMultiCoverageBar(ctx, x, y, width, height, levels) {
+        const coverageTypes = [
+            { key: 'water', color: '#4169E1', label: 'W' },     // Blue
+            { key: 'food', color: '#DAA520', label: 'F' },      // Gold
+            { key: 'religion', color: '#9370DB', label: 'R' }   // Purple
+        ];
+
+        const segmentWidth = width / coverageTypes.length;
+        const gap = 1;
+
+        for (let i = 0; i < coverageTypes.length; i++) {
+            const type = coverageTypes[i];
+            const level = levels[type.key] || 0;
+            const sx = x + i * segmentWidth + gap / 2;
+            const sw = segmentWidth - gap;
+
+            // Background (dark)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(sx, y, sw, height);
+
+            // Fill based on level
+            if (level > 0) {
+                ctx.fillStyle = type.color;
+                ctx.fillRect(sx, y, sw * level, height);
+            }
+
+            // Border
+            ctx.strokeStyle = level > 0.5 ? type.color : 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx, y, sw, height);
+        }
     }
 
     renderEntities(entities) {
@@ -141,10 +180,12 @@ export class Renderer {
             const y = entity.y * ts + ts / 4;
             const size = ts / 2;
 
-            this.sprites.walker.render(ctx, x, y, size, size);
+            // Use entity's color
+            ctx.fillStyle = entity.color || '#e74c3c';
+            ctx.fillRect(x, y, size, size);
 
-            // Direction indicator
-            ctx.fillStyle = '#c0392b';
+            // Direction indicator (darker version of entity color)
+            ctx.fillStyle = this.darkenColor(entity.color || '#e74c3c', 0.3);
             const cx = x + size / 2;
             const cy = y + size / 2;
             const dx = entity.dx * 4;
@@ -160,12 +201,13 @@ export class Renderer {
 
         // Mode indicator
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, 10, 180, 60);
+        ctx.fillRect(10, 10, 240, 75);
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px monospace';
-        ctx.fillText(`Mode: ${input.mode.toUpperCase()}`, 20, 30);
-        ctx.fillText('[1] Road  [2] Building', 20, 50);
-        ctx.fillText('LClick: Place  RClick: Remove', 20, 65);
+        ctx.fillText(`Mode: ${input.getModeDisplay()}`, 20, 30);
+        ctx.fillText('[1] Road [2] House [3] Well', 20, 50);
+        ctx.fillText('[4] Market [5] Temple', 20, 65);
+        ctx.fillText('LClick: Place  RClick: Remove', 20, 80);
     }
 }

@@ -101,7 +101,7 @@ export class Game {
     }
 
     placeBuilding(x, y) {
-        this.buildingManager.placeBuilding(x, y);
+        this.buildingManager.placeBuilding(x, y, this.input.selectedBuildingType);
     }
 
     removeTile(x, y) {
