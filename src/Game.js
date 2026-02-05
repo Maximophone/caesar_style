@@ -1,0 +1,118 @@
+import { Renderer } from './Renderer.js';
+import { Grid } from './world/Grid.js';
+import { Input } from './Input.js';
+import { RoadNetwork } from './world/RoadNetwork.js';
+import { EntityManager } from './entities/EntityManager.js';
+import { BuildingManager } from './world/BuildingManager.js';
+
+export class Game {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+
+        // Game settings
+        this.tileSize = 24;
+        this.gridWidth = 32;
+        this.gridHeight = 24;
+
+        // Set canvas size
+        this.canvas.width = this.gridWidth * this.tileSize;
+        this.canvas.height = this.gridHeight * this.tileSize;
+
+        // Initialize systems
+        this.grid = new Grid(this.gridWidth, this.gridHeight);
+        this.roadNetwork = new RoadNetwork(this.grid);
+        this.entityManager = new EntityManager();
+        this.buildingManager = new BuildingManager(this.grid, this.roadNetwork, this.entityManager);
+        this.renderer = new Renderer(this.ctx, this.tileSize);
+        this.input = new Input(this.canvas, this.tileSize, this);
+
+        // Timing
+        this.lastTime = 0;
+        this.running = false;
+    }
+
+    start() {
+        this.running = true;
+        this.lastTime = performance.now();
+        requestAnimationFrame((time) => this.loop(time));
+    }
+
+    stop() {
+        this.running = false;
+    }
+
+    loop(currentTime) {
+        if (!this.running) return;
+
+        const deltaTime = (currentTime - this.lastTime) / 1000; // Convert to seconds
+        this.lastTime = currentTime;
+
+        this.update(deltaTime);
+        this.render();
+
+        requestAnimationFrame((time) => this.loop(time));
+    }
+
+    update(deltaTime) {
+        this.buildingManager.update(deltaTime);
+        this.entityManager.update(deltaTime, this.roadNetwork, this.grid);
+    }
+
+    render() {
+        // Clear canvas
+        this.ctx.fillStyle = '#16213e';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Render grid
+        this.renderer.renderGrid(this.grid);
+
+        // Render roads
+        this.renderer.renderRoads(this.grid);
+
+        // Render buildings
+        this.renderer.renderBuildings(this.buildingManager.buildings);
+
+        // Render entities
+        this.renderer.renderEntities(this.entityManager.entities);
+
+        // Render UI hints
+        this.renderer.renderUI(this.input);
+    }
+
+    // Called by Input when a tile is clicked
+    onTileClick(x, y, button) {
+        if (button === 0) { // Left click
+            if (this.input.mode === 'road') {
+                this.placeRoad(x, y);
+            } else if (this.input.mode === 'building') {
+                this.placeBuilding(x, y);
+            }
+        } else if (button === 2) { // Right click
+            this.removeTile(x, y);
+        }
+    }
+
+    placeRoad(x, y) {
+        if (this.grid.getTile(x, y) === null) {
+            this.grid.setTile(x, y, { type: 'road' });
+            this.roadNetwork.addRoad(x, y);
+        }
+    }
+
+    placeBuilding(x, y) {
+        this.buildingManager.placeBuilding(x, y);
+    }
+
+    removeTile(x, y) {
+        const tile = this.grid.getTile(x, y);
+        if (tile) {
+            if (tile.type === 'road') {
+                this.roadNetwork.removeRoad(x, y);
+            } else if (tile.type === 'building') {
+                this.buildingManager.removeBuilding(x, y);
+            }
+            this.grid.setTile(x, y, null);
+        }
+    }
+}
