@@ -1,25 +1,50 @@
 import { ColorSprite } from './sprites/Sprite.js';
 
 export class Renderer {
-    constructor(ctx, tileSize) {
+    constructor(ctx, tileSize, assetManager) {
         this.ctx = ctx;
         this.tileSize = tileSize;
+        this.assetManager = assetManager;
 
-        // Define sprites (colored rectangles for now)
+        // Define sprites (colored rectangles for now, roads use AssetManager)
         this.sprites = {
             grass: new ColorSprite('#2d5a27'),
-            road: new ColorSprite('#8b7355'),
         };
     }
 
-    renderGrid(grid) {
+    renderGrid(grid, debug = { useSprites: true }) {
         const ctx = this.ctx;
         const ts = this.tileSize;
+
+        const grassImg = this.assetManager.getImage('grass_tiles');
+        let tileW = 0;
+        let tileH = 0;
+
+        if (grassImg) {
+            tileW = grassImg.width / 3;
+            tileH = grassImg.height / 3;
+        }
 
         // Draw grass background for each tile
         for (let y = 0; y < grid.height; y++) {
             for (let x = 0; x < grid.width; x++) {
-                this.sprites.grass.render(ctx, x * ts, y * ts, ts, ts);
+                if (grassImg && debug.useSprites) {
+                    // pseudo-random deterministic variant based on position
+                    const seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+                    const variant = Math.floor((seed - Math.floor(seed)) * 9);
+
+                    const col = variant % 3;
+                    const row = Math.floor(variant / 3);
+
+                    ctx.drawImage(
+                        grassImg,
+                        col * tileW, row * tileH, tileW, tileH,
+                        x * ts, y * ts, ts, ts
+                    );
+                } else {
+                    // Fallback to solid color
+                    this.sprites.grass.render(ctx, x * ts, y * ts, ts, ts);
+                }
 
                 // Draw subtle grid lines
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
@@ -28,100 +53,269 @@ export class Renderer {
         }
     }
 
-    renderRoads(grid) {
+    renderRoads(grid, roadNetwork, debug = { useSprites: true }) {
         const ctx = this.ctx;
         const ts = this.tileSize;
+        const roadImg = this.assetManager.getImage('road_tiles');
+
+        // If no image, we can't draw sprites anyway
+        const canDrawSprites = roadImg && debug.useSprites;
+
+        let tileW = 0;
+        let tileH = 0;
+
+        if (roadImg) {
+            tileW = roadImg.width / 3;
+            tileH = roadImg.height / 2;
+        }
+
+        // Optimized 3x2 Tileset Mapping
+        // Row 0: Isolated[0,0], End(S)[1,0], Straight(NS)[2,0]
+        // Row 1: Corner(NE)[0,1], T-Junc(NWS)[1,1], Cross(All)[2,1]
+
+        // Rotation is Clockwise from Base Tile Orientation
+        // ... (comments elided for brevity) ...
+
+        const PI = Math.PI;
+        const HALF_PI = Math.PI / 2;
+
+        const tileMap = {
+            0: { c: 0, r: 0, rot: 0 },         // Isolated
+            1: { c: 1, r: 0, rot: PI },        // N (Base S, rot 180)
+            2: { c: 1, r: 0, rot: -HALF_PI },  // E (Base S, rot -90)
+            3: { c: 0, r: 1, rot: 0 },         // NE (Base NE)
+            4: { c: 1, r: 0, rot: 0 },         // S (Base S)
+            5: { c: 2, r: 0, rot: 0 },         // NS (Base NS)
+            6: { c: 0, r: 1, rot: HALF_PI },   // SE (Base NE, rot 90)
+            7: { c: 1, r: 1, rot: PI },        // NES (Base NWS, rot 180 - Wait. Base is NWS (Left-Up-Down). NES is Right-Up-Down. To get Right from Left, flip? Or Rotate? Leftrot180 = Right. Up rot180 = Down. Down rot180 = Up. So NWS rot 180 = S E N = NES. Correct.)
+            8: { c: 1, r: 0, rot: HALF_PI },   // W (Base S, rot 90)
+            9: { c: 0, r: 1, rot: -HALF_PI },  // NW (Base NE, rot -90)
+            10: { c: 2, r: 0, rot: HALF_PI },   // EW (Base NS, rot 90)
+            11: { c: 1, r: 1, rot: HALF_PI },   // NEW (Base NWS (Left-Up-Down) rot 90 -> Up-Right-Left? No. Left->Up, Up->Right, Down->Left. So Up-Right-Left = N E W. Correct.)
+            12: { c: 0, r: 1, rot: PI },        // SW (Base NE, rot 180)
+            13: { c: 1, r: 1, rot: 0 },         // NWS (Base NWS)
+            14: { c: 1, r: 1, rot: -HALF_PI },  // EWS (Base NWS rot -90 -> Left->Down, Up->Left, Down->Right. So Down-Left-Right = S W E. Correct.)
+            15: { c: 2, r: 1, rot: 0 }          // All (Base Cross)
+        };
 
         for (let y = 0; y < grid.height; y++) {
             for (let x = 0; x < grid.width; x++) {
-                const tile = grid.getTile(x, y);
-                if (tile && tile.type === 'road') {
-                    this.sprites.road.render(ctx, x * ts + 2, y * ts + 2, ts - 4, ts - 4);
+                if (roadNetwork.hasRoad(x, y)) {
+                    if (canDrawSprites) {
+                        // Calculate bitmask (N=1, E=2, S=4, W=8)
+                        let mask = 0;
+                        if (roadNetwork.hasRoad(x, y - 1)) mask |= 1; // North
+                        if (roadNetwork.hasRoad(x + 1, y)) mask |= 2; // East
+                        if (roadNetwork.hasRoad(x, y + 1)) mask |= 4; // South
+                        if (roadNetwork.hasRoad(x - 1, y)) mask |= 8; // West
+
+                        const mapping = tileMap[mask] || tileMap[0];
+                        this.renderRotatedTile(ctx, roadImg, x, y, ts, tileW, tileH, mapping.c, mapping.r, mapping.rot);
+                    } else {
+                        // Fallback: Simple gray rectangle
+                        ctx.fillStyle = '#7f8c8d';
+                        ctx.fillRect(x * ts, y * ts, ts, ts);
+
+                        // Optional: Darker border
+                        ctx.strokeStyle = '#555';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x * ts, y * ts, ts, ts);
+                    }
                 }
             }
         }
     }
 
-    renderBuildings(buildings) {
+    renderRotatedTile(ctx, img, gridX, gridY, ts, tileW, tileH, col, row, rotation) {
+        const sx = col * tileW;
+        const sy = row * tileH;
+
+        ctx.save();
+        // Move to center of tile
+        ctx.translate(gridX * ts + ts / 2, gridY * ts + ts / 2);
+        ctx.rotate(rotation);
+        // Draw centered relative to translation
+        ctx.drawImage(img, sx, sy, tileW, tileH, -ts / 2, -ts / 2, ts, ts);
+        ctx.restore();
+    }
+
+    renderBuildings(buildings, debug = { useSprites: true, showOverlays: true }) {
         const ctx = this.ctx;
         const ts = this.tileSize;
 
+        // House assets
+        const houseL1 = this.assetManager.getImage('house_level_1');
+
         for (const building of buildings) {
-            const x = building.x * ts;
-            const y = building.y * ts;
-            const w = building.width * ts;
-            const h = building.height * ts;
+            const bx = building.x * ts;
+            const by = building.y * ts;
+            const bw = building.width * ts;
+            const bh = building.height * ts;
 
-            // Get building type color
-            let color = building.type.color;
-
-            // For houses, use level-based color and apply coverage tint
-            if (building.coverageNeeds) {
-                const baseColor = building.getLevelColor();
-                const coverage = building.getCoveragePercent();
-                color = this.applyFadeTint(baseColor, coverage);
+            // Draw selection highlight
+            if (this.selectedBuilding === building) {
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
             }
 
-            // Building body
-            ctx.fillStyle = color;
-            ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+            // Check if we can draw a sprite for this building
+            let drawn = false;
 
-            // Building outline (darker)
-            ctx.strokeStyle = this.darkenColor(color, 0.3);
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+            if (debug.useSprites) {
+                if (building.type.id === 'house') {
+                    if (building.level === 1 && houseL1) {
+                        // Level 1 Tent - 4 Rotations
+                        // 2x2 Grid (0=South, 1=East, 2=North, 3=West)
+                        // Layout assumption in 2x2 grid (TL, TR, BL, BR):
+                        // Row 0: South(0), North(2) ?? Wait, usually it is linear.
+                        // Let's assume standard reading order based on my prompt list?
+                        // 1. South (0), 2. North (2), 3. East (1), 4. West (3)
+                        // Grid 2x2:
+                        // (0,0): South (Rot 0)
+                        // (1,0): North (Rot 2)
+                        // (0,1): East  (Rot 1)
+                        // (1,1): West  (Rot 3)
 
-            // Door indicator (shows road access point)
-            if (building.doorX !== undefined) {
+                        let col = 0;
+                        let row = 0;
+
+                        switch (building.rotation) {
+                            case 0: col = 0; row = 0; break; // South
+                            case 2: col = 1; row = 0; break; // North
+                            case 1: col = 0; row = 1; break; // East
+                            case 3: col = 1; row = 1; break; // West
+                        }
+
+                        const tileW = houseL1.width / 2;
+                        const tileH = houseL1.height / 2;
+
+                        ctx.drawImage(
+                            houseL1,
+                            col * tileW, row * tileH, tileW, tileH,
+                            bx, by, bw, bh
+                        );
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'well') {
+                    const wellImg = this.assetManager.getImage('well');
+                    if (wellImg) {
+                        ctx.drawImage(wellImg, bx, by, bw, bh);
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'fountain') {
+                    const fountainImg = this.assetManager.getImage('fountain');
+                    if (fountainImg) {
+                        ctx.drawImage(fountainImg, bx, by, bw, bh);
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'market') {
+                    const marketImg = this.assetManager.getImage('market');
+                    if (marketImg) {
+                        // Market - 4 Rotations
+                        // 2x2 Grid based on prompt provided to user:
+                        // TL: South (0), TR: North (2)
+                        // BL: West (3),  BR: East (1)
+
+                        let col = 0;
+                        let row = 0;
+
+                        switch (building.rotation) {
+                            case 0: col = 0; row = 0; break; // South
+                            case 2: col = 1; row = 0; break; // North
+                            case 3: col = 0; row = 1; break; // West
+                            case 1: col = 1; row = 1; break; // East
+                        }
+
+                        const tileW = marketImg.width / 2;
+                        const tileH = marketImg.height / 2;
+
+                        ctx.drawImage(
+                            marketImg,
+                            col * tileW, row * tileH, tileW, tileH,
+                            bx, by, bw, bh
+                        );
+                        drawn = true;
+                    }
+                }
+            }
+
+
+            if (!drawn) {
+                // Determine color based on type/state
+                let color = building.type.color;
+
+                // For houses, use level-based color and apply coverage tint
+                if (building.coverageNeeds) {
+                    const baseColor = building.getLevelColor();
+                    const coverage = building.getCoveragePercent();
+                    color = this.applyFadeTint(baseColor, coverage);
+                }
+
+                // Building body
+                ctx.fillStyle = color;
+                ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+
+                // Building outline (darker)
+                ctx.strokeStyle = this.darkenColor(color, 0.3);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(bx + 2, by + 2, bw - 4, bh - 4);
+            }
+
+            // Door indicator (shows road access point) - only for placeholders (not sprites)
+            if (building.doorX !== undefined && !drawn) {
                 ctx.fillStyle = '#5a3e1b';
                 const doorX = building.doorX * ts + ts / 4;
                 const doorY = building.doorY * ts + ts / 4;
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
-            // House-specific UI
-            if (building.coverageNeeds) {
-                const levels = building.getCoverageLevels();
+            // OVERLAYS (Bars, Icons, Etc) - Only if enabled
+            if (debug.showOverlays) {
+                // House-specific UI
+                if (building.coverageNeeds) {
+                    const levels = building.getCoverageLevels();
 
-                // Show walker-based coverage (food, religion) - water is shown via icon
-                const walkerLevels = { food: levels.food, religion: levels.religion };
-                this.renderWalkerCoverageBar(ctx, x, y - 10, w, 6, walkerLevels);
+                    // Show walker-based coverage (food, religion) - water is shown via icon
+                    const walkerLevels = { food: levels.food, religion: levels.religion };
+                    this.renderWalkerCoverageBar(ctx, bx, by - 10, bw, 6, walkerLevels);
 
-                // Evolution bar (shows progress toward upgrade/downgrade)
-                this.renderEvolutionBar(ctx, x, y + h + 2, w, 4, building.evolutionProgress);
+                    // Evolution bar (shows progress toward upgrade/downgrade)
+                    this.renderEvolutionBar(ctx, bx, by + bh + 2, bw, 4, building.evolutionProgress);
 
-                // Show level number in top-left corner
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 12px sans-serif';
-                ctx.fillText(building.level, x + 6, y + 14);
+                    // Show level number in top-left corner
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText(building.level, bx + 6, by + 14);
 
-                // Show water coverage bar (vertical) in top-right
-                const waterBarW = 6;
-                const waterBarH = 16;
-                const waterBarX = x + w - waterBarW - 4;
-                const waterBarY = y + 4;
+                    // Show water coverage bar (vertical) in top-right
+                    const waterBarW = 6;
+                    const waterBarH = 16;
+                    const waterBarX = bx + bw - waterBarW - 4;
+                    const waterBarY = by + 4;
 
-                // Bar Background
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(waterBarX, waterBarY, waterBarW, waterBarH);
+                    // Bar Background
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(waterBarX, waterBarY, waterBarW, waterBarH);
 
-                // Bar Fill
-                if (levels.water > 0) {
-                    ctx.fillStyle = '#4169E1'; // Blue
-                    const fillH = Math.min(1, levels.water) * waterBarH;
-                    ctx.fillRect(waterBarX, waterBarY + waterBarH - fillH, waterBarW, fillH);
+                    // Bar Fill
+                    if (levels.water > 0) {
+                        ctx.fillStyle = '#4169E1'; // Blue
+                        const fillH = Math.min(1, levels.water) * waterBarH;
+                        ctx.fillRect(waterBarX, waterBarY + waterBarH - fillH, waterBarW, fillH);
+                    }
+
+
+                    // Bar Border
+                    ctx.strokeStyle = '#87CEEB'; // SkyBlue border
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
                 }
 
-                // Bar Border
-                ctx.strokeStyle = '#87CEEB'; // SkyBlue border
-                ctx.lineWidth = 1;
-                ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
-            }
-
-            // Employment indicator for service buildings
-            if (building.type.workersNeeded > 0) {
-                const fill = building.workers / building.type.workersNeeded;
-                this.renderEmploymentBar(ctx, x, y - 8, w, 4, fill, building.isStaffed());
+                // Employment indicator for service buildings
+                if (building.type.workersNeeded > 0) {
+                    const fill = building.workers / building.type.workersNeeded;
+                    this.renderEmploymentBar(ctx, bx, by - 8, bw, 4, fill, building.isStaffed());
+                }
             }
         }
     }
@@ -322,19 +516,24 @@ export class Renderer {
         }
     }
 
-    renderUI(input, economy) {
+    renderUI(input, economy, debug) {
         const ctx = this.ctx;
 
         // Mode indicator (top-left)
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, 10, 240, 75);
+        ctx.fillRect(10, 10, 320, 95);
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px monospace';
         ctx.fillText(`Mode: ${input.getModeDisplay()}`, 20, 30);
         ctx.fillText('[1] Road [2] House [3] Well', 20, 50);
-        ctx.fillText('[4] Market [5] Temple', 20, 65);
+        ctx.fillText('[4] Market [5] Temple [6] Fountain', 20, 65);
         ctx.fillText('LClick: Place  RClick: Remove', 20, 80);
+
+        // Debug hints
+        let debugText = '[O]verlays: ' + (debug && debug.showOverlays ? 'ON' : 'OFF');
+        debugText += '  [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
+        ctx.fillText(debugText, 20, 95);
 
         // Economy HUD (top-right)
         if (economy) {

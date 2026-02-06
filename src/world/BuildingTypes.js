@@ -68,6 +68,27 @@ export const BUILDING_TYPES = {
         cost: 50,
         key: '3'
     },
+    fountain: {
+        id: 'fountain',
+        name: 'Fountain',
+        width: 1,
+        height: 1,
+        color: '#00BFFF',  // Deep Sky Blue (brighter/richer than Well)
+        spawnsWalker: false,
+        staticCoverage: {
+            type: 'water',
+            // Better coverage over longer distance
+            distanceAmounts: {
+                1: 90,
+                2: 70,
+                3: 50,
+                4: 30,
+                5: 10
+            }
+        },
+        cost: 200,  // Expensive
+        key: '6'
+    },
     market: {
         id: 'market',
         name: 'Market',

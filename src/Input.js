@@ -65,6 +65,16 @@ export class Input {
             return;
         }
 
+        // Debug controls
+        if (e.key.toLowerCase() === 'o') {
+            this.game.toggleOverlays();
+            return;
+        }
+        if (e.key.toLowerCase() === 'p') {
+            this.game.toggleSprites();
+            return;
+        }
+
         // Check for building type keys
         const buildingType = getBuildingTypeByKey(e.key);
         if (buildingType) {

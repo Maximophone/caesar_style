@@ -6,6 +6,7 @@ import { EntityManager } from './entities/EntityManager.js';
 import { BuildingManager } from './world/BuildingManager.js';
 import { Economy } from './Economy.js';
 import { ROAD_COST } from './world/BuildingTypes.js';
+import { AssetManager } from './AssetManager.js';
 
 export class Game {
     constructor(canvas) {
@@ -22,17 +23,57 @@ export class Game {
         this.canvas.height = this.gridHeight * this.tileSize;
 
         // Initialize systems
+        this.assetManager = new AssetManager();
         this.grid = new Grid(this.gridWidth, this.gridHeight);
         this.roadNetwork = new RoadNetwork(this.grid);
         this.entityManager = new EntityManager();
         this.buildingManager = new BuildingManager(this.grid, this.roadNetwork, this.entityManager);
         this.economy = new Economy();
-        this.renderer = new Renderer(this.ctx, this.tileSize);
+        this.renderer = new Renderer(this.ctx, this.tileSize, this.assetManager); // Pass assetManager to renderer
         this.input = new Input(this.canvas, this.tileSize, this);
 
         // Timing
         this.lastTime = 0;
         this.running = false;
+
+        // Debug controls
+        this.debug = {
+            showOverlays: true,
+            useSprites: true
+        };
+    }
+
+    toggleOverlays() {
+        this.debug.showOverlays = !this.debug.showOverlays;
+        console.log('Overlays:', this.debug.showOverlays);
+    }
+
+    toggleSprites() {
+        this.debug.useSprites = !this.debug.useSprites;
+        console.log('Sprites:', this.debug.useSprites);
+    }
+
+    async init() {
+        // Cache buster for new file - Updated for new grass tiles
+        const t = Date.now();
+        await this.assetManager.loadImages({
+            'road_tiles': `assets/road_tiles_optimized.png?t=${t}`,
+            'grass_tiles': `assets/grass_tiles.png?t=${t}`,
+            'house_level_1': `assets/house_level_1.png?t=${t}`,
+            'well': `assets/well.png?t=${t}`,
+            'fountain': `assets/fountain.png?t=${t}`,
+            'market': `assets/market.png?t=${t}`
+        });
+
+        // Apply transparency at runtime as requested by user to keep source image editable
+        // Target Raspberry: R=189 G=9 B=115
+        this.assetManager.applyFuzzyTransparency('road_tiles', 189, 9, 115, 40);
+        this.assetManager.applyFuzzyTransparency('house_level_1', 255, 0, 255, 40); // Magenta background
+        this.assetManager.applyFuzzyTransparency('well', 255, 0, 255, 40);
+        this.assetManager.applyFuzzyTransparency('fountain', 255, 0, 255, 40);
+        this.assetManager.applyFuzzyTransparency('market', 255, 0, 255, 40);
+
+        console.log('Assets loaded');
     }
 
     start() {
@@ -69,19 +110,19 @@ export class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Render grid
-        this.renderer.renderGrid(this.grid);
+        this.renderer.renderGrid(this.grid, this.debug);
 
         // Render roads
-        this.renderer.renderRoads(this.grid);
+        this.renderer.renderRoads(this.grid, this.roadNetwork, this.debug);
 
         // Render buildings
-        this.renderer.renderBuildings(this.buildingManager.buildings);
+        this.renderer.renderBuildings(this.buildingManager.buildings, this.debug);
 
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities);
 
         // Render UI hints
-        this.renderer.renderUI(this.input, this.economy);
+        this.renderer.renderUI(this.input, this.economy, this.debug);
     }
 
     // Called by Input when a tile is clicked

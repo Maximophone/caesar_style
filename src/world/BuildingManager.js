@@ -32,6 +32,20 @@ export class BuildingManager {
         building.roadAccessX = doorPos.roadX;
         building.roadAccessY = doorPos.roadY;
 
+        // Determine rotation based on side
+        // Door is on one of the edges. We want the building to Face the road.
+        // Side 'top' means road is above (North). We want Back to face North? No, usually Front faces road.
+        // If road is North, we rotate to face North (2).
+        // If road is South, we rotate to face South (0).
+        // If road is East, we rotate to face East (1).
+        // If road is West, we rotate to face West (3).
+
+        if (doorPos.side === 'top') building.rotation = 2;      // North
+        else if (doorPos.side === 'right') building.rotation = 1; // East
+        else if (doorPos.side === 'bottom') building.rotation = 0; // South
+        else if (doorPos.side === 'left') building.rotation = 3;  // West
+
+
         // Mark tiles as occupied
         for (let dy = 0; dy < height; dy++) {
             for (let dx = 0; dx < width; dx++) {

@@ -33,6 +33,10 @@ export class Building {
             this.maxCoverage = 100;
             this.coverageDecayRate = 5;
 
+            this.tier = 1; // For employment tiers
+            // Orientation: 0=South(Front), 1=East(Right), 2=North(Back), 3=West(Left)
+            this.rotation = 0;
+
             // House evolution
             this.level = 1;  // Start as Tent
             this.evolutionProgress = 0.5;  // Start in the middle
