@@ -1,3 +1,42 @@
+// House evolution levels - thresholds create stable equilibrium points
+// Water is always fundamental (required at 50%)
+// Upgrade threshold = next level's maintenance threshold for stability
+export const HOUSE_LEVELS = [
+    null, // Index 0 unused
+    {
+        // Level 1: Tent
+        name: 'Tent',
+        color: '#A0522D',  // Sienna (lighter brown)
+        population: 1,
+        requirements: { water: 0.5 },  // Just need water
+        upgradeThreshold: 0.7          // Need 70% water to progress
+    },
+    {
+        // Level 2: Shack
+        name: 'Shack',
+        color: '#8B4513',  // Brown
+        population: 2,
+        requirements: { water: 0.5, food: 0.4 },
+        upgradeThreshold: 0.7
+    },
+    {
+        // Level 3: House
+        name: 'House',
+        color: '#654321',  // Dark brown
+        population: 4,
+        requirements: { water: 0.5, food: 0.6, religion: 0.4 },
+        upgradeThreshold: 0.8
+    },
+    {
+        // Level 4: Villa (max level)
+        name: 'Villa',
+        color: '#4A3728',  // Very dark brown
+        population: 6,
+        requirements: { water: 0.5, food: 0.8, religion: 0.7 },
+        upgradeThreshold: null  // Can't upgrade further
+    }
+];
+
 // Building type configurations
 export const BUILDING_TYPES = {
     house: {
@@ -5,7 +44,7 @@ export const BUILDING_TYPES = {
         name: 'House',
         width: 2,
         height: 2,
-        color: '#8B4513',  // Brown
+        color: '#A0522D',  // Start as Tent color
         spawnsWalker: false,
         coverageNeeds: ['water', 'food', 'religion'],
         cost: 30,
@@ -35,6 +74,7 @@ export const BUILDING_TYPES = {
         walkerColor: '#FFD700',  // Gold
         coverageType: 'food',
         workersNeeded: 5,
+        maxWalkers: 1,
         cost: 100,
         key: '4'
     },
@@ -48,6 +88,7 @@ export const BUILDING_TYPES = {
         walkerColor: '#DDA0DD',  // Plum
         coverageType: 'religion',
         workersNeeded: 8,
+        maxWalkers: 2,
         cost: 200,
         key: '5'
     }

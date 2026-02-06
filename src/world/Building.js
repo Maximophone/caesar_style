@@ -1,4 +1,4 @@
-import { BUILDING_TYPES } from './BuildingTypes.js';
+import { BUILDING_TYPES, HOUSE_LEVELS } from './BuildingTypes.js';
 
 export class Building {
     constructor(x, y, type = BUILDING_TYPES.house) {
@@ -17,7 +17,7 @@ export class Building {
         // Walker spawning (only for service buildings)
         this.spawnInterval = 5; // seconds
         this.spawnTimer = 2;    // Start with a short delay
-        this.maxWalkers = 3;
+        this.maxWalkers = type.maxWalkers || 1;  // From config, default 1
         this.activeWalkers = 0;
 
         // Employment (for service buildings that need workers)
@@ -32,6 +32,10 @@ export class Building {
             }
             this.maxCoverage = 100;
             this.coverageDecayRate = 5;
+
+            // House evolution
+            this.level = 1;  // Start as Tent
+            this.evolutionProgress = 0.5;  // Start in the middle
         }
     }
 
@@ -45,7 +49,91 @@ export class Building {
                     this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);
                 }
             }
+
+            // Update house evolution
+            this.updateEvolution(deltaTime);
         }
+    }
+
+    // House evolution mechanic
+    updateEvolution(deltaTime) {
+        const levelConfig = HOUSE_LEVELS[this.level];
+        if (!levelConfig) return;
+
+        const levels = this.getCoverageLevels();
+        const evolutionSpeed = 0.05;  // Progress per second
+
+        // Check if we meet requirements for current level
+        const meetsCurrentRequirements = this.meetsLevelRequirements(this.level, levels);
+
+        if (!meetsCurrentRequirements) {
+            // Not meeting requirements - evolution bar drops
+            this.evolutionProgress -= evolutionSpeed * deltaTime;
+        } else {
+            // Meeting requirements - check if we're exceeding (upgrade progress)
+            // ONLY count surplus if we can actually upgrade (next level exists and requirements met)
+            const canUpgrade = this.level < 4 && this.meetsLevelRequirements(this.level + 1, levels);
+
+            if (canUpgrade) {
+                const surplus = this.calculateSurplus(this.level, levels);
+                if (surplus > 0) {
+                    // Doing better than needed AND can upgrade - bar fills
+                    this.evolutionProgress += evolutionSpeed * surplus * deltaTime;
+                }
+            }
+            // If we can't upgrade (missing next level's requirements), bar stays stable
+        }
+
+        // Handle level changes
+        if (this.evolutionProgress >= 1.0 && this.level < 4) {
+            // Check if we actually meet next level requirements before upgrading
+            if (this.meetsLevelRequirements(this.level + 1, levels)) {
+                // Upgrade!
+                this.level++;
+                this.evolutionProgress = 0.5;  // Reset to middle at new level
+            } else {
+                // Can't upgrade - cap at 1.0
+                this.evolutionProgress = 1.0;
+            }
+        } else if (this.evolutionProgress <= 0.0 && this.level > 1) {
+            // Downgrade!
+            this.level--;
+            this.evolutionProgress = 0.5;  // Reset to middle at lower level
+        }
+
+        // Clamp between 0 and 1
+        this.evolutionProgress = Math.max(0, Math.min(1, this.evolutionProgress));
+    }
+
+    // Check if house meets requirements for a given level
+    meetsLevelRequirements(level, coverageLevels) {
+        const config = HOUSE_LEVELS[level];
+        if (!config) return false;
+
+        for (const [serviceType, threshold] of Object.entries(config.requirements)) {
+            const current = coverageLevels[serviceType] || 0;
+            if (current < threshold) {
+                return false;  // Missing a required service
+            }
+        }
+        return true;
+    }
+
+    // Calculate how much we exceed requirements (for upgrade progress)
+    calculateSurplus(level, coverageLevels) {
+        const config = HOUSE_LEVELS[level];
+        if (!config || !config.upgradeThreshold) return 0;
+
+        // For upgrade, all required services must be above upgradeThreshold
+        let minSurplus = Infinity;
+        for (const [serviceType, threshold] of Object.entries(config.requirements)) {
+            const current = coverageLevels[serviceType] || 0;
+            const upgradeTarget = config.upgradeThreshold;
+            const surplus = (current - threshold) / (upgradeTarget - threshold);
+            minSurplus = Math.min(minSurplus, surplus);
+        }
+
+        return minSurplus === Infinity ? 0 : Math.max(0, minSurplus);
     }
 
     // Check if building has enough workers to function
@@ -99,13 +187,28 @@ export class Building {
         return levels;
     }
 
-    // Get population for houses (1-5 based on coverage)
-    // Minimum 1 to solve chicken/egg problem
+    // Get population based on house level
     getPopulation() {
         if (!this.coverageNeeds) return 0; // Service buildings have no population
 
-        const coverage = this.getCoveragePercent();
-        // Minimum 1 pop, scale up to 5 with full coverage
-        return 1 + Math.floor(coverage * 4);
+        // Must have water to have any population
+        const waterLevel = this.coverageNeeds.water / this.maxCoverage;
+        if (waterLevel < 0.5) return 0;
+
+        // Population based on house level
+        const config = HOUSE_LEVELS[this.level];
+        return config ? config.population : 1;
+    }
+
+    // Get house level name for display
+    getLevelName() {
+        const config = HOUSE_LEVELS[this.level];
+        return config ? config.name : 'Tent';
+    }
+
+    // Get house color based on level
+    getLevelColor() {
+        const config = HOUSE_LEVELS[this.level];
+        return config ? config.color : this.type.color;
     }
 }

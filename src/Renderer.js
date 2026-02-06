@@ -55,10 +55,11 @@ export class Renderer {
             // Get building type color
             let color = building.type.color;
 
-            // For houses, apply coverage-based tint
+            // For houses, use level-based color and apply coverage tint
             if (building.coverageNeeds) {
+                const baseColor = building.getLevelColor();
                 const coverage = building.getCoveragePercent();
-                color = this.applyFadeTint(building.type.color, coverage);
+                color = this.applyFadeTint(baseColor, coverage);
             }
 
             // Building body
@@ -78,13 +79,21 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
-            // Coverage bars for houses - show walker-based coverage (food, religion)
-            // Water is handled by static coverage (shown as blue icon)
+            // House-specific UI
             if (building.coverageNeeds) {
                 const levels = building.getCoverageLevels();
+
                 // Show walker-based coverage (food, religion) - water is shown via icon
                 const walkerLevels = { food: levels.food, religion: levels.religion };
                 this.renderWalkerCoverageBar(ctx, x, y - 10, w, 6, walkerLevels);
+
+                // Evolution bar (shows progress toward upgrade/downgrade)
+                this.renderEvolutionBar(ctx, x, y + h + 2, w, 4, building.evolutionProgress);
+
+                // Show level number in top-left corner
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillText(building.level, x + 6, y + 14);
 
                 // Show water status as blue droplet inside top-right corner of house
                 if (levels.water > 0.5) {
@@ -239,6 +248,41 @@ export class Renderer {
         // Border
         ctx.strokeStyle = isStaffed ? '#27ae60' : '#c0392b';
         ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, height);
+    }
+
+    // Render evolution bar (center-anchored: left = downgrade, right = upgrade)
+    renderEvolutionBar(ctx, x, y, width, height, progress) {
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(x, y, width, height);
+
+        // Center marker (where progress starts)
+        const centerX = x + width / 2;
+
+        // Fill from center based on progress (0.5 = center)
+        if (progress < 0.5) {
+            // Downgrade risk - fill left from center (red)
+            const amount = (0.5 - progress) * 2;  // 0-1 scale
+            ctx.fillStyle = '#c0392b';  // Red
+            ctx.fillRect(centerX - (width / 2) * amount, y, (width / 2) * amount, height);
+        } else if (progress > 0.5) {
+            // Upgrade progress - fill right from center (green)
+            const amount = (progress - 0.5) * 2;  // 0-1 scale
+            ctx.fillStyle = '#27ae60';  // Green
+            ctx.fillRect(centerX, y, (width / 2) * amount, height);
+        }
+
+        // Center line marker
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(centerX, y);
+        ctx.lineTo(centerX, y + height);
+        ctx.stroke();
+
+        // Border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.strokeRect(x, y, width, height);
     }
 
