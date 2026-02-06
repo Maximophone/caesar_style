@@ -32,7 +32,7 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 40,
-        requirements: { water: 0.8, food: 0.6, desirability: 0.1 }, // 0.1 normalized = 10 if max is 100
+        requirements: { water: 0.8, food: 0.6, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
         upgradeThreshold: null
     }
 ];
