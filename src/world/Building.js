@@ -30,6 +30,10 @@ export class Building {
             for (const need of type.coverageNeeds) {
                 this.coverageNeeds[need] = 0;
             }
+            // Add desirability if not already present
+            if (!('desirability' in this.coverageNeeds)) {
+                this.coverageNeeds.desirability = 0;
+            }
             this.maxCoverage = 100;
             this.coverageDecayRate = 5;
 
@@ -49,8 +53,8 @@ export class Building {
         // Decay coverage over time
         if (this.coverageNeeds) {
             for (const need of Object.keys(this.coverageNeeds)) {
-                // Water uses static coverage (reset each frame by BuildingManager), so don't decay it
-                if (need === 'water') continue;
+                // Water and Desirability use static coverage (reset each frame by BuildingManager), so don't decay them
+                if (need === 'water' || need === 'desirability') continue;
 
                 if (this.coverageNeeds[need] > 0) {
                     this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);

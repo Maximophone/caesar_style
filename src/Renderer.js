@@ -163,13 +163,16 @@ export class Renderer {
 
             if (debug.useSprites) {
                 if (building.type.id === 'house') {
-                    if (building.level === 1 && houseL1) {
-                        // Level 1 Tent - 4 Rotations
+                    let sprite = null;
+                    if (building.level === 1) sprite = houseL1;
+                    else if (building.level === 2) sprite = this.assetManager.getImage('house_level_2');
+                    else if (building.level === 3) sprite = this.assetManager.getImage('house_level_3');
+                    else if (building.level === 4) sprite = this.assetManager.getImage('house_level_4');
+
+                    if (sprite) {
+                        // Level 1 & 2 - 4 Rotations
                         // 2x2 Grid (0=South, 1=East, 2=North, 3=West)
                         // Layout assumption in 2x2 grid (TL, TR, BL, BR):
-                        // Row 0: South(0), North(2) ?? Wait, usually it is linear.
-                        // Let's assume standard reading order based on my prompt list?
-                        // 1. South (0), 2. North (2), 3. East (1), 4. West (3)
                         // Grid 2x2:
                         // (0,0): South (Rot 0)
                         // (1,0): North (Rot 2)
@@ -186,11 +189,11 @@ export class Renderer {
                             case 3: col = 1; row = 1; break; // West
                         }
 
-                        const tileW = houseL1.width / 2;
-                        const tileH = houseL1.height / 2;
+                        const tileW = sprite.width / 2;
+                        const tileH = sprite.height / 2;
 
                         ctx.drawImage(
-                            houseL1,
+                            sprite,
                             col * tileW, row * tileH, tileW, tileH,
                             bx, by, bw, bh
                         );
@@ -220,10 +223,10 @@ export class Renderer {
                         let row = 0;
 
                         switch (building.rotation) {
-                            case 0: col = 0; row = 0; break; // South
-                            case 2: col = 1; row = 0; break; // North
-                            case 3: col = 0; row = 1; break; // West
-                            case 1: col = 1; row = 1; break; // East
+                            case 0: col = 0; row = 0; break; // South (TL)
+                            case 2: col = 1; row = 0; break; // North (TR)
+                            case 1: col = 0; row = 1; break; // East (BL)
+                            case 3: col = 1; row = 1; break; // West (BR)
                         }
 
                         const tileW = marketImg.width / 2;
@@ -234,6 +237,46 @@ export class Renderer {
                             col * tileW, row * tileH, tileW, tileH,
                             bx, by, bw, bh
                         );
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'temple') {
+                    const templeImg = this.assetManager.getImage('temple');
+                    if (templeImg) {
+                        // Temple - 4 Rotations
+                        // Map matches Market/House:
+                        // TL: South (0), TR: North (2)
+                        // BL: East (1),  BR: West (3)
+
+                        let col = 0;
+                        let row = 0;
+
+                        switch (building.rotation) {
+                            case 0: col = 0; row = 0; break; // South (TL)
+                            case 2: col = 1; row = 0; break; // North (TR)
+                            case 1: col = 0; row = 1; break; // East (BL)
+                            case 3: col = 1; row = 1; break; // West (BR)
+                        }
+
+                        const tileW = templeImg.width / 2;
+                        const tileH = templeImg.height / 2;
+
+                        ctx.drawImage(
+                            templeImg,
+                            col * tileW, row * tileH, tileW, tileH,
+                            bx, by, bw, bh
+                        );
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'small_garden') {
+                    const gardenImg = this.assetManager.getImage('garden_small');
+                    if (gardenImg) {
+                        ctx.drawImage(gardenImg, bx, by, bw, bh);
+                        drawn = true;
+                    }
+                } else if (building.type.id === 'large_garden') {
+                    const gardenImg = this.assetManager.getImage('garden_large');
+                    if (gardenImg) {
+                        ctx.drawImage(gardenImg, bx, by, bw, bh);
                         drawn = true;
                     }
                 }
@@ -275,8 +318,12 @@ export class Renderer {
                 if (building.coverageNeeds) {
                     const levels = building.getCoverageLevels();
 
-                    // Show walker-based coverage (food, religion) - water is shown via icon
-                    const walkerLevels = { food: levels.food, religion: levels.religion };
+                    // Show walker-based and static coverage (food, religion, desirability) - water is shown via separate icon
+                    const walkerLevels = {
+                        food: levels.food,
+                        religion: levels.religion,
+                        desirability: levels.desirability
+                    };
                     this.renderWalkerCoverageBar(ctx, bx, by - 10, bw, 6, walkerLevels);
 
                     // Evolution bar (shows progress toward upgrade/downgrade)
@@ -408,7 +455,8 @@ export class Renderer {
     renderWalkerCoverageBar(ctx, x, y, width, height, levels) {
         const coverageTypes = [
             { key: 'food', color: '#DAA520', label: 'F' },      // Gold
-            { key: 'religion', color: '#9370DB', label: 'R' }   // Purple
+            { key: 'religion', color: '#9370DB', label: 'R' },   // Purple
+            { key: 'desirability', color: '#2ecc71', label: 'D' } // Emerald Green
         ];
 
         const segmentWidth = width / coverageTypes.length;
@@ -519,21 +567,22 @@ export class Renderer {
     renderUI(input, economy, debug) {
         const ctx = this.ctx;
 
-        // Mode indicator (top-left)
+        // Background for info box
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, 10, 320, 95);
+        ctx.fillRect(10, 10, 360, 115); // Slightly wider and taller
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px monospace';
         ctx.fillText(`Mode: ${input.getModeDisplay()}`, 20, 30);
-        ctx.fillText('[1] Road [2] House [3] Well', 20, 50);
-        ctx.fillText('[4] Market [5] Temple [6] Fountain', 20, 65);
-        ctx.fillText('LClick: Place  RClick: Remove', 20, 80);
+        ctx.fillText('[1] Road (5) [2] House (30) [3] Well (50)', 20, 50);
+        ctx.fillText('[4] Market (40) [5] Temple (200) [6] Fountain (200)', 20, 65);
+        ctx.fillText('[7] S. Garden (10) [8] L. Garden (30)', 20, 80);
+        ctx.fillText('LClick: Place  RClick: Remove', 20, 95);
 
         // Debug hints
         let debugText = '[O]verlays: ' + (debug && debug.showOverlays ? 'ON' : 'OFF');
         debugText += '  [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
-        ctx.fillText(debugText, 20, 95);
+        ctx.fillText(debugText, 20, 110);
 
         // Economy HUD (top-right)
         if (economy) {

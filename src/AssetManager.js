@@ -55,4 +55,38 @@ export class AssetManager {
         // Store the canvas as the new image source
         this.images[name] = canvas;
     }
+    // Automatically detect background color from top-left pixel (0,0) and remove it
+    applyTransparencyFromCorner(name, tolerance = 10) {
+        const img = this.images[name];
+        if (!img) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Get key color from top-left pixel
+        const r = data[0];
+        const g = data[1];
+        const b = data[2];
+
+        console.log(`[AssetManager] Auto-Transparency for ${name}: KeyColor=[${r},${g},${b}]`);
+
+        for (let i = 0; i < data.length; i += 4) {
+            const dr = Math.abs(data[i] - r);
+            const dg = Math.abs(data[i + 1] - g);
+            const db = Math.abs(data[i + 2] - b);
+
+            if (dr <= tolerance && dg <= tolerance && db <= tolerance) {
+                data[i + 3] = 0; // Set alpha to 0
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        this.images[name] = canvas;
+    }
 }

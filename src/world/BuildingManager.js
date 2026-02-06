@@ -20,30 +20,34 @@ export class BuildingManager {
         }
 
         // Find adjacent road for door placement
-        const doorPos = this.findDoorPosition(x, y, width, height);
-        if (!doorPos) {
-            return null; // Must be placed next to a road
+        const needsRoad = type.needsRoadAccess !== false;
+        let doorPos = null;
+
+        if (needsRoad) {
+            doorPos = this.findDoorPosition(x, y, width, height);
+            if (!doorPos) {
+                return null; // Must be placed next to a road
+            }
         }
 
         // Create building
         const building = new Building(x, y, type);
-        building.doorX = doorPos.x;
-        building.doorY = doorPos.y;
-        building.roadAccessX = doorPos.roadX;
-        building.roadAccessY = doorPos.roadY;
 
-        // Determine rotation based on side
-        // Door is on one of the edges. We want the building to Face the road.
-        // Side 'top' means road is above (North). We want Back to face North? No, usually Front faces road.
-        // If road is North, we rotate to face North (2).
-        // If road is South, we rotate to face South (0).
-        // If road is East, we rotate to face East (1).
-        // If road is West, we rotate to face West (3).
+        if (doorPos) {
+            building.doorX = doorPos.x;
+            building.doorY = doorPos.y;
+            building.roadAccessX = doorPos.roadX;
+            building.roadAccessY = doorPos.roadY;
 
-        if (doorPos.side === 'top') building.rotation = 2;      // North
-        else if (doorPos.side === 'right') building.rotation = 1; // East
-        else if (doorPos.side === 'bottom') building.rotation = 0; // South
-        else if (doorPos.side === 'left') building.rotation = 3;  // West
+            // Determine rotation based on side
+            if (doorPos.side === 'top') building.rotation = 2;      // North
+            else if (doorPos.side === 'right') building.rotation = 1; // East
+            else if (doorPos.side === 'bottom') building.rotation = 0; // South
+            else if (doorPos.side === 'left') building.rotation = 3;  // West
+        } else {
+            // Default rotation for buildings without road access
+            building.rotation = 0;
+        }
 
 
         // Mark tiles as occupied
@@ -81,11 +85,18 @@ export class BuildingManager {
             for (const road of adjacentRoads) {
                 // Make sure the road is actually outside the building footprint
                 if (road.x < x || road.x >= x + width || road.y < y || road.y >= y + height) {
+                    let side = 'top';
+                    if (road.y < y) side = 'top';
+                    else if (road.y >= y + height) side = 'bottom';
+                    else if (road.x < x) side = 'left';
+                    else if (road.x >= x + width) side = 'right';
+
                     return {
                         x: edge.bx,
                         y: edge.by,
                         roadX: road.x,
-                        roadY: road.y
+                        roadY: road.y,
+                        side: side
                     };
                 }
             }
@@ -132,10 +143,11 @@ export class BuildingManager {
     // Apply coverage from buildings with staticCoverage (like wells)
     // Coverage is cumulative and distance-based
     applyStaticCoverage() {
-        // First, reset water coverage for all houses (it's re-calculated each frame)
+        // First, reset water and desirability coverage for all houses (re-calculated each frame)
         for (const building of this.buildings) {
-            if (building.coverageNeeds && 'water' in building.coverageNeeds) {
-                building.coverageNeeds.water = 0;
+            if (building.coverageNeeds) {
+                if ('water' in building.coverageNeeds) building.coverageNeeds.water = 0;
+                if ('desirability' in building.coverageNeeds) building.coverageNeeds.desirability = 0;
             }
         }
 

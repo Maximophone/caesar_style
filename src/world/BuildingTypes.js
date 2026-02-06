@@ -7,36 +7,33 @@ export const HOUSE_LEVELS = [
         // Level 1: Tent
         name: 'Tent',
         color: '#A0522D',  // Sienna (lighter brown)
-        population: 1,
+        population: 5,
         requirements: { water: 0.1 },  // Survival needs
-        upgradeThreshold: 0.4          // Can think about upgrading with decent water (dist 2)
+        upgradeThreshold: 0.4
     },
     {
         // Level 2: Shack
         name: 'Shack',
         color: '#8B4513',  // Brown
-        population: 2,
-        // Allows upgrading here with just good water (e.g. cumulative dist 1+2 = 60+40=100)
+        population: 10,
         requirements: { water: 0.4 },
-        upgradeThreshold: 0.8          // Need VERY high water to think about Level 3
+        upgradeThreshold: 0.8
     },
     {
         // Level 3: House
         name: 'House',
         color: '#654321',  // Dark brown
-        population: 4,
-        // Introduces Food requirement. 
+        population: 20,
         requirements: { water: 0.6, food: 0.2 },
         upgradeThreshold: 0.8
     },
     {
-        // Level 4: Villa (max level)
+        // Level 4: Villa
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
-        population: 6,
-        // Introduces Religion
-        requirements: { water: 0.8, food: 0.6, religion: 0.4 },
-        upgradeThreshold: null  // Can't upgrade further
+        population: 40,
+        requirements: { water: 0.8, food: 0.6, desirability: 0.1 }, // 0.1 normalized = 10 if max is 100
+        upgradeThreshold: null
     }
 ];
 
@@ -100,7 +97,9 @@ export const BUILDING_TYPES = {
         coverageType: 'food',
         workersNeeded: 5,
         maxWalkers: 1,
-        cost: 100,
+        cost: 40,
+        employees: 5,
+        sprite: 'market',
         key: '4'
     },
     temple: {
@@ -116,6 +115,36 @@ export const BUILDING_TYPES = {
         maxWalkers: 2,
         cost: 200,
         key: '5'
+    },
+    small_garden: {
+        id: 'small_garden',
+        name: 'Small Garden',
+        width: 1,
+        height: 1,
+        color: '#228B22',  // Forest Green
+        spawnsWalker: false,
+        needsRoadAccess: false,
+        staticCoverage: {
+            type: 'desirability',
+            distanceAmounts: { 1: 30, 2: 20, 3: 10 }
+        },
+        cost: 10,
+        key: '7'
+    },
+    large_garden: {
+        id: 'large_garden',
+        name: 'Large Garden',
+        width: 2,
+        height: 2,
+        color: '#006400',  // Dark Green
+        spawnsWalker: false,
+        needsRoadAccess: false,
+        staticCoverage: {
+            type: 'desirability',
+            distanceAmounts: { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 }
+        },
+        cost: 30,
+        key: '8'
     }
 };
 

@@ -60,18 +60,28 @@ export class Game {
             'road_tiles': `assets/road_tiles_optimized.png?t=${t}`,
             'grass_tiles': `assets/grass_tiles.png?t=${t}`,
             'house_level_1': `assets/house_level_1.png?t=${t}`,
+            'house_level_2': `assets/house_level_2.png?t=${t}`,
+            'house_level_3': `assets/house_level_3.png?t=${t}`,
+            'house_level_4': `assets/house_level_4.png?t=${t}`,
             'well': `assets/well.png?t=${t}`,
             'fountain': `assets/fountain.png?t=${t}`,
-            'market': `assets/market.png?t=${t}`
+            'market': `assets/market.png?t=${t}`,
+            'temple': `assets/temple.png?t=${t}`
         });
 
         // Apply transparency at runtime as requested by user to keep source image editable
         // Target Raspberry: R=189 G=9 B=115
         this.assetManager.applyFuzzyTransparency('road_tiles', 189, 9, 115, 40);
-        this.assetManager.applyFuzzyTransparency('house_level_1', 255, 0, 255, 40); // Magenta background
-        this.assetManager.applyFuzzyTransparency('well', 255, 0, 255, 40);
-        this.assetManager.applyFuzzyTransparency('fountain', 255, 0, 255, 40);
-        this.assetManager.applyFuzzyTransparency('market', 255, 0, 255, 40);
+
+        // Auto-detect corner color for buildings (magenta/pink variations)
+        this.assetManager.applyTransparencyFromCorner('house_level_1', 40);
+        this.assetManager.applyTransparencyFromCorner('house_level_2', 40);
+        this.assetManager.applyTransparencyFromCorner('house_level_3', 40);
+        this.assetManager.applyTransparencyFromCorner('house_level_4', 40);
+        this.assetManager.applyTransparencyFromCorner('well', 40);
+        this.assetManager.applyTransparencyFromCorner('fountain', 40);
+        this.assetManager.applyTransparencyFromCorner('market', 40);
+        this.assetManager.applyTransparencyFromCorner('temple', 40);
 
         console.log('Assets loaded');
     }
