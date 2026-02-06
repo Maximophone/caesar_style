@@ -101,13 +101,49 @@ export class BuildingManager {
     }
 
     update(deltaTime) {
+        // Apply static coverage from buildings like wells
+        this.applyStaticCoverage();
+
         for (const building of this.buildings) {
             building.update(deltaTime);
 
-            // Spawn walker if ready
+            // Spawn walker if ready (and staffed)
             if (building.shouldSpawnWalker()) {
                 this.spawnWalker(building);
                 building.onWalkerSpawned();
+            }
+        }
+    }
+
+    // Apply coverage from buildings with staticCoverage (like wells)
+    applyStaticCoverage() {
+        for (const building of this.buildings) {
+            const staticCoverage = building.type.staticCoverage;
+            if (!staticCoverage) continue;
+
+            const { type: coverageType, radius } = staticCoverage;
+            const centerX = building.x + Math.floor(building.width / 2);
+            const centerY = building.y + Math.floor(building.height / 2);
+
+            // Find all houses within radius
+            for (const other of this.buildings) {
+                if (!other.coverageNeeds) continue; // Only houses receive coverage
+
+                // Check if any tile of the house is within range
+                for (let dy = 0; dy < other.height; dy++) {
+                    for (let dx = 0; dx < other.width; dx++) {
+                        const houseX = other.x + dx;
+                        const houseY = other.y + dy;
+                        const dist = Math.max(
+                            Math.abs(houseX - centerX),
+                            Math.abs(houseY - centerY)
+                        );
+                        if (dist <= radius) {
+                            other.receiveCoverage(coverageType);
+                            break;
+                        }
+                    }
+                }
             }
         }
     }

@@ -20,6 +20,9 @@ export class Building {
         this.maxWalkers = 3;
         this.activeWalkers = 0;
 
+        // Employment (for service buildings that need workers)
+        this.workers = 0;
+
         // Service coverage - houses have multiple needs
         if (type.coverageNeeds) {
             // House: needs multiple coverage types
@@ -45,8 +48,17 @@ export class Building {
         }
     }
 
+    // Check if building has enough workers to function
+    isStaffed() {
+        const needed = this.type.workersNeeded || 0;
+        return this.workers >= needed;
+    }
+
     shouldSpawnWalker() {
-        return this.type.spawnsWalker && this.spawnTimer <= 0 && this.activeWalkers < this.maxWalkers;
+        return this.type.spawnsWalker &&
+            this.isStaffed() &&
+            this.spawnTimer <= 0 &&
+            this.activeWalkers < this.maxWalkers;
     }
 
     onWalkerSpawned() {
@@ -58,7 +70,7 @@ export class Building {
         this.activeWalkers = Math.max(0, this.activeWalkers - 1);
     }
 
-    // Called when a walker passes nearby
+    // Called when a walker passes nearby or by static coverage
     receiveCoverage(coverageType) {
         if (this.coverageNeeds && coverageType in this.coverageNeeds) {
             this.coverageNeeds[coverageType] = this.maxCoverage;
@@ -87,12 +99,13 @@ export class Building {
         return levels;
     }
 
-    // Get population for houses (0-5 based on coverage)
+    // Get population for houses (1-5 based on coverage)
+    // Minimum 1 to solve chicken/egg problem
     getPopulation() {
         if (!this.coverageNeeds) return 0; // Service buildings have no population
 
         const coverage = this.getCoveragePercent();
-        // Scale from 0-5 based on coverage level
-        return Math.floor(coverage * 5);
+        // Minimum 1 pop, scale up to 5 with full coverage
+        return 1 + Math.floor(coverage * 4);
     }
 }

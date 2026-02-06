@@ -17,9 +17,11 @@ export const BUILDING_TYPES = {
         width: 1,
         height: 1,
         color: '#4169E1',  // Blue
-        spawnsWalker: true,
-        walkerColor: '#87CEEB',  // Light blue
-        coverageType: 'water',
+        spawnsWalker: false,  // Changed: static coverage instead
+        staticCoverage: {
+            type: 'water',
+            radius: 2  // 2 tiles = 5x5 area
+        },
         cost: 50,
         key: '3'
     },
@@ -32,6 +34,7 @@ export const BUILDING_TYPES = {
         spawnsWalker: true,
         walkerColor: '#FFD700',  // Gold
         coverageType: 'food',
+        workersNeeded: 5,
         cost: 100,
         key: '4'
     },
@@ -44,6 +47,7 @@ export const BUILDING_TYPES = {
         spawnsWalker: true,
         walkerColor: '#DDA0DD',  // Plum
         coverageType: 'religion',
+        workersNeeded: 8,
         cost: 200,
         key: '5'
     }

@@ -216,14 +216,18 @@ export class Renderer {
             const hudX = ctx.canvas.width - hudWidth - 10;
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(hudX, 10, hudWidth, 50);
+            ctx.fillRect(hudX, 10, hudWidth, 70);
+
+            ctx.font = 'bold 14px monospace';
 
             ctx.fillStyle = '#f1c40f'; // Gold for money
-            ctx.font = 'bold 16px monospace';
-            ctx.fillText(`💰 ${economy.money}`, hudX + 10, 32);
+            ctx.fillText(`💰 ${economy.money}`, hudX + 10, 30);
 
             ctx.fillStyle = '#3498db'; // Blue for population
-            ctx.fillText(`👥 ${economy.population}`, hudX + 10, 52);
+            ctx.fillText(`👥 ${economy.population}`, hudX + 10, 50);
+
+            ctx.fillStyle = '#27ae60'; // Green for employed
+            ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, hudX + 10, 70);
         }
     }
 }
