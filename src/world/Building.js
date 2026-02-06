@@ -45,6 +45,9 @@ export class Building {
         // Decay coverage over time
         if (this.coverageNeeds) {
             for (const need of Object.keys(this.coverageNeeds)) {
+                // Water uses static coverage (reset each frame by BuildingManager), so don't decay it
+                if (need === 'water') continue;
+
                 if (this.coverageNeeds[need] > 0) {
                     this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);
                 }
@@ -158,10 +161,20 @@ export class Building {
         this.activeWalkers = Math.max(0, this.activeWalkers - 1);
     }
 
-    // Called when a walker passes nearby or by static coverage
+    // Called when a walker passes nearby - sets to full
     receiveCoverage(coverageType) {
         if (this.coverageNeeds && coverageType in this.coverageNeeds) {
             this.coverageNeeds[coverageType] = this.maxCoverage;
+        }
+    }
+
+    // Called by static coverage sources - adds amount (cumulative, capped at max)
+    addCoverage(coverageType, amount) {
+        if (this.coverageNeeds && coverageType in this.coverageNeeds) {
+            this.coverageNeeds[coverageType] = Math.min(
+                this.maxCoverage,
+                this.coverageNeeds[coverageType] + amount
+            );
         }
     }
 

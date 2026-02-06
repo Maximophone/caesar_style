@@ -1,5 +1,5 @@
 // House evolution levels - thresholds create stable equilibrium points
-// Water is always fundamental (required at 50%)
+// Water requirements grow with level
 // Upgrade threshold = next level's maintenance threshold for stability
 export const HOUSE_LEVELS = [
     null, // Index 0 unused
@@ -8,23 +8,25 @@ export const HOUSE_LEVELS = [
         name: 'Tent',
         color: '#A0522D',  // Sienna (lighter brown)
         population: 1,
-        requirements: { water: 0.5 },  // Just need water
-        upgradeThreshold: 0.7          // Need 70% water to progress
+        requirements: { water: 0.1 },  // Survival needs
+        upgradeThreshold: 0.4          // Can think about upgrading with decent water (dist 2)
     },
     {
         // Level 2: Shack
         name: 'Shack',
         color: '#8B4513',  // Brown
         population: 2,
-        requirements: { water: 0.5, food: 0.4 },
-        upgradeThreshold: 0.7
+        // Allows upgrading here with just good water (e.g. cumulative dist 1+2 = 60+40=100)
+        requirements: { water: 0.4 },
+        upgradeThreshold: 0.8          // Need VERY high water to think about Level 3
     },
     {
         // Level 3: House
         name: 'House',
         color: '#654321',  // Dark brown
         population: 4,
-        requirements: { water: 0.5, food: 0.6, religion: 0.4 },
+        // Introduces Food requirement. 
+        requirements: { water: 0.6, food: 0.2 },
         upgradeThreshold: 0.8
     },
     {
@@ -32,7 +34,8 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.5, food: 0.8, religion: 0.7 },
+        // Introduces Religion
+        requirements: { water: 0.8, food: 0.6, religion: 0.4 },
         upgradeThreshold: null  // Can't upgrade further
     }
 ];
@@ -56,10 +59,11 @@ export const BUILDING_TYPES = {
         width: 1,
         height: 1,
         color: '#4169E1',  // Blue
-        spawnsWalker: false,  // Changed: static coverage instead
+        spawnsWalker: false,
         staticCoverage: {
             type: 'water',
-            radius: 2  // 2 tiles = 5x5 area
+            // Coverage by Manhattan distance: {distance: amount}
+            distanceAmounts: { 1: 60, 2: 40, 3: 20 }  // Max coverage at each distance
         },
         cost: 50,
         key: '3'

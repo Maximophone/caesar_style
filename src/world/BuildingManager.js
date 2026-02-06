@@ -116,36 +116,48 @@ export class BuildingManager {
     }
 
     // Apply coverage from buildings with staticCoverage (like wells)
+    // Coverage is cumulative and distance-based
     applyStaticCoverage() {
+        // First, reset water coverage for all houses (it's re-calculated each frame)
+        for (const building of this.buildings) {
+            if (building.coverageNeeds && 'water' in building.coverageNeeds) {
+                building.coverageNeeds.water = 0;
+            }
+        }
+
+        // Then apply coverage from each source
         for (const building of this.buildings) {
             const staticCoverage = building.type.staticCoverage;
             if (!staticCoverage) continue;
 
-            const { type: coverageType, radius } = staticCoverage;
+            const { type: coverageType, distanceAmounts } = staticCoverage;
+            if (!distanceAmounts) continue;
+
             const centerX = building.x + Math.floor(building.width / 2);
             const centerY = building.y + Math.floor(building.height / 2);
 
-            // Find all houses within radius
+            // Find maximum distance defined
+            const maxDist = Math.max(...Object.keys(distanceAmounts).map(Number));
+
+            // Find all houses and add coverage based on distance
             for (const other of this.buildings) {
                 if (!other.coverageNeeds) continue; // Only houses receive coverage
 
-                // Check if any tile of the house is within range
-                let inRange = false;
-                for (let dy = 0; dy < other.height && !inRange; dy++) {
-                    for (let dx = 0; dx < other.width && !inRange; dx++) {
+                // Calculate Manhattan distance to closest tile of house
+                let minDist = Infinity;
+                for (let dy = 0; dy < other.height; dy++) {
+                    for (let dx = 0; dx < other.width; dx++) {
                         const houseX = other.x + dx;
                         const houseY = other.y + dy;
-                        const dist = Math.max(
-                            Math.abs(houseX - centerX),
-                            Math.abs(houseY - centerY)
-                        );
-                        if (dist <= radius) {
-                            inRange = true;
-                        }
+                        // Manhattan distance
+                        const dist = Math.abs(houseX - centerX) + Math.abs(houseY - centerY);
+                        minDist = Math.min(minDist, dist);
                     }
                 }
-                if (inRange) {
-                    other.receiveCoverage(coverageType);
+
+                // Add coverage based on distance (cumulative)
+                if (minDist <= maxDist && distanceAmounts[minDist] !== undefined) {
+                    other.addCoverage(coverageType, distanceAmounts[minDist]);
                 }
             }
         }

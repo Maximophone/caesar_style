@@ -95,17 +95,27 @@ export class Renderer {
                 ctx.font = 'bold 12px sans-serif';
                 ctx.fillText(building.level, x + 6, y + 14);
 
-                // Show water status as blue droplet inside top-right corner of house
-                if (levels.water > 0.5) {
-                    ctx.fillStyle = '#4169E1';
-                    ctx.beginPath();
-                    ctx.arc(x + w - 10, y + 10, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#87CEEB';
-                    ctx.beginPath();
-                    ctx.arc(x + w - 11, y + 9, 2, 0, Math.PI * 2);
-                    ctx.fill();
+                // Show water coverage bar (vertical) in top-right
+                const waterBarW = 6;
+                const waterBarH = 16;
+                const waterBarX = x + w - waterBarW - 4;
+                const waterBarY = y + 4;
+
+                // Bar Background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(waterBarX, waterBarY, waterBarW, waterBarH);
+
+                // Bar Fill
+                if (levels.water > 0) {
+                    ctx.fillStyle = '#4169E1'; // Blue
+                    const fillH = Math.min(1, levels.water) * waterBarH;
+                    ctx.fillRect(waterBarX, waterBarY + waterBarH - fillH, waterBarW, fillH);
                 }
+
+                // Bar Border
+                ctx.strokeStyle = '#87CEEB'; // SkyBlue border
+                ctx.lineWidth = 1;
+                ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
             }
 
             // Employment indicator for service buildings
