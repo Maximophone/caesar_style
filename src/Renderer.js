@@ -196,10 +196,10 @@ export class Renderer {
         }
     }
 
-    renderUI(input) {
+    renderUI(input, economy) {
         const ctx = this.ctx;
 
-        // Mode indicator
+        // Mode indicator (top-left)
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(10, 10, 240, 75);
 
@@ -209,5 +209,21 @@ export class Renderer {
         ctx.fillText('[1] Road [2] House [3] Well', 20, 50);
         ctx.fillText('[4] Market [5] Temple', 20, 65);
         ctx.fillText('LClick: Place  RClick: Remove', 20, 80);
+
+        // Economy HUD (top-right)
+        if (economy) {
+            const hudWidth = 150;
+            const hudX = ctx.canvas.width - hudWidth - 10;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(hudX, 10, hudWidth, 50);
+
+            ctx.fillStyle = '#f1c40f'; // Gold for money
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText(`💰 ${economy.money}`, hudX + 10, 32);
+
+            ctx.fillStyle = '#3498db'; // Blue for population
+            ctx.fillText(`👥 ${economy.population}`, hudX + 10, 52);
+        }
     }
 }

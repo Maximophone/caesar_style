@@ -4,6 +4,8 @@ import { Input } from './Input.js';
 import { RoadNetwork } from './world/RoadNetwork.js';
 import { EntityManager } from './entities/EntityManager.js';
 import { BuildingManager } from './world/BuildingManager.js';
+import { Economy } from './Economy.js';
+import { ROAD_COST } from './world/BuildingTypes.js';
 
 export class Game {
     constructor(canvas) {
@@ -24,6 +26,7 @@ export class Game {
         this.roadNetwork = new RoadNetwork(this.grid);
         this.entityManager = new EntityManager();
         this.buildingManager = new BuildingManager(this.grid, this.roadNetwork, this.entityManager);
+        this.economy = new Economy();
         this.renderer = new Renderer(this.ctx, this.tileSize);
         this.input = new Input(this.canvas, this.tileSize, this);
 
@@ -57,6 +60,7 @@ export class Game {
     update(deltaTime) {
         this.buildingManager.update(deltaTime);
         this.entityManager.update(deltaTime, this.roadNetwork, this.grid);
+        this.economy.update(deltaTime, this.buildingManager.buildings);
     }
 
     render() {
@@ -77,7 +81,7 @@ export class Game {
         this.renderer.renderEntities(this.entityManager.entities);
 
         // Render UI hints
-        this.renderer.renderUI(this.input);
+        this.renderer.renderUI(this.input, this.economy);
     }
 
     // Called by Input when a tile is clicked
@@ -95,13 +99,22 @@ export class Game {
 
     placeRoad(x, y) {
         if (this.grid.getTile(x, y) === null) {
+            if (!this.economy.canAfford(ROAD_COST)) return;
+
+            this.economy.spend(ROAD_COST);
             this.grid.setTile(x, y, { type: 'road' });
             this.roadNetwork.addRoad(x, y);
         }
     }
 
     placeBuilding(x, y) {
-        this.buildingManager.placeBuilding(x, y, this.input.selectedBuildingType);
+        const type = this.input.selectedBuildingType;
+        if (!this.economy.canAfford(type.cost)) return;
+
+        const building = this.buildingManager.placeBuilding(x, y, type);
+        if (building) {
+            this.economy.spend(type.cost);
+        }
     }
 
     removeTile(x, y) {

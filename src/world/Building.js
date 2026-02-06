@@ -86,4 +86,13 @@ export class Building {
         }
         return levels;
     }
+
+    // Get population for houses (0-5 based on coverage)
+    getPopulation() {
+        if (!this.coverageNeeds) return 0; // Service buildings have no population
+
+        const coverage = this.getCoveragePercent();
+        // Scale from 0-5 based on coverage level
+        return Math.floor(coverage * 5);
+    }
 }

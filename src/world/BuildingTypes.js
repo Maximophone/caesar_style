@@ -8,6 +8,7 @@ export const BUILDING_TYPES = {
         color: '#8B4513',  // Brown
         spawnsWalker: false,
         coverageNeeds: ['water', 'food', 'religion'],
+        cost: 30,
         key: '2'
     },
     well: {
@@ -19,6 +20,7 @@ export const BUILDING_TYPES = {
         spawnsWalker: true,
         walkerColor: '#87CEEB',  // Light blue
         coverageType: 'water',
+        cost: 50,
         key: '3'
     },
     market: {
@@ -30,6 +32,7 @@ export const BUILDING_TYPES = {
         spawnsWalker: true,
         walkerColor: '#FFD700',  // Gold
         coverageType: 'food',
+        cost: 100,
         key: '4'
     },
     temple: {
@@ -41,9 +44,13 @@ export const BUILDING_TYPES = {
         spawnsWalker: true,
         walkerColor: '#DDA0DD',  // Plum
         coverageType: 'religion',
+        cost: 200,
         key: '5'
     }
 };
+
+// Road cost (not a building but needs a cost)
+export const ROAD_COST = 5;
 
 // Get building type by key press
 export function getBuildingTypeByKey(key) {
