@@ -66,7 +66,9 @@ export class Game {
             'well': `assets/well.png?t=${t}`,
             'fountain': `assets/fountain.png?t=${t}`,
             'market': `assets/market.png?t=${t}`,
-            'temple': `assets/temple.png?t=${t}`
+            'temple': `assets/temple.png?t=${t}`,
+            'garden_small': `assets/garden_small.png?t=${t}`,
+            'garden_large': `assets/garden_large.png?t=${t}`
         });
 
         // Apply transparency at runtime as requested by user to keep source image editable
@@ -82,6 +84,8 @@ export class Game {
         this.assetManager.applyTransparencyFromCorner('fountain', 40);
         this.assetManager.applyTransparencyFromCorner('market', 40);
         this.assetManager.applyTransparencyFromCorner('temple', 40);
+        this.assetManager.applyTransparencyFromCorner('garden_small', 40);
+        this.assetManager.applyTransparencyFromCorner('garden_large', 40);
 
         console.log('Assets loaded');
     }
