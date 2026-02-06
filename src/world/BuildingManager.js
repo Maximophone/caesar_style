@@ -130,8 +130,9 @@ export class BuildingManager {
                 if (!other.coverageNeeds) continue; // Only houses receive coverage
 
                 // Check if any tile of the house is within range
-                for (let dy = 0; dy < other.height; dy++) {
-                    for (let dx = 0; dx < other.width; dx++) {
+                let inRange = false;
+                for (let dy = 0; dy < other.height && !inRange; dy++) {
+                    for (let dx = 0; dx < other.width && !inRange; dx++) {
                         const houseX = other.x + dx;
                         const houseY = other.y + dy;
                         const dist = Math.max(
@@ -139,10 +140,12 @@ export class BuildingManager {
                             Math.abs(houseY - centerY)
                         );
                         if (dist <= radius) {
-                            other.receiveCoverage(coverageType);
-                            break;
+                            inRange = true;
                         }
                     }
+                }
+                if (inRange) {
+                    other.receiveCoverage(coverageType);
                 }
             }
         }

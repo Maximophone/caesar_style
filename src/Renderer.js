@@ -78,10 +78,31 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
-            // Coverage bars for houses - show each type separately
+            // Coverage bars for houses - show walker-based coverage (food, religion)
+            // Water is handled by static coverage (shown as blue icon)
             if (building.coverageNeeds) {
                 const levels = building.getCoverageLevels();
-                this.renderMultiCoverageBar(ctx, x, y - 10, w, 6, levels);
+                // Show walker-based coverage (food, religion) - water is shown via icon
+                const walkerLevels = { food: levels.food, religion: levels.religion };
+                this.renderWalkerCoverageBar(ctx, x, y - 10, w, 6, walkerLevels);
+
+                // Show water status as blue droplet inside top-right corner of house
+                if (levels.water > 0.5) {
+                    ctx.fillStyle = '#4169E1';
+                    ctx.beginPath();
+                    ctx.arc(x + w - 10, y + 10, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.beginPath();
+                    ctx.arc(x + w - 11, y + 9, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Employment indicator for service buildings
+            if (building.type.workersNeeded > 0) {
+                const fill = building.workers / building.type.workersNeeded;
+                this.renderEmploymentBar(ctx, x, y - 8, w, 4, fill, building.isStaffed());
             }
         }
     }
@@ -168,6 +189,57 @@ export class Renderer {
             ctx.lineWidth = 1;
             ctx.strokeRect(sx, y, sw, height);
         }
+    }
+
+    // Render 2 bars for walker-based coverage (food, religion only)
+    renderWalkerCoverageBar(ctx, x, y, width, height, levels) {
+        const coverageTypes = [
+            { key: 'food', color: '#DAA520', label: 'F' },      // Gold
+            { key: 'religion', color: '#9370DB', label: 'R' }   // Purple
+        ];
+
+        const segmentWidth = width / coverageTypes.length;
+        const gap = 1;
+
+        for (let i = 0; i < coverageTypes.length; i++) {
+            const type = coverageTypes[i];
+            const level = levels[type.key] || 0;
+            const sx = x + i * segmentWidth + gap / 2;
+            const sw = segmentWidth - gap;
+
+            // Background (dark)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(sx, y, sw, height);
+
+            // Fill based on level
+            if (level > 0) {
+                ctx.fillStyle = type.color;
+                ctx.fillRect(sx, y, sw * level, height);
+            }
+
+            // Border
+            ctx.strokeStyle = level > 0.5 ? type.color : 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx, y, sw, height);
+        }
+    }
+
+    // Render employment bar for service buildings
+    renderEmploymentBar(ctx, x, y, width, height, fill, isStaffed) {
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(x, y, width, height);
+
+        // Fill (green if staffed, orange/red if understaffed)
+        if (fill > 0) {
+            ctx.fillStyle = isStaffed ? '#27ae60' : '#e67e22';
+            ctx.fillRect(x, y, width * Math.min(1, fill), height);
+        }
+
+        // Border
+        ctx.strokeStyle = isStaffed ? '#27ae60' : '#c0392b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, height);
     }
 
     renderEntities(entities) {
