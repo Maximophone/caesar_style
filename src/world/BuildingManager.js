@@ -131,7 +131,7 @@ export class BuildingManager {
         this.applyStaticCoverage();
 
         for (const building of this.buildings) {
-            building.update(deltaTime);
+            building.update(deltaTime, this.grid);
 
             // Spawn walker if ready (and staffed)
             // For markets: also need goods to distribute

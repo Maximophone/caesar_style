@@ -167,6 +167,7 @@ export const BUILDING_TYPES = {
         workersNeeded: 6,
         cost: 100,
         sprite: 'farm',
+        requiredResource: 'fertility',
         // Goods production
         produces: 'food',
         productionRate: 10,  // Units per second when staffed

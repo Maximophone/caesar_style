@@ -5,12 +5,56 @@ export class Grid {
 
         // 2D array of tiles, null = empty
         this.tiles = [];
+        // 2D array of resources (e.g., 'fertility')
+        this.resources = [];
+
         for (let y = 0; y < height; y++) {
             this.tiles[y] = [];
+            this.resources[y] = [];
             for (let x = 0; x < width; x++) {
                 this.tiles[y][x] = null;
+                this.resources[y][x] = null;
             }
         }
+    }
+
+    generateResources() {
+        // Clear existing
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                this.resources[y][x] = null;
+            }
+        }
+
+        // Generate 'fertility' clusters
+        const numClusters = Math.floor((this.width * this.height) / 50); // density control
+
+        for (let i = 0; i < numClusters; i++) {
+            const cx = Math.floor(Math.random() * this.width);
+            const cy = Math.floor(Math.random() * this.height);
+            const radius = 2 + Math.floor(Math.random() * 3); // 2-4 radius
+
+            // Draw circular blob
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = cx + dx;
+                    const y = cy + dy;
+
+                    if (this.isInBounds(x, y)) {
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        // Add randomness to edges
+                        if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
+                            this.resources[y][x] = 'fertility';
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    getResource(x, y) {
+        if (!this.isInBounds(x, y)) return null;
+        return this.resources[y][x];
     }
 
     isInBounds(x, y) {

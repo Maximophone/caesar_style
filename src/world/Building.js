@@ -75,12 +75,12 @@ export class Building {
         this.activeCartWalkers = 0;
     }
 
-    update(deltaTime) {
+    update(deltaTime, grid) {
         this.spawnTimer -= deltaTime;
         this.cartSpawnTimer -= deltaTime;
 
         // Produce goods if this is a producer building
-        this.produceGoods(deltaTime);
+        this.produceGoods(deltaTime, grid);
 
         // House-specific updates
         if (this.coverageNeeds) {
@@ -347,13 +347,34 @@ export class Building {
     // ===== GOODS PRODUCTION & STORAGE =====
 
     // Produce goods (for farms) - called each frame
-    produceGoods(deltaTime) {
+    produceGoods(deltaTime, grid) {
         if (!this.type.produces || !this.storage) return;
         if (!this.isStaffed()) return;
 
+        // Calculate efficiency based on resource coverage
+        let efficiency = 1.0;
+        if (this.type.requiredResource && grid) {
+            let matchedTiles = 0;
+            const totalTiles = this.width * this.height;
+
+            for (let dy = 0; dy < this.height; dy++) {
+                for (let dx = 0; dx < this.width; dx++) {
+                    const resource = grid.getResource(this.x + dx, this.y + dy);
+                    if (resource === this.type.requiredResource) {
+                        matchedTiles++;
+                    }
+                }
+            }
+
+            // 0% efficiency if no tiles match, up to 100% if all match.
+            // Actually, let's establish a baseline. 
+            // If we want it strictly location-based:
+            efficiency = matchedTiles / totalTiles;
+        }
+
         const goodType = this.type.produces;
         const rate = this.type.productionRate || 1;
-        const amount = rate * deltaTime;
+        const amount = rate * efficiency * deltaTime;
 
         // Add to storage, capped at max
         this.storage[goodType] = Math.min(

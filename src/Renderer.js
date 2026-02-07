@@ -49,6 +49,12 @@ export class Renderer {
                 // Draw subtle grid lines
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.strokeRect(x * ts, y * ts, ts, ts);
+
+                // Draw resources
+                if (grid.resources && grid.resources[y][x] === 'fertility') {
+                    ctx.fillStyle = 'rgba(218, 165, 32, 0.3)'; // Goldenrod semi-transparent
+                    ctx.fillRect(x * ts, y * ts, ts, ts);
+                }
             }
         }
     }

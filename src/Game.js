@@ -26,6 +26,7 @@ export class Game {
         // Initialize systems
         this.assetManager = new AssetManager();
         this.grid = new Grid(this.gridWidth, this.gridHeight);
+        this.grid.generateResources();
         this.roadNetwork = new RoadNetwork(this.grid);
         this.entityManager = new EntityManager();
         this.buildingManager = new BuildingManager(this.grid, this.roadNetwork, this.entityManager);

@@ -73,7 +73,10 @@ All buildings require road access **except** for Gardens.
 | Warehouse | 3x3 | 80 Dn | 4 | Stores 800, accepts food |
 
 #### Farm
-- Produces food when staffed (10 units/second)
+- Produces food when staffed.
+- **Location Dependent**: Production rate depends on underlying "Fertility" (Yellowish ground).
+- Efficiency = Percent of building covering fertile tiles (0% - 100%).
+- Max Rate: 10 units/second.
 - Spawns a **Cart Walker** when storage reaches 100 units
 - Cart Walker travels to the **most empty** Market or Warehouse in the city
 
