@@ -194,7 +194,12 @@ Walkers are spawned by service buildings to deliver coverage to houses.
 
 - **Tax Collector**: Spawns from the Tax Office.
 - **Manual Collection**: Taxes are **not** collected automatically. Money is only generated when a Tax Collector walker passes a populated house.
-- **Revenue**: 1 Dn per inhabitant.
+- **Revenue**: Based on population and house level multiplier.
+  - Formula: `Population * Multiplier`
+  - **Tent (L1)**: x1
+  - **Shack (L2)**: x1
+  - **House (L3)**: x2
+  - **Villa (L4)**: x3
 - **Cooldown**: Houses have a 20-second cooldown after paying tax before they can pay again.
 
 ---

@@ -119,8 +119,12 @@ export class Building {
         const population = this.getPopulation();
         if (population <= 0) return 0;
 
-        // 1 coin per person
-        const taxAmount = population;
+        // Get multiplier from house level
+        const levelConfig = HOUSE_LEVELS[this.level];
+        const multiplier = levelConfig ? (levelConfig.taxMultiplier || 1) : 1;
+
+        // coin per person * multiplier
+        const taxAmount = population * multiplier;
 
         // Reset cooldown (prevent multi-collection per walker pass or multiple walkers spammed)
         // 20 seconds cooldown

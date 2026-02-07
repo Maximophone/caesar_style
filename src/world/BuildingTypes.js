@@ -9,7 +9,8 @@ export const HOUSE_LEVELS = [
         color: '#A0522D',  // Sienna (lighter brown)
         population: 1,
         requirements: { water: 0.1 },  // Survival needs
-        upgradeThreshold: 0.4
+        upgradeThreshold: 0.4,
+        taxMultiplier: 1
     },
     {
         // Level 2: Shack
@@ -17,7 +18,8 @@ export const HOUSE_LEVELS = [
         color: '#8B4513',  // Brown
         population: 2,
         requirements: { water: 0.4 },
-        upgradeThreshold: 0.8
+        upgradeThreshold: 0.8,
+        taxMultiplier: 1
     },
     {
         // Level 3: House
@@ -25,7 +27,8 @@ export const HOUSE_LEVELS = [
         color: '#654321',  // Dark brown
         population: 4,
         requirements: { water: 0.6, food: 0.2 },
-        upgradeThreshold: 0.8
+        upgradeThreshold: 0.8,
+        taxMultiplier: 2
     },
     {
         // Level 4: Villa
@@ -33,7 +36,8 @@ export const HOUSE_LEVELS = [
         color: '#4A3728',  // Very dark brown
         population: 6,
         requirements: { water: 0.8, food: 0.6, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
-        upgradeThreshold: null
+        upgradeThreshold: null,
+        taxMultiplier: 3
     }
 ];
 
