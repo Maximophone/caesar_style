@@ -1,6 +1,6 @@
 // Water requirements grow with level
 // Upgrade threshold = next level's maintenance threshold for stability
-export const TAX_COOLDOWN = 20;
+export const TAX_COOLDOWN = 10;
 
 export const HOUSE_LEVELS = [
     null, // Index 0 unused
@@ -77,7 +77,7 @@ export const BUILDING_TYPES = {
             // Coverage by Manhattan distance: {distance: amount}
             distanceAmounts: { 1: 60, 2: 40, 3: 20 }  // Max coverage at each distance
         },
-        cost: 50
+        cost: 20
     },
     fountain: {
         id: 'fountain',
@@ -97,7 +97,7 @@ export const BUILDING_TYPES = {
                 5: 10
             }
         },
-        cost: 200  // Expensive
+        cost: 70  // Expensive
     },
     market: {
         id: 'market',
@@ -110,7 +110,7 @@ export const BUILDING_TYPES = {
         coverageType: 'food',
         workersNeeded: 5,
         maxWalkers: 1,
-        cost: 40,
+        cost: 60,
         employees: 5,
         sprite: 'market',
         // Goods storage
@@ -166,7 +166,7 @@ export const BUILDING_TYPES = {
         color: '#8B7355',  // Wheat/tan color
         spawnsWalker: false,  // Spawns cart walkers via special logic
         workersNeeded: 6,
-        cost: 100,
+        cost: 120,
         sprite: 'farm',
         requiredResource: 'fertility',
         // Goods production
@@ -182,7 +182,7 @@ export const BUILDING_TYPES = {
         color: '#8B4513',  // Saddle brown
         spawnsWalker: false,
         workersNeeded: 4,
-        cost: 80,
+        cost: 100,
         sprite: 'warehouse',
         // Goods storage - accepts multiple goods
         acceptsGoods: ['food'],
@@ -200,7 +200,7 @@ export const BUILDING_TYPES = {
         coverageType: 'tax',   // Special coverage type
         workersNeeded: 4,
         maxWalkers: 1,
-        cost: 150
+        cost: 100
     }
 };
 

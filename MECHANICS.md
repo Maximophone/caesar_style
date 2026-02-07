@@ -58,7 +58,7 @@ All buildings require road access **except** for Gardens.
 | Building | Size | Cost | Coverage Type | Range |
 |----------|------|------|---------------|-------|
 | Well | 1x1 | 50 Dn | Water | 3 tiles (60/40/20) |
-| Fountain | 1x1 | 200 Dn | Water | 5 tiles (90/70/50/30/10) |
+| Fountain | 1x1 | 70 Dn | Water | 5 tiles (90/70/50/30/10) |
 
 - **Static Coverage**: Provides water automatically to nearby houses without walkers.
 - Coverage value decreases with distance (Manhattan distance).
@@ -69,9 +69,9 @@ All buildings require road access **except** for Gardens.
 
 | Building | Size | Cost | Workers | Production/Storage |
 |----------|------|------|---------|-------------------|
-| Farm | 3x3 | 100 Dn | 6 | Produces 10 food/sec, stores 200 |
-| Market | 2x2 | 40 Dn | 5 | Stores 400, distributes to houses |
-| Warehouse | 3x3 | 80 Dn | 4 | Stores 800, accepts food |
+| Farm | 3x3 | 120 Dn | 6 | Produces 10 food/sec, stores 200 |
+| Market | 2x2 | 60 Dn | 5 | Stores 400, distributes to houses |
+| Warehouse | 3x3 | 100 Dn | 4 | Stores 800, accepts food |
 
 #### Farm
 - Produces food when staffed.
@@ -119,7 +119,7 @@ All buildings require road access **except** for Gardens.
 
 | Building | Size | Cost | Workers | Walkers |
 |----------|------|------|---------|---------|
-| Tax Office | 2x2 | 150 Dn | 4 | 1 |
+| Tax Office | 2x2 | 100 Dn | 4 | 1 |
 
 - **Tax Collector**: Spawns from the Tax Office.
 - **Manual Collection**: Taxes are **not** collected automatically. Money is only generated when a Tax Collector walker passes a populated house.
@@ -129,7 +129,7 @@ All buildings require road access **except** for Gardens.
   - **Shack (L2)**: x1
   - **House (L3)**: x2
   - **Villa (L4)**: x3
-- **Cooldown**: Houses have a 20-second cooldown after paying tax before they can pay again.
+- **Cooldown**: Houses have a 10-second cooldown after paying tax before they can pay again.
 
 ### Infrastructure
 
