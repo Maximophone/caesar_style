@@ -143,9 +143,6 @@ export class Renderer {
         const ctx = this.ctx;
         const ts = this.tileSize;
 
-        // House assets
-        const houseL1 = this.assetManager.getImage('house_level_1');
-
         for (const building of buildings) {
             const bx = building.x * ts;
             const by = building.y * ts;
@@ -162,121 +159,59 @@ export class Renderer {
             let drawn = false;
 
             if (debug.useSprites) {
+                // Map rotation to direction string
+                const rotationToDirection = ['south', 'east', 'north', 'west'];
+                const direction = rotationToDirection[building.rotation] || 'south';
+
+                // Determine base sprite name based on building type
+                let baseName = null;
                 if (building.type.id === 'house') {
-                    let sprite = null;
-                    if (building.level === 1) sprite = houseL1;
-                    else if (building.level === 2) sprite = this.assetManager.getImage('house_level_2');
-                    else if (building.level === 3) sprite = this.assetManager.getImage('house_level_3');
-                    else if (building.level === 4) sprite = this.assetManager.getImage('house_level_4');
-
-                    if (sprite) {
-                        // Level 1 & 2 - 4 Rotations
-                        // 2x2 Grid (0=South, 1=East, 2=North, 3=West)
-                        // Layout assumption in 2x2 grid (TL, TR, BL, BR):
-                        // Grid 2x2:
-                        // (0,0): South (Rot 0)
-                        // (1,0): North (Rot 2)
-                        // (0,1): East  (Rot 1)
-                        // (1,1): West  (Rot 3)
-
-                        let col = 0;
-                        let row = 0;
-
-                        switch (building.rotation) {
-                            case 0: col = 0; row = 0; break; // South
-                            case 2: col = 1; row = 0; break; // North
-                            case 1: col = 0; row = 1; break; // East
-                            case 3: col = 1; row = 1; break; // West
-                        }
-
-                        const tileW = sprite.width / 2;
-                        const tileH = sprite.height / 2;
-
-                        ctx.drawImage(
-                            sprite,
-                            col * tileW, row * tileH, tileW, tileH,
-                            bx, by, bw, bh
-                        );
-                        drawn = true;
-                    }
+                    baseName = `house_level_${building.level}`;
                 } else if (building.type.id === 'well') {
-                    const wellImg = this.assetManager.getImage('well');
-                    if (wellImg) {
-                        ctx.drawImage(wellImg, bx, by, bw, bh);
-                        drawn = true;
-                    }
+                    baseName = 'well';
                 } else if (building.type.id === 'fountain') {
-                    const fountainImg = this.assetManager.getImage('fountain');
-                    if (fountainImg) {
-                        ctx.drawImage(fountainImg, bx, by, bw, bh);
-                        drawn = true;
-                    }
+                    baseName = 'fountain';
                 } else if (building.type.id === 'market') {
-                    const marketImg = this.assetManager.getImage('market');
-                    if (marketImg) {
-                        // Market - 4 Rotations
-                        // 2x2 Grid based on prompt provided to user:
-                        // TL: South (0), TR: North (2)
-                        // BL: West (3),  BR: East (1)
-
-                        let col = 0;
-                        let row = 0;
-
-                        switch (building.rotation) {
-                            case 0: col = 0; row = 0; break; // South (TL)
-                            case 2: col = 1; row = 0; break; // North (TR)
-                            case 1: col = 0; row = 1; break; // East (BL)
-                            case 3: col = 1; row = 1; break; // West (BR)
-                        }
-
-                        const tileW = marketImg.width / 2;
-                        const tileH = marketImg.height / 2;
-
-                        ctx.drawImage(
-                            marketImg,
-                            col * tileW, row * tileH, tileW, tileH,
-                            bx, by, bw, bh
-                        );
-                        drawn = true;
-                    }
+                    baseName = 'market';
                 } else if (building.type.id === 'temple') {
-                    const templeImg = this.assetManager.getImage('temple');
-                    if (templeImg) {
-                        // Temple - 4 Rotations
-                        // Map matches Market/House:
-                        // TL: South (0), TR: North (2)
-                        // BL: East (1),  BR: West (3)
-
-                        let col = 0;
-                        let row = 0;
-
-                        switch (building.rotation) {
-                            case 0: col = 0; row = 0; break; // South (TL)
-                            case 2: col = 1; row = 0; break; // North (TR)
-                            case 1: col = 0; row = 1; break; // East (BL)
-                            case 3: col = 1; row = 1; break; // West (BR)
-                        }
-
-                        const tileW = templeImg.width / 2;
-                        const tileH = templeImg.height / 2;
-
-                        ctx.drawImage(
-                            templeImg,
-                            col * tileW, row * tileH, tileW, tileH,
-                            bx, by, bw, bh
-                        );
-                        drawn = true;
-                    }
+                    baseName = 'temple';
                 } else if (building.type.id === 'small_garden') {
-                    const gardenImg = this.assetManager.getImage('garden_small');
-                    if (gardenImg) {
-                        ctx.drawImage(gardenImg, bx, by, bw, bh);
-                        drawn = true;
-                    }
+                    baseName = 'garden_small';
                 } else if (building.type.id === 'large_garden') {
-                    const gardenImg = this.assetManager.getImage('garden_large');
-                    if (gardenImg) {
-                        ctx.drawImage(gardenImg, bx, by, bw, bh);
+                    baseName = 'garden_large';
+                } else if (building.type.id === 'farm') {
+                    baseName = 'farm';
+                }
+
+                if (baseName) {
+                    const spriteData = this.assetManager.getBuildingSprite(baseName, direction);
+
+                    if (spriteData) {
+                        if (spriteData.isSheet) {
+                            // Use 2x2 tileset approach
+                            // Grid layout: TL=South(0), TR=North(2), BL=East(1), BR=West(3)
+                            let col = 0;
+                            let row = 0;
+
+                            switch (building.rotation) {
+                                case 0: col = 0; row = 0; break; // South (TL)
+                                case 2: col = 1; row = 0; break; // North (TR)
+                                case 1: col = 0; row = 1; break; // East (BL)
+                                case 3: col = 1; row = 1; break; // West (BR)
+                            }
+
+                            const tileW = spriteData.image.width / 2;
+                            const tileH = spriteData.image.height / 2;
+
+                            ctx.drawImage(
+                                spriteData.image,
+                                col * tileW, row * tileH, tileW, tileH,
+                                bx, by, bw, bh
+                            );
+                        } else {
+                            // Single directional sprite - draw directly
+                            ctx.drawImage(spriteData.image, bx, by, bw, bh);
+                        }
                         drawn = true;
                     }
                 }
@@ -318,9 +253,8 @@ export class Renderer {
                 if (building.coverageNeeds) {
                     const levels = building.getCoverageLevels();
 
-                    // Show walker-based and static coverage (food, religion, desirability) - water is shown via separate icon
+                    // Show walker-based and static coverage (religion, desirability) - water and food have their own bars
                     const walkerLevels = {
-                        food: levels.food,
                         religion: levels.religion,
                         desirability: levels.desirability
                     };
@@ -356,12 +290,42 @@ export class Renderer {
                     ctx.strokeStyle = '#87CEEB'; // SkyBlue border
                     ctx.lineWidth = 1;
                     ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
+
+                    // Show food storage bar (vertical) next to water bar
+                    if (building.foodStorage !== undefined) {
+                        const foodBarW = 6;
+                        const foodBarH = 16;
+                        const foodBarX = waterBarX - foodBarW - 2;
+                        const foodBarY = by + 4;
+
+                        // Bar Background
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(foodBarX, foodBarY, foodBarW, foodBarH);
+
+                        // Bar Fill
+                        const capacity = building.getFoodCapacity();
+                        if (capacity > 0 && building.foodStorage > 0) {
+                            ctx.fillStyle = '#DAA520'; // Gold for food
+                            const fillH = Math.min(1, building.foodStorage / capacity) * foodBarH;
+                            ctx.fillRect(foodBarX, foodBarY + foodBarH - fillH, foodBarW, fillH);
+                        }
+
+                        // Bar Border
+                        ctx.strokeStyle = '#DAA520';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(foodBarX, foodBarY, foodBarW, foodBarH);
+                    }
                 }
 
                 // Employment indicator for service buildings
                 if (building.type.workersNeeded > 0) {
                     const fill = building.workers / building.type.workersNeeded;
                     this.renderEmploymentBar(ctx, bx, by - 8, bw, 4, fill, building.isStaffed());
+                }
+
+                // Storage indicator for buildings with goods (Farm, Market)
+                if (building.storage && building.storage.food > 0) {
+                    this.renderStorageIndicator(ctx, bx, by + bh + 2, bw, 8, building.storage.food, building.type.maxStorage || 200);
                 }
             }
         }
@@ -454,7 +418,6 @@ export class Renderer {
     // Render 2 bars for walker-based coverage (food, religion only)
     renderWalkerCoverageBar(ctx, x, y, width, height, levels) {
         const coverageTypes = [
-            { key: 'food', color: '#DAA520', label: 'F' },      // Gold
             { key: 'religion', color: '#9370DB', label: 'R' },   // Purple
             { key: 'desirability', color: '#2ecc71', label: 'D' } // Emerald Green
         ];
@@ -538,6 +501,30 @@ export class Renderer {
         ctx.strokeRect(x, y, width, height);
     }
 
+    // Render storage indicator for buildings with goods
+    renderStorageIndicator(ctx, x, y, width, height, current, max) {
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(x, y, width, height);
+
+        // Fill based on storage level
+        const fill = Math.min(1, current / max);
+        if (fill > 0) {
+            ctx.fillStyle = '#DAA520';  // Gold for food
+            ctx.fillRect(x, y, width * fill, height);
+        }
+
+        // Border
+        ctx.strokeStyle = '#DAA520';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, height);
+
+        // Text showing amount
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(`${Math.floor(current)}`, x + 2, y + 7);
+    }
+
     renderEntities(entities) {
         const ctx = this.ctx;
         const ts = this.tileSize;
@@ -561,6 +548,15 @@ export class Renderer {
             ctx.beginPath();
             ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
             ctx.fill();
+
+            // Cargo indicator for walkers carrying goods
+            if (entity.cargo && entity.cargo.amount > 0) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x - 2, y - 12, size + 4, 10);
+                ctx.fillStyle = '#DAA520';  // Gold for food
+                ctx.font = 'bold 8px sans-serif';
+                ctx.fillText(`${Math.floor(entity.cargo.amount)}`, x, y - 4);
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
-import { BUILDING_TYPES } from './BuildingTypes.js';
+import { CartWalker } from '../entities/CartWalker.js';
+import { BUILDING_TYPES, GOODS_CONFIG } from './BuildingTypes.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -133,9 +134,20 @@ export class BuildingManager {
             building.update(deltaTime);
 
             // Spawn walker if ready (and staffed)
+            // For markets: also need goods to distribute
             if (building.shouldSpawnWalker()) {
-                this.spawnWalker(building);
-                building.onWalkerSpawned();
+                // Markets need goods to distribute
+                if (building.type.acceptsGoods && !building.hasGoodsToDistribute()) {
+                    // Market has no goods, don't spawn distributor
+                } else {
+                    this.spawnWalker(building);
+                    building.onWalkerSpawned();
+                }
+            }
+
+            // Spawn cart walker for producer buildings (farms)
+            if (building.shouldSpawnCartWalker()) {
+                this.spawnCartWalker(building);
             }
         }
     }
@@ -200,15 +212,89 @@ export class BuildingManager {
         );
 
         if (path.length > 1) {
+            // For markets with goods, take goods for distribution
+            let cargo = null;
+            if (building.type.acceptsGoods && building.hasGoodsToDistribute()) {
+                cargo = building.takeGoodsForDistributor();
+            }
+
             const walker = new Walker(
                 building.roadAccessX,
                 building.roadAccessY,
                 path,
                 building,
                 building.type.coverageType,
-                building.type.walkerColor || '#ff0000'
+                building.type.walkerColor || '#ff0000',
+                cargo  // Pass cargo for distribution
             );
             this.entityManager.addEntity(walker);
         }
+    }
+
+    // Spawn cart walker to transport goods from producer to receiver
+    spawnCartWalker(building) {
+        if (building.roadAccessX === undefined) return;
+
+        // Find nearest building that accepts the goods we produce
+        const goodType = building.type.produces;
+        const target = this.findNearestAcceptingBuilding(goodType, building);
+
+        if (!target) {
+            // No target found, don't spawn
+            return;
+        }
+
+        // Get path to target building
+        const path = this.roadNetwork.findPath(
+            building.roadAccessX,
+            building.roadAccessY,
+            target.roadAccessX,
+            target.roadAccessY
+        );
+
+        if (path && path.length >= 1) {
+            // Take goods from building storage
+            const cargo = building.takeGoodsForCart();
+
+            if (cargo.amount > 0) {
+                const cartWalker = new CartWalker(
+                    building.roadAccessX,
+                    building.roadAccessY,
+                    path,
+                    building,
+                    target,
+                    cargo
+                );
+                this.entityManager.addEntity(cartWalker);
+                building.onCartWalkerSpawned();
+            }
+        }
+    }
+
+    // Find the most empty building that accepts a given good type
+    findNearestAcceptingBuilding(goodType, fromBuilding) {
+        let best = null;
+        let lowestFillPercent = Infinity;
+
+        for (const building of this.buildings) {
+            if (building === fromBuilding) continue;
+            if (!building.type.acceptsGoods?.includes(goodType)) continue;
+            if (building.roadAccessX === undefined) continue;
+
+            // Check if building has space for goods
+            const current = building.storage?.[goodType] || 0;
+            const max = building.maxStorage || 0;
+            if (current >= max) continue;  // Full, skip
+
+            // Calculate fill percentage (lower = more empty = better)
+            const fillPercent = max > 0 ? current / max : 1;
+
+            if (fillPercent < lowestFillPercent) {
+                lowestFillPercent = fillPercent;
+                best = building;
+            }
+        }
+
+        return best;
     }
 }

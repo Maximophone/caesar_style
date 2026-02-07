@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, HOUSE_LEVELS } from './BuildingTypes.js';
+import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG } from './BuildingTypes.js';
 
 export class Building {
     constructor(x, y, type = BUILDING_TYPES.house) {
@@ -44,17 +44,54 @@ export class Building {
             // House evolution
             this.level = 1;  // Start as Tent
             this.evolutionProgress = 0.5;  // Start in the middle
+
+            // House food storage - capacity scales with population
+            this.foodStorage = 0;
         }
+
+        // Storage for goods (farms, markets)
+        if (type.maxStorage) {
+            this.storage = {};
+            this.maxStorage = type.maxStorage;
+
+            // Initialize storage for produced goods
+            if (type.produces) {
+                this.storage[type.produces] = 0;
+            }
+            // Initialize storage for accepted goods
+            if (type.acceptsGoods) {
+                for (const good of type.acceptsGoods) {
+                    this.storage[good] = 0;
+                }
+            }
+        }
+
+        // Cart walker spawning (for producers like farms)
+        this.cartSpawnTimer = 3;  // Start with a short delay
+        this.cartSpawnInterval = 8;
+        this.activeCartWalkers = 0;
     }
 
     update(deltaTime) {
         this.spawnTimer -= deltaTime;
+        this.cartSpawnTimer -= deltaTime;
 
-        // Decay coverage over time
+        // Produce goods if this is a producer building
+        this.produceGoods(deltaTime);
+
+        // House-specific updates
         if (this.coverageNeeds) {
+            // Consume food from storage
+            this.consumeFood(deltaTime);
+
+            // Update food coverage based on storage fullness
+            this.updateFoodCoverage();
+
+            // Decay non-food, non-static coverage over time
             for (const need of Object.keys(this.coverageNeeds)) {
-                // Water and Desirability use static coverage (reset each frame by BuildingManager), so don't decay them
-                if (need === 'water' || need === 'desirability') continue;
+                // Water and Desirability use static coverage (reset each frame by BuildingManager)
+                // Food is now based on foodStorage, not decay
+                if (need === 'water' || need === 'desirability' || need === 'food') continue;
 
                 if (this.coverageNeeds[need] > 0) {
                     this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);
@@ -64,6 +101,50 @@ export class Building {
             // Update house evolution
             this.updateEvolution(deltaTime);
         }
+    }
+
+    // Consume food from house storage
+    consumeFood(deltaTime) {
+        if (this.foodStorage === undefined) return;
+
+        const population = this.getPopulation();
+        if (population <= 0) return;
+
+        // Consume food: rate * population * time
+        const consumption = GOODS_CONFIG.HOUSE_FOOD_CONSUMPTION_RATE * population * deltaTime;
+        this.foodStorage = Math.max(0, this.foodStorage - consumption);
+    }
+
+    // Update food coverage based on storage fullness
+    updateFoodCoverage() {
+        if (this.foodStorage === undefined || !this.coverageNeeds) return;
+
+        const capacity = this.getFoodCapacity();
+        if (capacity <= 0) {
+            this.coverageNeeds.food = 0;
+            return;
+        }
+
+        // Food coverage = percentage of capacity filled
+        this.coverageNeeds.food = (this.foodStorage / capacity) * this.maxCoverage;
+    }
+
+    // Get food storage capacity (scales with population)
+    getFoodCapacity() {
+        const population = this.getPopulation();
+        return population * GOODS_CONFIG.HOUSE_FOOD_PER_INHABITANT;
+    }
+
+    // Receive food delivery from distributor walker
+    receiveFoodDelivery(amount) {
+        if (this.foodStorage === undefined) return 0;
+
+        const capacity = this.getFoodCapacity();
+        const space = capacity - this.foodStorage;
+        const received = Math.min(amount, space);
+
+        this.foodStorage += received;
+        return received;  // Return amount actually received
     }
 
     // House evolution mechanic
@@ -231,5 +312,103 @@ export class Building {
     getLevelColor() {
         const config = HOUSE_LEVELS[this.level];
         return config ? config.color : this.type.color;
+    }
+
+    // ===== GOODS PRODUCTION & STORAGE =====
+
+    // Produce goods (for farms) - called each frame
+    produceGoods(deltaTime) {
+        if (!this.type.produces || !this.storage) return;
+        if (!this.isStaffed()) return;
+
+        const goodType = this.type.produces;
+        const rate = this.type.productionRate || 1;
+        const amount = rate * deltaTime;
+
+        // Add to storage, capped at max
+        this.storage[goodType] = Math.min(
+            this.maxStorage,
+            (this.storage[goodType] || 0) + amount
+        );
+    }
+
+    // Check if this building should spawn a cart walker
+    shouldSpawnCartWalker() {
+        if (!this.type.produces || !this.storage) return false;
+        if (!this.isStaffed()) return false;
+        if (this.cartSpawnTimer > 0) return false;
+        if (this.activeCartWalkers > 0) return false;  // Only one cart at a time
+
+        const goodType = this.type.produces;
+        return (this.storage[goodType] || 0) >= GOODS_CONFIG.CART_CAPACITY;
+    }
+
+    // Take goods from storage for cart walker
+    takeGoodsForCart() {
+        if (!this.type.produces || !this.storage) return { type: null, amount: 0 };
+
+        const goodType = this.type.produces;
+        const available = this.storage[goodType] || 0;
+        const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
+
+        this.storage[goodType] -= amount;
+        return { type: goodType, amount };
+    }
+
+    onCartWalkerSpawned() {
+        this.cartSpawnTimer = this.cartSpawnInterval;
+        this.activeCartWalkers++;
+    }
+
+    onCartWalkerReturned() {
+        this.activeCartWalkers = Math.max(0, this.activeCartWalkers - 1);
+    }
+
+    // Receive goods from a cart walker (for markets)
+    receiveGoods(goodType, amount) {
+        if (!this.storage) return 0;
+        if (!this.type.acceptsGoods?.includes(goodType)) return 0;
+
+        const current = this.storage[goodType] || 0;
+        const space = this.maxStorage - current;
+        const received = Math.min(amount, space);
+
+        this.storage[goodType] = current + received;
+        return received;  // Return amount actually received
+    }
+
+    // Check if market has goods to distribute
+    hasGoodsToDistribute() {
+        if (!this.storage || !this.type.acceptsGoods) return false;
+
+        for (const goodType of this.type.acceptsGoods) {
+            if ((this.storage[goodType] || 0) > 0) return true;
+        }
+        return false;
+    }
+
+    // Take goods from market for distributor walker
+    takeGoodsForDistributor() {
+        if (!this.storage || !this.type.acceptsGoods) return { type: null, amount: 0 };
+
+        // Take food (the primary good for markets)
+        const goodType = 'food';
+        const available = this.storage[goodType] || 0;
+        const amount = Math.min(available, GOODS_CONFIG.DISTRIBUTOR_CAPACITY);
+
+        this.storage[goodType] -= amount;
+        return { type: goodType, amount };
+    }
+
+    // Return leftover goods from distributor walker
+    returnGoods(goodType, amount) {
+        if (!this.storage) return;
+        this.storage[goodType] = (this.storage[goodType] || 0) + amount;
+    }
+
+    // Get storage percentage for rendering
+    getStoragePercent(goodType) {
+        if (!this.storage || !this.maxStorage) return 0;
+        return (this.storage[goodType] || 0) / this.maxStorage;
     }
 }

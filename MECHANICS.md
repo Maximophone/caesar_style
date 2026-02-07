@@ -28,6 +28,7 @@ This document provides a comprehensive overview of all game mechanics in Caesar 
 | `6` | Select Fountain |
 | `7` | Select Small Garden |
 | `8` | Select Large Garden |
+| `9` | Select Farm |
 | `O` | Toggle overlay visibility |
 | `P` | Toggle sprite rendering |
 | **Left Click** | Place selected item |
@@ -51,7 +52,7 @@ All buildings require road access **except** for Gardens.
 
 | Building | Size | Cost | Population | Description |
 |----------|------|------|------------|-------------|
-| House | 2x2 | 30 Dn | 5–40 | Evolves through 4 levels based on service coverage. |
+| House | 2x2 | 30 Dn | 1–6 | Evolves through 4 levels based on service coverage. |
 
 ### Water Supply
 
@@ -63,14 +64,31 @@ All buildings require road access **except** for Gardens.
 - **Static Coverage**: Provides water automatically to nearby houses without walkers.
 - Coverage value decreases with distance (Manhattan distance).
 
-### Food Supply
+### Food Production & Supply
 
-| Building | Size | Cost | Workers | Walkers |
-|----------|------|------|---------|---------|
-| Market | 2x2 | 40 Dn | 5 | 1 |
+**Food Supply Chain**: Farm → Market → Houses
 
-- **Walker-based Coverage**: Spawns a walker that provides food coverage to houses it passes.
-- Requires workers to function.
+| Building | Size | Cost | Workers | Production/Storage |
+|----------|------|------|---------|-------------------|
+| Farm | 3x3 | 100 Dn | 6 | Produces 10 food/sec, stores 200 |
+| Market | 2x2 | 40 Dn | 5 | Stores 400, distributes to houses |
+
+#### Farm
+- Produces food when staffed (10 units/second)
+- Spawns a **Cart Walker** when storage reaches 100 units
+- Cart Walker travels to the **most empty** Market in the city
+
+#### Market
+- Receives food from Farm cart walkers
+- Spawns **Distributor Walker** when staffed and has food
+- Distributor carries 100 units and delivers food to houses
+- Leftover food returns to market when walker returns home
+
+#### House Food Storage
+- Houses store food (capacity = 5 units per inhabitant)
+- Distributor delivers 1 food per inhabitant when passing
+- Houses consume food at 0.1 units/inhabitant/second
+- **Food coverage % = storage fullness** (drives house evolution)
 
 ### Religion
 
@@ -133,10 +151,10 @@ Houses evolve through 4 levels based on coverage satisfaction:
 
 | Level | Name | Population | Requirements |
 |-------|------|------------|--------------|
-| 1 | Tent | 5 | Water ≥ 10% |
-| 2 | Shack | 10 | Water ≥ 40% |
-| 3 | House | 20 | Water ≥ 60%, Food ≥ 20% |
-| 4 | Villa | 40 | Water ≥ 80%, Food ≥ 60%, Desirability ≥ 40% |
+| 1 | Tent | 1 | Water ≥ 10% |
+| 2 | Shack | 2 | Water ≥ 40% |
+| 3 | House | 4 | Water ≥ 60%, Food ≥ 20% |
+| 4 | Villa | 6 | Water ≥ 80%, Food ≥ 60%, Desirability ≥ 40% |
 
 ### Evolution Mechanics
 

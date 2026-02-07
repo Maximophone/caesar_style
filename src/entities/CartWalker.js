@@ -1,7 +1,10 @@
 import { GOODS_CONFIG } from '../world/BuildingTypes.js';
 
-export class Walker {
-    constructor(x, y, path, originBuilding, coverageType = null, color = '#ff0000', cargo = null) {
+/**
+ * CartWalker - Transports goods from producer buildings (farms) to receiver buildings (markets)
+ */
+export class CartWalker {
+    constructor(x, y, path, originBuilding, targetBuilding, cargo) {
         // Position (sub-tile precision for smooth movement)
         this.x = x;
         this.y = y;
@@ -14,24 +17,33 @@ export class Walker {
         this.path = path;
         this.pathIndex = 0;
         this.returning = false;
+        this.delivered = false;
 
-        // Origin building (to return to)
+        // Buildings
         this.originBuilding = originBuilding;
+        this.targetBuilding = targetBuilding;
 
-        // Movement speed (tiles per second)
-        this.speed = 2;
+        // Movement speed (tiles per second) - carts are slower than regular walkers
+        this.speed = 1.5;
 
-        // Coverage emission
-        this.coverageRadius = 1;
-        this.coverageType = coverageType;  // water, food, religion, or null
-        this.color = color;
+        // Cargo
+        this.cargo = cargo;  // { type: 'food', amount: 100 }
 
-        // Cargo for goods-based distribution (for market walkers)
-        this.cargo = cargo;  // { type: 'food', amount: 100 } or null
+        // Visual
+        this.color = '#CD853F';  // Peru/tan color for cart
     }
 
     update(deltaTime, roadNetwork, entityManager, grid) {
         if (this.path.length === 0) return;
+
+        // Handle single-node path or already at destination
+        if (this.path.length === 1 && !this.returning) {
+            // Already at destination
+            this.deliverGoods();
+            this.returning = true;
+            this.onReturnHome(entityManager);
+            return;
+        }
 
         // Get current target
         const target = this.path[this.pathIndex];
@@ -46,9 +58,6 @@ export class Walker {
             this.x = target.x;
             this.y = target.y;
 
-            // Emit coverage to nearby buildings
-            this.emitCoverage(grid);
-
             if (this.returning) {
                 this.pathIndex--;
                 if (this.pathIndex < 0) {
@@ -59,7 +68,10 @@ export class Walker {
             } else {
                 this.pathIndex++;
                 if (this.pathIndex >= this.path.length) {
-                    // End of outbound path, start returning
+                    // Reached destination - deliver goods
+                    this.deliverGoods();
+
+                    // Start returning
                     this.returning = true;
                     this.pathIndex = this.path.length - 2;
                     if (this.pathIndex < 0) {
@@ -92,43 +104,21 @@ export class Walker {
         }
     }
 
-    emitCoverage(grid) {
-        if (!grid || !this.coverageType) return;
+    deliverGoods() {
+        if (!this.targetBuilding || !this.cargo || this.delivered) return;
 
-        const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
+        const received = this.targetBuilding.receiveGoods(this.cargo.type, this.cargo.amount);
 
-        for (const building of nearbyBuildings) {
-            // Only provide coverage to houses (buildings with coverageNeeds)
-            if (!building.coverageNeeds) continue;
-
-            // For food distributors with cargo, deliver food to house storage
-            if (this.coverageType === 'food' && this.cargo && this.cargo.type === 'food') {
-                // Calculate food to deliver: 1 unit per inhabitant
-                const population = building.getPopulation();
-                const toDeliver = population * GOODS_CONFIG.HOUSE_FOOD_DELIVERY_PER_POP;
-
-                if (this.cargo.amount >= toDeliver && toDeliver > 0) {
-                    // Deliver food to house storage
-                    const received = building.receiveFoodDelivery(toDeliver);
-                    this.cargo.amount -= received;
-                }
-                // If out of cargo or house is full, skip
-            } else {
-                // Normal coverage (religion, etc.) - no goods required
-                building.receiveCoverage(this.coverageType);
-            }
-        }
+        // If market couldn't accept all, we lose the excess (for simplicity)
+        // Could be enhanced later to return excess to farm
+        this.cargo.amount = 0;
+        this.delivered = true;
     }
 
     onReturnHome(entityManager) {
         if (this.originBuilding) {
-            // Return leftover cargo back to origin building
-            if (this.cargo && this.cargo.amount > 0) {
-                this.originBuilding.returnGoods(this.cargo.type, this.cargo.amount);
-            }
-            this.originBuilding.onWalkerReturned();
+            this.originBuilding.onCartWalkerReturned();
         }
         entityManager.removeEntity(this);
     }
 }
-

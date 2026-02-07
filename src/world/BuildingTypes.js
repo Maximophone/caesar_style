@@ -7,7 +7,7 @@ export const HOUSE_LEVELS = [
         // Level 1: Tent
         name: 'Tent',
         color: '#A0522D',  // Sienna (lighter brown)
-        population: 5,
+        population: 1,
         requirements: { water: 0.1 },  // Survival needs
         upgradeThreshold: 0.4
     },
@@ -15,7 +15,7 @@ export const HOUSE_LEVELS = [
         // Level 2: Shack
         name: 'Shack',
         color: '#8B4513',  // Brown
-        population: 10,
+        population: 2,
         requirements: { water: 0.4 },
         upgradeThreshold: 0.8
     },
@@ -23,7 +23,7 @@ export const HOUSE_LEVELS = [
         // Level 3: House
         name: 'House',
         color: '#654321',  // Dark brown
-        population: 20,
+        population: 4,
         requirements: { water: 0.6, food: 0.2 },
         upgradeThreshold: 0.8
     },
@@ -31,7 +31,7 @@ export const HOUSE_LEVELS = [
         // Level 4: Villa
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
-        population: 40,
+        population: 6,
         requirements: { water: 0.8, food: 0.6, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
         upgradeThreshold: null
     }
@@ -100,7 +100,10 @@ export const BUILDING_TYPES = {
         cost: 40,
         employees: 5,
         sprite: 'market',
-        key: '4'
+        key: '4',
+        // Goods storage
+        acceptsGoods: ['food'],
+        maxStorage: 400
     },
     temple: {
         id: 'temple',
@@ -145,11 +148,37 @@ export const BUILDING_TYPES = {
         },
         cost: 30,
         key: '8'
+    },
+    farm: {
+        id: 'farm',
+        name: 'Farm',
+        width: 3,
+        height: 3,
+        color: '#8B7355',  // Wheat/tan color
+        spawnsWalker: false,  // Spawns cart walkers via special logic
+        workersNeeded: 6,
+        cost: 100,
+        sprite: 'farm',
+        key: '9',
+        // Goods production
+        produces: 'food',
+        productionRate: 10,  // Units per second when staffed
+        maxStorage: 200
     }
 };
 
 // Road cost (not a building but needs a cost)
 export const ROAD_COST = 5;
+
+// Goods transport configuration
+export const GOODS_CONFIG = {
+    CART_CAPACITY: 100,              // Units per cart trip
+    DISTRIBUTOR_CAPACITY: 100,       // Units per market walker
+    // House food consumption
+    HOUSE_FOOD_PER_INHABITANT: 5,    // Max food storage per inhabitant
+    HOUSE_FOOD_DELIVERY_PER_POP: 1,  // Food delivered per inhabitant when walker passes
+    HOUSE_FOOD_CONSUMPTION_RATE: 0.1 // Food consumed per inhabitant per second
+};
 
 // Get building type by key press
 export function getBuildingTypeByKey(key) {

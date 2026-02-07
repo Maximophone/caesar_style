@@ -23,6 +23,59 @@ export class AssetManager {
         return this.images[name];
     }
 
+    /**
+     * Try to load an image, but don't fail if it doesn't exist.
+     * Returns a promise that resolves to true if loaded, false otherwise.
+     */
+    tryLoadImage(name, src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                this.images[name] = img;
+                resolve(true);
+            };
+            img.onerror = () => resolve(false);
+            img.src = src;
+        });
+    }
+
+    /**
+     * Get the appropriate sprite for a building based on direction.
+     * Precedence:
+     * 1. Exact directional match: {baseName}_{direction}
+     * 2. Any available directional sprite as fallback
+     * 3. Base spritesheet: {baseName}
+     * 
+     * @param {string} baseName - Base asset name (e.g., 'house_level_1')
+     * @param {string} direction - Direction string: 'south', 'north', 'east', 'west'
+     * @returns {{ image: Image|HTMLCanvasElement, isSheet: boolean } | null}
+     */
+    getBuildingSprite(baseName, direction) {
+        const directionSuffixes = ['south', 'north', 'east', 'west'];
+
+        // 1. Try exact directional match
+        const exactKey = `${baseName}_${direction}`;
+        if (this.images[exactKey]) {
+            return { image: this.images[exactKey], isSheet: false };
+        }
+
+        // 2. Fallback: use any available directional sprite
+        for (const suffix of directionSuffixes) {
+            const fallbackKey = `${baseName}_${suffix}`;
+            if (this.images[fallbackKey]) {
+                return { image: this.images[fallbackKey], isSheet: false };
+            }
+        }
+
+        // 3. Fall back to base spritesheet
+        const baseImg = this.images[baseName];
+        if (baseImg) {
+            return { image: baseImg, isSheet: true };
+        }
+
+        return null;
+    }
+
     // Replace a specific color (r,g,b) with transparency, within a tolerance
     applyFuzzyTransparency(name, r, g, b, tolerance = 10) {
         const img = this.images[name];

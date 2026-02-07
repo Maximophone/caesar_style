@@ -59,16 +59,19 @@ export class Game {
         await this.assetManager.loadImages({
             'road_tiles': `assets/road_tiles_optimized.png?t=${t}`,
             'grass_tiles': `assets/grass_tiles.png?t=${t}`,
+            // 4-tile spritesheets (rotational buildings)
             'house_level_1': `assets/house_level_1.png?t=${t}`,
             'house_level_2': `assets/house_level_2.png?t=${t}`,
             'house_level_3': `assets/house_level_3.png?t=${t}`,
             'house_level_4': `assets/house_level_4.png?t=${t}`,
-            'well': `assets/well.png?t=${t}`,
-            'fountain': `assets/fountain.png?t=${t}`,
             'market': `assets/market.png?t=${t}`,
             'temple': `assets/temple.png?t=${t}`,
-            'garden_small': `assets/garden_small.png?t=${t}`,
-            'garden_large': `assets/garden_large.png?t=${t}`
+            // Single-direction sprites (using _south suffix)
+            'well_south': `assets/well_south.png?t=${t}`,
+            'fountain_south': `assets/fountain_south.png?t=${t}`,
+            'garden_small_south': `assets/garden_small_south.png?t=${t}`,
+            'garden_large_south': `assets/garden_large_south.png?t=${t}`,
+            'farm_south': `assets/farm_south.png?t=${t}`
         });
 
         // Apply transparency at runtime as requested by user to keep source image editable
@@ -80,14 +83,51 @@ export class Game {
         this.assetManager.applyTransparencyFromCorner('house_level_2', 40);
         this.assetManager.applyTransparencyFromCorner('house_level_3', 40);
         this.assetManager.applyTransparencyFromCorner('house_level_4', 40);
-        this.assetManager.applyTransparencyFromCorner('well', 40);
-        this.assetManager.applyTransparencyFromCorner('fountain', 40);
         this.assetManager.applyTransparencyFromCorner('market', 40);
         this.assetManager.applyTransparencyFromCorner('temple', 40);
-        this.assetManager.applyTransparencyFromCorner('garden_small', 40);
-        this.assetManager.applyTransparencyFromCorner('garden_large', 40);
+        this.assetManager.applyTransparencyFromCorner('well_south', 40);
+        this.assetManager.applyTransparencyFromCorner('fountain_south', 40);
+        this.assetManager.applyTransparencyFromCorner('garden_small_south', 40);
+        this.assetManager.applyTransparencyFromCorner('garden_large_south', 40);
+        this.assetManager.applyTransparencyFromCorner('farm_south', 40);
+
+        // Try to load optional directional sprites for buildings
+        // These won't fail if they don't exist
+        await this.loadOptionalDirectionalSprites();
 
         console.log('Assets loaded');
+    }
+
+    /**
+     * Attempt to load directional sprites for buildings.
+     * Files are optional - missing files are silently ignored.
+     */
+    async loadOptionalDirectionalSprites() {
+        const t = Date.now();
+        const directions = ['south', 'north', 'east', 'west'];
+        const baseNames = [
+            'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
+            'well', 'fountain', 'market', 'temple', 'farm',
+            'garden_small', 'garden_large'
+        ];
+
+        const loadPromises = [];
+        for (const baseName of baseNames) {
+            for (const dir of directions) {
+                const key = `${baseName}_${dir}`;
+                const src = `assets/${key}.png?t=${t}`;
+                loadPromises.push(
+                    this.assetManager.tryLoadImage(key, src).then(loaded => {
+                        if (loaded) {
+                            // Apply transparency to the loaded sprite
+                            this.assetManager.applyTransparencyFromCorner(key, 40);
+                            console.log(`Loaded directional sprite: ${key}`);
+                        }
+                    })
+                );
+            }
+        }
+        await Promise.all(loadPromises);
     }
 
     start() {
