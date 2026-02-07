@@ -27,6 +27,7 @@ This document provides a comprehensive overview of all game mechanics in Caesar 
 | `4` | **Food** (1: Farm, 2: Market, 3: Warehouse) |
 | `5` | **Religion** (1: Temple) |
 | `6` | **Beauty** (1: Small Garden, 2: Large Garden) |
+| `7` | **Administration** (1: Tax Office) |
 | `O` | Toggle overlay visibility |
 | `P` | Toggle sprite rendering |
 | **Left Click** | Place selected item |
@@ -114,6 +115,22 @@ All buildings require road access **except** for Gardens.
 - **Static Coverage**: Provides desirability automatically to nearby houses.
 - Gardens can be placed anywhere on the map (no road access needed).
 
+### Administration
+
+| Building | Size | Cost | Workers | Walkers |
+|----------|------|------|---------|---------|
+| Tax Office | 2x2 | 150 Dn | 4 | 1 |
+
+- **Tax Collector**: Spawns from the Tax Office.
+- **Manual Collection**: Taxes are **not** collected automatically. Money is only generated when a Tax Collector walker passes a populated house.
+- **Revenue**: Based on population and house level multiplier.
+  - Formula: `Population * Multiplier`
+  - **Tent (L1)**: x1
+  - **Shack (L2)**: x1
+  - **House (L3)**: x2
+  - **Villa (L4)**: x3
+- **Cooldown**: Houses have a 20-second cooldown after paying tax before they can pay again.
+
 ### Infrastructure
 
 | Item | Size | Cost |
@@ -188,24 +205,9 @@ Walkers are spawned by service buildings to deliver coverage to houses.
 |----------|----------------|-------------|
 | Market | 5 | 1 |
 | Temple | 8 | 2 |
+| Tax Office | 4 | 1 |
 
-### Administration & Tax
 
-| Building | Size | Cost | Workers | Walkers |
-|----------|------|------|---------|---------|
-| Tax Office | 2x2 | 150 Dn | 4 | 1 |
-
-- **Tax Collector**: Spawns from the Tax Office.
-- **Manual Collection**: Taxes are **not** collected automatically. Money is only generated when a Tax Collector walker passes a populated house.
-- **Revenue**: Based on population and house level multiplier.
-  - Formula: `Population * Multiplier`
-  - **Tent (L1)**: x1
-  - **Shack (L2)**: x1
-  - **House (L3)**: x2
-  - **Villa (L4)**: x3
-- **Cooldown**: Houses have a 20-second cooldown after paying tax before they can pay again.
-
----
 
 ## Debug Controls & Cheats
 
