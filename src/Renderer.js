@@ -1,4 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
+import { TAX_COOLDOWN } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -287,6 +288,30 @@ export class Renderer {
                     // Bar Background
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                     ctx.fillRect(waterBarX, waterBarY, waterBarW, waterBarH);
+
+                    // Bar Border
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
+
+                    // Tax Cooldown Bar (Gold) - Below Evolution Bar
+                    if (building.taxCooldown > 0) {
+                        const taxBarH = 4;
+                        const taxBarY = by + bh + 8;
+                        const taxPct = building.taxCooldown / TAX_COOLDOWN;
+
+                        // Background
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(bx, taxBarY, bw, taxBarH);
+
+                        // Fill
+                        ctx.fillStyle = '#FFD700'; // Gold
+                        ctx.fillRect(bx, taxBarY, bw * taxPct, taxBarH);
+
+                        // Border
+                        ctx.strokeStyle = '#000';
+                        ctx.strokeRect(bx, taxBarY, bw, taxBarH);
+                    }
 
                     // Bar Fill
                     if (levels.water > 0) {

@@ -1,6 +1,7 @@
-// House evolution levels - thresholds create stable equilibrium points
 // Water requirements grow with level
 // Upgrade threshold = next level's maintenance threshold for stability
+export const TAX_COOLDOWN = 20;
+
 export const HOUSE_LEVELS = [
     null, // Index 0 unused
     {

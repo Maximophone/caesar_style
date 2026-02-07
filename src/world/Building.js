@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG } from './BuildingTypes.js';
+import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG, TAX_COOLDOWN } from './BuildingTypes.js';
 
 export class Building {
     constructor(x, y, type = BUILDING_TYPES.house) {
@@ -128,7 +128,7 @@ export class Building {
 
         // Reset cooldown (prevent multi-collection per walker pass or multiple walkers spammed)
         // 20 seconds cooldown
-        this.taxCooldown = 20;
+        this.taxCooldown = TAX_COOLDOWN;
 
         return taxAmount;
     }
