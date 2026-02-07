@@ -8,6 +8,7 @@ export class Input {
         this.mouseX = 0;
         this.mouseY = 0;
         this.isMouseDown = false;
+        this.mouseButton = null;
 
         this.setupEventListeners();
     }
@@ -34,12 +35,14 @@ export class Input {
 
     onMouseDown(e) {
         this.isMouseDown = true;
+        this.mouseButton = e.button;
         const { x, y } = this.screenToTile(e.clientX, e.clientY);
         this.game.onTileClick(x, y, e.button);
     }
 
     onMouseUp(e) {
         this.isMouseDown = false;
+        this.mouseButton = null;
     }
 
     onMouseMove(e) {
@@ -47,10 +50,18 @@ export class Input {
         this.mouseX = x;
         this.mouseY = y;
 
-        // Drag to place roads
-        const menu = this.game.buildingMenu;
-        if (this.isMouseDown && menu.placementMode === 'road') {
-            this.game.onTileClick(x, y, 0);
+        // Handle drag interactions
+        if (this.isMouseDown) {
+            if (this.mouseButton === 2) {
+                // Right click drag -> Delete
+                this.game.onTileClick(x, y, 2);
+            } else if (this.mouseButton === 0) {
+                // Left click drag -> Place road (if in road mode)
+                const menu = this.game.buildingMenu;
+                if (menu.placementMode === 'road') {
+                    this.game.onTileClick(x, y, 0);
+                }
+            }
         }
     }
 
