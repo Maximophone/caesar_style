@@ -325,7 +325,9 @@ export class Building {
 
         // Must have water to have any population
         const waterLevel = this.coverageNeeds.water / this.maxCoverage;
-        if (waterLevel < 0.5) return 0;
+
+        const minWater = HOUSE_LEVELS[1].requirements.water;
+        if (waterLevel < minWater) return 0;
 
         // Population based on house level
         const config = HOUSE_LEVELS[this.level];
