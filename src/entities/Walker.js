@@ -30,7 +30,7 @@ export class Walker {
         this.cargo = cargo;  // { type: 'food', amount: 100 } or null
     }
 
-    update(deltaTime, roadNetwork, entityManager, grid) {
+    update(deltaTime, roadNetwork, entityManager, grid, economy) {
         if (this.path.length === 0) return;
 
         // Get current target
@@ -47,7 +47,7 @@ export class Walker {
             this.y = target.y;
 
             // Emit coverage to nearby buildings
-            this.emitCoverage(grid);
+            this.emitCoverage(grid, economy);
 
             if (this.returning) {
                 this.pathIndex--;
@@ -92,8 +92,9 @@ export class Walker {
         }
     }
 
-    emitCoverage(grid) {
+    emitCoverage(grid, economy) {
         if (!grid || !this.coverageType) return;
+
 
         const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
 
@@ -113,6 +114,17 @@ export class Walker {
                     this.cargo.amount -= received;
                 }
                 // If out of cargo or house is full, skip
+            } else if (this.coverageType === 'tax') {
+                // Collect tax
+                if (building.payTax && economy) {
+                    const taxCollected = building.payTax();
+                    if (taxCollected > 0) {
+                        economy.collectTax(taxCollected);
+                        // Optional: Show floating text or effect
+                    }
+                }
+                // Also provide generic coverage (maybe tax office provides some comfort?)
+                building.receiveCoverage(this.coverageType);
             } else {
                 // Normal coverage (religion, etc.) - no goods required
                 building.receiveCoverage(this.coverageType);

@@ -7,6 +7,7 @@ import { BuildingManager } from './world/BuildingManager.js';
 import { Economy } from './Economy.js';
 import { ROAD_COST } from './world/BuildingTypes.js';
 import { AssetManager } from './AssetManager.js';
+import { BuildingMenu } from './ui/BuildingMenu.js';
 
 export class Game {
     constructor(canvas) {
@@ -31,6 +32,7 @@ export class Game {
         this.economy = new Economy();
         this.renderer = new Renderer(this.ctx, this.tileSize, this.assetManager); // Pass assetManager to renderer
         this.input = new Input(this.canvas, this.tileSize, this);
+        this.buildingMenu = new BuildingMenu();
 
         // Timing
         this.lastTime = 0;
@@ -107,8 +109,8 @@ export class Game {
         const directions = ['south', 'north', 'east', 'west'];
         const baseNames = [
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
-            'well', 'fountain', 'market', 'temple', 'farm',
-            'garden_small', 'garden_large'
+            'well', 'fountain', 'market', 'temple', 'farm', 'warehouse',
+            'garden_small', 'garden_large', 'tax_office'
         ];
 
         const loadPromises = [];
@@ -154,7 +156,7 @@ export class Game {
 
     update(deltaTime) {
         this.buildingManager.update(deltaTime);
-        this.entityManager.update(deltaTime, this.roadNetwork, this.grid);
+        this.entityManager.update(deltaTime, this.roadNetwork, this.grid, this.economy);
         this.economy.update(deltaTime, this.buildingManager.buildings);
     }
 
@@ -176,7 +178,7 @@ export class Game {
         this.renderer.renderEntities(this.entityManager.entities);
 
         // Render UI hints
-        this.renderer.renderUI(this.input, this.economy, this.debug);
+        this.renderer.renderUI(this.input, this.economy, this.debug, this.buildingMenu);
     }
 
     // Called by Input when a tile is clicked

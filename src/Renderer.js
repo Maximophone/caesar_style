@@ -181,6 +181,10 @@ export class Renderer {
                     baseName = 'garden_large';
                 } else if (building.type.id === 'farm') {
                     baseName = 'farm';
+                } else if (building.type.id === 'warehouse') {
+                    baseName = 'warehouse';
+                } else if (building.type.id === 'tax_office') {
+                    baseName = 'tax_office';
                 }
 
                 if (baseName) {
@@ -560,25 +564,64 @@ export class Renderer {
         }
     }
 
-    renderUI(input, economy, debug) {
+    renderUI(input, economy, debug, buildingMenu) {
         const ctx = this.ctx;
+
+        // Get menu display data
+        const menuData = buildingMenu ? buildingMenu.getDisplayData() : null;
+
+        // Calculate menu dimensions based on content
+        let menuHeight = 85;  // Base height for selection + controls + debug
+        if (menuData) {
+            menuHeight += (menuData.mode === 'categories') ? 15 : 15;
+        }
 
         // Background for info box
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, 10, 360, 115); // Slightly wider and taller
+        ctx.fillRect(10, 10, 400, menuHeight);
 
         ctx.fillStyle = '#fff';
         ctx.font = '14px monospace';
-        ctx.fillText(`Mode: ${input.getModeDisplay()}`, 20, 30);
-        ctx.fillText('[1] Road (5) [2] House (30) [3] Well (50)', 20, 50);
-        ctx.fillText('[4] Market (40) [5] Temple (200) [6] Fountain (200)', 20, 65);
-        ctx.fillText('[7] S. Garden (10) [8] L. Garden (30)', 20, 80);
-        ctx.fillText('LClick: Place  RClick: Remove', 20, 95);
+
+        // Current selection
+        const selectionText = buildingMenu ? buildingMenu.getSelectionText() : 'Loading...';
+        ctx.fillText(`Selected: ${selectionText}`, 20, 30);
+
+        // Display categories or sub-menu
+        if (menuData) {
+            if (menuData.mode === 'categories') {
+                // Show all categories
+                let line = '';
+                for (const cat of menuData.items) {
+                    line += `[${cat.key}] ${cat.name}  `;
+                }
+                ctx.fillText(line, 20, 50);
+            } else {
+                // Show buildings in selected category
+                ctx.fillStyle = '#f1c40f';  // Yellow for category name
+                ctx.fillText(`${menuData.categoryName}:`, 20, 50);
+
+                ctx.fillStyle = '#fff';
+                let line = '';
+                for (const item of menuData.items) {
+                    const marker = item.selected ? '>' : ' ';
+                    line += `${marker}[${item.key}] ${item.name} (${item.cost})  `;
+                }
+                ctx.fillText(line, 20, 65);
+                ctx.fillStyle = '#aaa';
+                ctx.fillText('[ESC] Back', 20, 80);
+            }
+        }
+
+        // Controls hint
+        const controlsY = menuData && menuData.mode === 'buildings' ? 95 : 65;
+        ctx.fillStyle = '#888';
+        ctx.fillText('LClick: Place  RClick: Remove', 20, controlsY);
 
         // Debug hints
         let debugText = '[O]verlays: ' + (debug && debug.showOverlays ? 'ON' : 'OFF');
         debugText += '  [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
-        ctx.fillText(debugText, 20, 110);
+        ctx.fillText(debugText, 20, controlsY + 15);
 
         // Economy HUD (top-right)
         if (economy) {

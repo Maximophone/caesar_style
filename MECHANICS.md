@@ -20,15 +20,13 @@ This document provides a comprehensive overview of all game mechanics in Caesar 
 
 | Key | Action |
 |-----|--------|
-| `1` | Select Road placement mode |
-| `2` | Select House |
-| `3` | Select Well |
-| `4` | Select Market |
-| `5` | Select Temple |
-| `6` | Select Fountain |
-| `7` | Select Small Garden |
-| `8` | Select Large Garden |
-| `9` | Select Farm |
+| `ESC` | Cancel current selection / Back to menu |
+| `1` | **Roads** (Select Road) |
+| `2` | **Residential** (Select House) |
+| `3` | **Water** (1: Well, 2: Fountain) |
+| `4` | **Food** (1: Farm, 2: Market, 3: Warehouse) |
+| `5` | **Religion** (1: Temple) |
+| `6` | **Beauty** (1: Small Garden, 2: Large Garden) |
 | `O` | Toggle overlay visibility |
 | `P` | Toggle sprite rendering |
 | **Left Click** | Place selected item |
@@ -66,21 +64,25 @@ All buildings require road access **except** for Gardens.
 
 ### Food Production & Supply
 
-**Food Supply Chain**: Farm → Market → Houses
+**Food Supply Chain**: Farm → Market → Houses (Warehouses store excess)
 
 | Building | Size | Cost | Workers | Production/Storage |
 |----------|------|------|---------|-------------------|
 | Farm | 3x3 | 100 Dn | 6 | Produces 10 food/sec, stores 200 |
 | Market | 2x2 | 40 Dn | 5 | Stores 400, distributes to houses |
+| Warehouse | 3x3 | 80 Dn | 4 | Stores 800, accepts food |
 
 #### Farm
 - Produces food when staffed (10 units/second)
 - Spawns a **Cart Walker** when storage reaches 100 units
-- Cart Walker travels to the **most empty** Market in the city
+- Cart Walker travels to the **most empty** Market or Warehouse in the city
 
-#### Market
+#### Market / Warehouse
+- **Market**: Receives food, spawns distributor walkers to feed houses.
+- **Warehouse**: Functions as large storage buffer. **Also acts as a supply hub** sending Cart Walkers to Markets when they need food.
 - Receives food from Farm cart walkers
-- Spawns **Distributor Walker** when staffed and has food
+- **Market** Spawns **Distributor Walker** when staffed and has food
+- **Warehouse** Spawns **Cart Walker** to refill Markets
 - Distributor carries 100 units and delivers food to houses
 - Leftover food returns to market when walker returns home
 
@@ -184,14 +186,26 @@ Walkers are spawned by service buildings to deliver coverage to houses.
 | Market | 5 | 1 |
 | Temple | 8 | 2 |
 
+### Administration & Tax
+
+| Building | Size | Cost | Workers | Walkers |
+|----------|------|------|---------|---------|
+| Tax Office | 2x2 | 150 Dn | 4 | 1 |
+
+- **Tax Collector**: Spawns from the Tax Office.
+- **Manual Collection**: Taxes are **not** collected automatically. Money is only generated when a Tax Collector walker passes a populated house.
+- **Revenue**: 1 Dn per inhabitant.
+- **Cooldown**: Houses have a 20-second cooldown after paying tax before they can pay again.
+
 ---
 
-## Debug Controls
+## Debug Controls & Cheats
 
 | Key | Function |
 |-----|----------|
 | `O` | Toggle overlays (coverage bars, evolution bars, level indicators) |
 | `P` | Toggle sprite rendering (switch between sprites and colored placeholders) |
+| `C` | **Cheat**: Add 500 Dn to treasury |
 
 ### HUD Indicators
 

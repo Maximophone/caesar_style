@@ -24,12 +24,7 @@ export class Economy {
         // Assign workers to buildings
         this.assignWorkers(buildings);
 
-        // Collect taxes periodically
-        this.taxTimer += deltaTime;
-        if (this.taxTimer >= ECONOMY_CONFIG.taxInterval) {
-            this.taxTimer -= ECONOMY_CONFIG.taxInterval;
-            this.collectTaxes();
-        }
+        // Automatic tax collection removed - now uses Tax Collector walkers
     }
 
     recalculatePopulation(buildings) {
@@ -68,11 +63,13 @@ export class Economy {
         this.employed = totalEmployed;
     }
 
-    collectTaxes() {
-        const taxIncome = Math.floor(this.population * ECONOMY_CONFIG.taxRate);
-        if (taxIncome > 0) {
-            this.earn(taxIncome);
+    // Called by Tax Collector walker when passing a house
+    collectTax(amount) {
+        if (amount > 0) {
+            this.earn(amount);
+            return true;
         }
+        return false;
     }
 
     canAfford(cost) {

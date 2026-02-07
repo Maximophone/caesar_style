@@ -37,6 +37,17 @@ export const HOUSE_LEVELS = [
     }
 ];
 
+// Building categories for menu
+export const BUILDING_CATEGORIES = {
+    roads: { key: '1', name: 'Roads', buildings: ['road'] },
+    residential: { key: '2', name: 'Residential', buildings: ['house'] },
+    water: { key: '3', name: 'Water', buildings: ['well', 'fountain'] },
+    food: { key: '4', name: 'Food', buildings: ['farm', 'market', 'warehouse'] },
+    religion: { key: '5', name: 'Religion', buildings: ['temple'] },
+    beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
+    administration: { key: '7', name: 'Admin', buildings: ['tax_office'] }
+};
+
 // Building type configurations
 export const BUILDING_TYPES = {
     house: {
@@ -47,8 +58,7 @@ export const BUILDING_TYPES = {
         color: '#A0522D',  // Start as Tent color
         spawnsWalker: false,
         coverageNeeds: ['water', 'food', 'religion'],
-        cost: 30,
-        key: '2'
+        cost: 30
     },
     well: {
         id: 'well',
@@ -62,8 +72,7 @@ export const BUILDING_TYPES = {
             // Coverage by Manhattan distance: {distance: amount}
             distanceAmounts: { 1: 60, 2: 40, 3: 20 }  // Max coverage at each distance
         },
-        cost: 50,
-        key: '3'
+        cost: 50
     },
     fountain: {
         id: 'fountain',
@@ -83,8 +92,7 @@ export const BUILDING_TYPES = {
                 5: 10
             }
         },
-        cost: 200,  // Expensive
-        key: '6'
+        cost: 200  // Expensive
     },
     market: {
         id: 'market',
@@ -100,7 +108,6 @@ export const BUILDING_TYPES = {
         cost: 40,
         employees: 5,
         sprite: 'market',
-        key: '4',
         // Goods storage
         acceptsGoods: ['food'],
         maxStorage: 400
@@ -116,8 +123,7 @@ export const BUILDING_TYPES = {
         coverageType: 'religion',
         workersNeeded: 8,
         maxWalkers: 2,
-        cost: 200,
-        key: '5'
+        cost: 200
     },
     small_garden: {
         id: 'small_garden',
@@ -131,8 +137,7 @@ export const BUILDING_TYPES = {
             type: 'desirability',
             distanceAmounts: { 1: 30, 2: 20, 3: 10 }
         },
-        cost: 10,
-        key: '7'
+        cost: 10
     },
     large_garden: {
         id: 'large_garden',
@@ -146,8 +151,7 @@ export const BUILDING_TYPES = {
             type: 'desirability',
             distanceAmounts: { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 }
         },
-        cost: 30,
-        key: '8'
+        cost: 30
     },
     farm: {
         id: 'farm',
@@ -159,11 +163,38 @@ export const BUILDING_TYPES = {
         workersNeeded: 6,
         cost: 100,
         sprite: 'farm',
-        key: '9',
         // Goods production
         produces: 'food',
         productionRate: 10,  // Units per second when staffed
         maxStorage: 200
+    },
+    warehouse: {
+        id: 'warehouse',
+        name: 'Warehouse',
+        width: 3,
+        height: 3,
+        color: '#8B4513',  // Saddle brown
+        spawnsWalker: false,
+        workersNeeded: 4,
+        cost: 80,
+        sprite: 'warehouse',
+        // Goods storage - accepts multiple goods
+        acceptsGoods: ['food'],
+        distributesGoods: true, // Enables spawning cart walkers to move goods
+        maxStorage: 800  // Large storage capacity
+    },
+    tax_office: {
+        id: 'tax_office',
+        name: 'Tax Office',
+        width: 2,
+        height: 2,
+        color: '#A52A2A',  // Brown
+        spawnsWalker: true,
+        walkerColor: '#FF4500',  // Orange Red
+        coverageType: 'tax',   // Special coverage type
+        workersNeeded: 4,
+        maxWalkers: 1,
+        cost: 150
     }
 };
 

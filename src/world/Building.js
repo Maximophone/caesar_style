@@ -47,6 +47,9 @@ export class Building {
 
             // House food storage - capacity scales with population
             this.foodStorage = 0;
+
+            // Tax cooldown
+            this.taxCooldown = 0;
         }
 
         // Storage for goods (farms, markets)
@@ -100,7 +103,30 @@ export class Building {
 
             // Update house evolution
             this.updateEvolution(deltaTime);
+
+            // Update tax cooldown
+            if (this.taxCooldown > 0) {
+                this.taxCooldown -= deltaTime;
+            }
         }
+    }
+
+    // Pay tax to collector
+    payTax() {
+        if (!this.coverageNeeds) return 0; // Only houses pay tax (for now)
+        if (this.taxCooldown > 0) return 0;
+
+        const population = this.getPopulation();
+        if (population <= 0) return 0;
+
+        // 1 coin per person
+        const taxAmount = population;
+
+        // Reset cooldown (prevent multi-collection per walker pass or multiple walkers spammed)
+        // 20 seconds cooldown
+        this.taxCooldown = 20;
+
+        return taxAmount;
     }
 
     // Consume food from house storage
@@ -332,26 +358,46 @@ export class Building {
         );
     }
 
-    // Check if this building should spawn a cart walker
+    // Check if this building should spawn a cart walker (Farm or Warehouse)
     shouldSpawnCartWalker() {
-        if (!this.type.produces || !this.storage) return false;
+        if (!this.storage) return false;
+
+        // Check if building produces goods OR distributes them (Warehouse)
+        const produces = this.type.produces;
+        const distributes = this.type.distributesGoods;
+
+        if (!produces && !distributes) return false;
         if (!this.isStaffed()) return false;
         if (this.cartSpawnTimer > 0) return false;
-        if (this.activeCartWalkers > 0) return false;  // Only one cart at a time
+        if (this.activeCartWalkers > 0) return false;  // Only one cart at a time per building
 
-        const goodType = this.type.produces;
+        // Determine what good to transport
+        const goodType = produces || 'food'; // Default to food for warehouses for now
+
         return (this.storage[goodType] || 0) >= GOODS_CONFIG.CART_CAPACITY;
     }
 
     // Take goods from storage for cart walker
     takeGoodsForCart() {
-        if (!this.type.produces || !this.storage) return { type: null, amount: 0 };
+        if (!this.storage) return { type: null, amount: 0 };
 
-        const goodType = this.type.produces;
+        const produces = this.type.produces;
+        const distributes = this.type.distributesGoods;
+
+        if (!produces && !distributes) return { type: null, amount: 0 };
+
+        const goodType = produces || 'food'; // Warehouse distributes food
         const available = this.storage[goodType] || 0;
-        const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
 
+        // For warehouses, only distribute if we have enough for a full cart
+        // This prevents micro-transfers
+        if (distributes && available < GOODS_CONFIG.CART_CAPACITY) {
+            return { type: null, amount: 0 };
+        }
+
+        const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
         this.storage[goodType] -= amount;
+
         return { type: goodType, amount };
     }
 

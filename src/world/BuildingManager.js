@@ -235,8 +235,10 @@ export class BuildingManager {
     spawnCartWalker(building) {
         if (building.roadAccessX === undefined) return;
 
-        // Find nearest building that accepts the goods we produce
-        const goodType = building.type.produces;
+        // Determine what good we are transporting
+        const goodType = building.type.produces || 'food'; // Warehouse default
+
+        // Find best target building
         const target = this.findNearestAcceptingBuilding(goodType, building);
 
         if (!target) {
@@ -276,10 +278,16 @@ export class BuildingManager {
         let best = null;
         let lowestFillPercent = Infinity;
 
+        // If source is a warehouse, don't deliver to other warehouses (prevent loops)
+        const isFromWarehouse = fromBuilding.type.id === 'warehouse';
+
         for (const building of this.buildings) {
             if (building === fromBuilding) continue;
             if (!building.type.acceptsGoods?.includes(goodType)) continue;
             if (building.roadAccessX === undefined) continue;
+
+            // Prevention logic: Warehouse -> Warehouse not allowed
+            if (isFromWarehouse && building.type.id === 'warehouse') continue;
 
             // Check if building has space for goods
             const current = building.storage?.[goodType] || 0;
@@ -297,4 +305,5 @@ export class BuildingManager {
 
         return best;
     }
+
 }

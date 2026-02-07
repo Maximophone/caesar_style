@@ -1,14 +1,8 @@
-import { BUILDING_TYPES, getBuildingTypeByKey } from './world/BuildingTypes.js';
-
 export class Input {
     constructor(canvas, tileSize, game) {
         this.canvas = canvas;
         this.tileSize = tileSize;
         this.game = game;
-
-        // Current placement mode
-        this.mode = 'road'; // 'road' or 'building'
-        this.selectedBuildingType = BUILDING_TYPES.house;
 
         // Mouse state
         this.mouseX = 0;
@@ -54,17 +48,13 @@ export class Input {
         this.mouseY = y;
 
         // Drag to place roads
-        if (this.isMouseDown && this.mode === 'road') {
+        const menu = this.game.buildingMenu;
+        if (this.isMouseDown && menu.placementMode === 'road') {
             this.game.onTileClick(x, y, 0);
         }
     }
 
     onKeyDown(e) {
-        if (e.key === '1') {
-            this.mode = 'road';
-            return;
-        }
-
         // Debug controls
         if (e.key.toLowerCase() === 'o') {
             this.game.toggleOverlays();
@@ -75,18 +65,30 @@ export class Input {
             return;
         }
 
-        // Check for building type keys
-        const buildingType = getBuildingTypeByKey(e.key);
-        if (buildingType) {
-            this.mode = 'building';
-            this.selectedBuildingType = buildingType;
+        // Cheat: Press C for cash
+        if (e.key.toLowerCase() === 'c') {
+            this.game.economy.earn(500);
+            return;
+        }
+
+        // Pass key to building menu
+        const handled = this.game.buildingMenu.handleKeyPress(e.key);
+        if (handled) {
+            e.preventDefault();
         }
     }
 
+    // Get current mode from building menu
+    get mode() {
+        return this.game.buildingMenu.placementMode || 'none';
+    }
+
+    // Get selected building from menu
+    get selectedBuildingType() {
+        return this.game.buildingMenu.selectedBuilding;
+    }
+
     getModeDisplay() {
-        if (this.mode === 'road') {
-            return 'ROAD';
-        }
-        return this.selectedBuildingType.name.toUpperCase();
+        return this.game.buildingMenu.getSelectionText();
     }
 }

@@ -33,7 +33,7 @@ export class CartWalker {
         this.color = '#CD853F';  // Peru/tan color for cart
     }
 
-    update(deltaTime, roadNetwork, entityManager, grid) {
+    update(deltaTime, roadNetwork, entityManager, grid, economy) {
         if (this.path.length === 0) return;
 
         // Handle single-node path or already at destination
