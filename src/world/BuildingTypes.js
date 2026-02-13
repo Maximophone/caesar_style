@@ -67,7 +67,13 @@ export const BUILDING_TYPES = {
         height: 2,
         color: '#A0522D',  // Start as Tent color
         coverageNeeds: ['water', 'food', 'religion'],
-        cost: 30
+        cost: 30,
+        goods: {
+            receives: ['food'],
+            storage: { food: 5 },        // per-inhabitant capacity
+            dynamicCapacity: true,        // capacity = storage[good] × population
+            consumes: { food: 0.1 },      // consumption rate per inhabitant per second
+        }
     },
     well: {
         id: 'well',
@@ -204,10 +210,7 @@ export const ROAD_COST = 5;
 export const GOODS_CONFIG = {
     CART_CAPACITY: 100,              // Units per cart trip
     DISTRIBUTOR_CAPACITY: 100,       // Units per market walker
-    // House food consumption
-    HOUSE_FOOD_PER_INHABITANT: 5,    // Max food storage per inhabitant
     HOUSE_FOOD_DELIVERY_PER_POP: 1,  // Food delivered per inhabitant when walker passes
-    HOUSE_FOOD_CONSUMPTION_RATE: 0.1 // Food consumed per inhabitant per second
 };
 
 // Get building type by key press

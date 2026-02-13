@@ -105,13 +105,17 @@ export class Walker {
 
             // For food distributors with cargo, deliver food to house storage
             if (this.coverageType === 'food' && this.cargo && this.cargo.type === 'food') {
-                // Calculate food to deliver: 1 unit per inhabitant
+                // Calculate food to deliver: per-inhabitant rate
                 const population = building.getPopulation();
                 const toDeliver = population * GOODS_CONFIG.HOUSE_FOOD_DELIVERY_PER_POP;
 
-                if (this.cargo.amount >= toDeliver && toDeliver > 0) {
-                    // Deliver food to house storage
-                    const received = building.receiveFoodDelivery(toDeliver);
+                if (this.cargo.amount >= toDeliver && toDeliver > 0 && building.storage) {
+                    // Deliver food to house storage (capped by capacity)
+                    const capacity = building.getMaxStorage('food');
+                    const current = building.storage.food || 0;
+                    const space = capacity - current;
+                    const received = Math.min(toDeliver, space);
+                    building.storage.food = current + received;
                     this.cargo.amount -= received;
                 }
                 // If out of cargo or house is full, skip

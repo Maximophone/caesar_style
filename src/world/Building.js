@@ -46,9 +46,6 @@ export class Building {
             this.level = 1;  // Start as Tent
             this.evolutionProgress = 0.5;  // Start in the middle
 
-            // House food storage - capacity scales with population
-            this.foodStorage = 0;
-
             // Tax cooldown
             this.taxCooldown = 0;
         }
@@ -75,16 +72,16 @@ export class Building {
 
         // House-specific updates
         if (this.coverageNeeds) {
-            // Consume food from storage
-            this.consumeFood(deltaTime);
+            // Consume goods from storage
+            this.consumeGoods(deltaTime);
 
-            // Update food coverage based on storage fullness
-            this.updateFoodCoverage();
+            // Update goods-based coverage (e.g. food coverage from food storage)
+            this.updateGoodsCoverage();
 
             // Decay non-food, non-static coverage over time
             for (const need of Object.keys(this.coverageNeeds)) {
                 // Water and Desirability use static coverage (reset each frame by BuildingManager)
-                // Food is now based on foodStorage, not decay
+                // Food coverage is based on storage, not decay
                 if (need === 'water' || need === 'desirability' || need === 'food') continue;
 
                 if (this.coverageNeeds[need] > 0) {
@@ -124,48 +121,38 @@ export class Building {
         return taxAmount;
     }
 
-    // Consume food from house storage
-    consumeFood(deltaTime) {
-        if (this.foodStorage === undefined) return;
+    // Consume goods based on type.goods.consumes config
+    consumeGoods(deltaTime) {
+        const consumes = this.type.goods?.consumes;
+        if (!consumes || !this.storage) return;
 
-        const population = this.getPopulation();
+        const population = this.getPopulation ? this.getPopulation() : 0;
         if (population <= 0) return;
 
-        // Consume food: rate * population * time
-        const consumption = GOODS_CONFIG.HOUSE_FOOD_CONSUMPTION_RATE * population * deltaTime;
-        this.foodStorage = Math.max(0, this.foodStorage - consumption);
-    }
-
-    // Update food coverage based on storage fullness
-    updateFoodCoverage() {
-        if (this.foodStorage === undefined || !this.coverageNeeds) return;
-
-        const capacity = this.getFoodCapacity();
-        if (capacity <= 0) {
-            this.coverageNeeds.food = 0;
-            return;
+        for (const [goodType, ratePerPop] of Object.entries(consumes)) {
+            const consumption = ratePerPop * population * deltaTime;
+            this.storage[goodType] = Math.max(0, (this.storage[goodType] || 0) - consumption);
         }
-
-        // Food coverage = percentage of capacity filled
-        this.coverageNeeds.food = (this.foodStorage / capacity) * this.maxCoverage;
     }
 
-    // Get food storage capacity (scales with population)
-    getFoodCapacity() {
-        const population = this.getPopulation();
-        return population * GOODS_CONFIG.HOUSE_FOOD_PER_INHABITANT;
-    }
+    // Update coverage needs based on goods storage fullness
+    updateGoodsCoverage() {
+        if (!this.coverageNeeds || !this.storage) return;
 
-    // Receive food delivery from distributor walker
-    receiveFoodDelivery(amount) {
-        if (this.foodStorage === undefined) return 0;
+        const consumes = this.type.goods?.consumes;
+        if (!consumes) return;
 
-        const capacity = this.getFoodCapacity();
-        const space = capacity - this.foodStorage;
-        const received = Math.min(amount, space);
+        for (const goodType of Object.keys(consumes)) {
+            if (!(goodType in this.coverageNeeds)) continue;
 
-        this.foodStorage += received;
-        return received;  // Return amount actually received
+            const capacity = this.getMaxStorage(goodType);
+            if (capacity <= 0) {
+                this.coverageNeeds[goodType] = 0;
+                continue;
+            }
+
+            this.coverageNeeds[goodType] = ((this.storage[goodType] || 0) / capacity) * this.maxCoverage;
+        }
     }
 
     // House evolution mechanic
@@ -367,7 +354,12 @@ export class Building {
 
     // Get max storage for a good type from config
     getMaxStorage(goodType) {
-        return this.type.goods?.storage?.[goodType] || 0;
+        const base = this.type.goods?.storage?.[goodType] || 0;
+        if (this.type.goods?.dynamicCapacity) {
+            const population = this.getPopulation ? this.getPopulation() : 0;
+            return base * population;
+        }
+        return base;
     }
 
     // Produce goods (for farms) - called each frame

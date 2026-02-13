@@ -264,7 +264,6 @@ export class Renderer {
                     // Coverage dots inside building (row of colored squares)
                     const dotTypes = [
                         { key: 'water', color: '#4169E1' },
-                        { key: 'food', color: '#DAA520' },
                         { key: 'religion', color: '#9370DB' },
                         { key: 'desirability', color: '#2ecc71' },
                     ];
