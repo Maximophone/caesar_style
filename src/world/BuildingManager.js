@@ -288,8 +288,10 @@ export class BuildingManager {
             if (!building.type.goods?.receives?.includes(goodType)) continue;
             if (building.roadAccessX === undefined) continue;
 
-            // Don't deliver to buildings that also emit the same good (prevents loops)
-            if (building.type.goods?.emits?.includes(goodType)) continue;
+            // Prevent loops between peer buildings (e.g., warehouse→warehouse):
+            // only block if BOTH source and target emit+receive the same good
+            const fromAlsoReceives = fromBuilding.type.goods?.receives?.includes(goodType);
+            if (fromAlsoReceives && building.type.goods?.emits?.includes(goodType)) continue;
 
             // Check if building has space for goods
             const current = building.storage?.[goodType] || 0;
