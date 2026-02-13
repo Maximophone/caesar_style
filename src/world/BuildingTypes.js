@@ -69,7 +69,6 @@ export const BUILDING_TYPES = {
         coverageNeeds: ['water', 'food', 'religion'],
         cost: 30,
         goods: {
-            receives: ['food'],
             storage: { food: 5 },        // per-inhabitant capacity
             dynamicCapacity: true,        // capacity = storage[good] × population
             consumes: { food: 0.1 },      // consumption rate per inhabitant per second
