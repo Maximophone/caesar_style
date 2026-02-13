@@ -197,6 +197,8 @@ export class Renderer {
                     baseName = 'tax_office';
                 } else if (building.type.id === 'mine') {
                     baseName = 'mine';
+                } else if (building.type.id === 'workshop') {
+                    baseName = 'workshop';
                 }
 
                 if (baseName) {

@@ -388,7 +388,27 @@ export class Building {
 
         // Produce each good type
         for (const [goodType, rate] of Object.entries(produces)) {
-            const amount = rate * efficiency * deltaTime;
+            let amount = rate * efficiency * deltaTime;
+
+            // Manufacturing: Check and consume production costs (inputs)
+            const costs = this.type.goods?.productionCost;
+            if (costs) {
+                // First pass: limit amount based on available inputs
+                for (const [inputGood, costPerUnit] of Object.entries(costs)) {
+                    const inputNeeded = amount * costPerUnit;
+                    const storedInput = this.storage[inputGood] || 0;
+                    if (storedInput < inputNeeded) {
+                        amount = storedInput / costPerUnit;
+                    }
+                }
+
+                // Second pass: consume inputs
+                for (const [inputGood, costPerUnit] of Object.entries(costs)) {
+                    const inputConsumed = amount * costPerUnit;
+                    this.storage[inputGood] = Math.max(0, (this.storage[inputGood] || 0) - inputConsumed);
+                }
+            }
+
             const maxStorage = this.getMaxStorage(goodType);
 
             this.storage[goodType] = Math.min(

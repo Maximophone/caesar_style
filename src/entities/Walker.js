@@ -1,4 +1,4 @@
-import { GOODS_CONFIG } from '../world/BuildingTypes.js';
+import { GOODS_CONFIG, GOODS_META } from '../world/BuildingTypes.js';
 
 export class Walker {
     constructor(x, y, path, originBuilding, slotIndex, coverageType = null, color = '#ff0000', cargo = null) {
@@ -103,19 +103,19 @@ export class Walker {
             // Only provide coverage to houses (buildings with coverageNeeds)
             if (!building.coverageNeeds) continue;
 
-            // For food distributors with cargo, deliver food to house storage
-            if (this.coverageType === 'food' && this.cargo && this.cargo.type === 'food') {
-                // Calculate food to deliver: per-inhabitant rate
+            // For distributors with cargo matching coverage type (which is a Good), deliver to house
+            if (this.coverageType && GOODS_META[this.coverageType] && this.cargo && this.cargo.type === this.coverageType) {
+                // Calculate goods to deliver: per-inhabitant rate
                 const population = building.getPopulation();
-                const toDeliver = population * GOODS_CONFIG.HOUSE_FOOD_DELIVERY_PER_POP;
+                const toDeliver = population * GOODS_CONFIG.HOUSE_GOOD_DELIVERY_PER_POP;
 
                 if (this.cargo.amount >= toDeliver && toDeliver > 0 && building.storage) {
-                    // Deliver food to house storage (capped by capacity)
-                    const capacity = building.getMaxStorage('food');
-                    const current = building.storage.food || 0;
+                    // Deliver goods to house storage (capped by capacity)
+                    const capacity = building.getMaxStorage(this.coverageType);
+                    const current = building.storage[this.coverageType] || 0;
                     const space = capacity - current;
                     const received = Math.min(toDeliver, space);
-                    building.storage.food = current + received;
+                    building.storage[this.coverageType] = current + received;
                     this.cargo.amount -= received;
                 }
                 // If out of cargo or house is full, skip

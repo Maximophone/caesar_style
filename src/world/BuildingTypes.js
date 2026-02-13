@@ -6,6 +6,7 @@ export const TAX_COOLDOWN = 10;
 export const GOODS_META = {
     food: { emoji: '🌾', color: '#DAA520' },
     iron: { emoji: '⛏️', color: '#708090' },
+    utensils: { emoji: '🥄', color: '#C0C0C0' }, // Silver/Metal color
 };
 
 export const HOUSE_LEVELS = [
@@ -57,7 +58,7 @@ export const BUILDING_CATEGORIES = {
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
-    industry: { key: '8', name: 'Industry', buildings: ['mine'] }
+    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop'] }
 };
 
 // Building type configurations
@@ -71,9 +72,9 @@ export const BUILDING_TYPES = {
         coverageNeeds: ['water', 'food', 'religion'],
         cost: 30,
         goods: {
-            storage: { food: 5 },        // per-inhabitant capacity
-            dynamicCapacity: true,        // capacity = storage[good] × population
-            consumes: { food: 0.1 },      // consumption rate per inhabitant per second
+            storage: { food: 5, utensils: 2 },  // per-inhabitant capacity (lower for utensils)
+            dynamicCapacity: true,
+            consumes: { food: 0.1, utensils: 0.05 }, // consuming utensils slower than food
         }
     },
     well: {
@@ -109,12 +110,13 @@ export const BUILDING_TYPES = {
         workersNeeded: 5,
         cost: 60,
         goods: {
-            receives: ['food'],
-            storage: { food: 400 },
-            distributes: ['food']
+            receives: ['food', 'utensils'],
+            storage: { food: 400, utensils: 200 },
+            distributes: ['food', 'utensils']
         },
         walkers: [
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' }
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' }
         ]
     },
     temple: {
@@ -182,9 +184,9 @@ export const BUILDING_TYPES = {
         workersNeeded: 4,
         cost: 100,
         goods: {
-            receives: ['food', 'iron'],
-            storage: { food: 800, iron: 400 },
-            emits: ['food', 'iron']
+            receives: ['food', 'iron', 'utensils'],
+            storage: { food: 800, iron: 400, utensils: 400 },
+            emits: ['food', 'iron', 'utensils']
         },
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
@@ -219,6 +221,25 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
         ]
+    },
+    workshop: {
+        id: 'workshop',
+        name: 'Workshop',
+        width: 2,
+        height: 2,
+        color: '#CD853F',  // Peru (bronze-ish)
+        workersNeeded: 6,
+        cost: 120,
+        goods: {
+            receives: ['iron'],
+            storage: { iron: 100, utensils: 100 },
+            produces: { utensils: 10 },
+            productionCost: { iron: 1 }, // Consumes 1 Iron per 1 Utensil produced
+            emits: ['utensils']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ]
     }
 };
 
@@ -229,7 +250,7 @@ export const ROAD_COST = 5;
 export const GOODS_CONFIG = {
     CART_CAPACITY: 100,              // Units per cart trip
     DISTRIBUTOR_CAPACITY: 100,       // Units per market walker
-    HOUSE_FOOD_DELIVERY_PER_POP: 1,  // Food delivered per inhabitant when walker passes
+    HOUSE_GOOD_DELIVERY_PER_POP: 1,  // Goods delivered per inhabitant when walker passes
 };
 
 // Get building type by key press
