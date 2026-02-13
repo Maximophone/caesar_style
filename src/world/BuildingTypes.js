@@ -25,16 +25,16 @@ export const HOUSE_LEVELS = [
         name: 'Shack',
         color: '#8B4513',  // Brown
         population: 2,
-        requirements: { water: 0.4 },
+        requirements: { water: 0.4, food: 0.1 },
         upgradeThreshold: 0.8,
         taxMultiplier: 1
     },
     {
-        // Level 3: House
-        name: 'House',
+        // Level 3: Stone House
+        name: 'Stone House',
         color: '#654321',  // Dark brown
         population: 4,
-        requirements: { water: 0.6, food: 0.2 },
+        requirements: { water: 0.6, food: 0.5, religion: 0.2 },
         upgradeThreshold: 0.8,
         taxMultiplier: 2
     },
@@ -43,7 +43,7 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.8, food: 0.6, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
+        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
         upgradeThreshold: null,
         taxMultiplier: 3
     }
@@ -69,7 +69,7 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A0522D',  // Start as Tent color
-        coverageNeeds: ['water', 'food', 'religion'],
+        coverageNeeds: ['water', 'food', 'religion', 'utensils', 'desirability'],
         cost: 30,
         goods: {
             storage: { food: 5, utensils: 2 },  // per-inhabitant capacity (lower for utensils)
