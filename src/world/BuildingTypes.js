@@ -2,6 +2,11 @@
 // Upgrade threshold = next level's maintenance threshold for stability
 export const TAX_COOLDOWN = 10;
 
+// Metadata for goods rendering (emoji + bar color)
+export const GOODS_META = {
+    food: { emoji: '🌾', color: '#DAA520' },
+};
+
 export const HOUSE_LEVELS = [
     null, // Index 0 unused
     {

@@ -102,4 +102,12 @@ export class Input {
     getModeDisplay() {
         return this.game.buildingMenu.getSelectionText();
     }
+
+    getHoveredBuilding(grid) {
+        const tile = grid.getTile(this.mouseX, this.mouseY);
+        if (tile && tile.type === 'building' && tile.building) {
+            return tile.building;
+        }
+        return null;
+    }
 }

@@ -1,5 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
-import { TAX_COOLDOWN } from './world/BuildingTypes.js';
+import { TAX_COOLDOWN, GOODS_META } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -146,7 +146,7 @@ export class Renderer {
         ctx.restore();
     }
 
-    renderBuildings(buildings, debug = { useSprites: true, showOverlays: true }) {
+    renderBuildings(buildings, debug = { useSprites: true, showOverlays: true }, hoveredBuilding = null) {
         const ctx = this.ctx;
         const ts = this.tileSize;
 
@@ -199,8 +199,6 @@ export class Renderer {
 
                     if (spriteData) {
                         if (spriteData.isSheet) {
-                            // Use 2x2 tileset approach
-                            // Grid layout: TL=South(0), TR=North(2), BL=East(1), BR=West(3)
                             let col = 0;
                             let row = 0;
 
@@ -220,7 +218,6 @@ export class Renderer {
                                 bx, by, bw, bh
                             );
                         } else {
-                            // Single directional sprite - draw directly
                             ctx.drawImage(spriteData.image, bx, by, bw, bh);
                         }
                         drawn = true;
@@ -228,29 +225,24 @@ export class Renderer {
                 }
             }
 
-
             if (!drawn) {
-                // Determine color based on type/state
                 let color = building.type.color;
 
-                // For houses, use level-based color and apply coverage tint
                 if (building.coverageNeeds) {
                     const baseColor = building.getLevelColor();
                     const coverage = building.getCoveragePercent();
                     color = this.applyFadeTint(baseColor, coverage);
                 }
 
-                // Building body
                 ctx.fillStyle = color;
                 ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
 
-                // Building outline (darker)
                 ctx.strokeStyle = this.darkenColor(color, 0.3);
                 ctx.lineWidth = 2;
                 ctx.strokeRect(bx + 2, by + 2, bw - 4, bh - 4);
             }
 
-            // Door indicator (shows road access point) - only for placeholders (not sprites)
+            // Door indicator (not sprites only)
             if (building.doorX !== undefined && !drawn) {
                 ctx.fillStyle = '#5a3e1b';
                 const doorX = building.doorX * ts + ts / 4;
@@ -258,111 +250,140 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
-            // OVERLAYS (Bars, Icons, Etc) - Only if enabled
+            // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
-                // House-specific UI
                 if (building.coverageNeeds) {
+                    // --- HOUSE OVERLAY ---
                     const levels = building.getCoverageLevels();
 
-                    // Show walker-based and static coverage (religion, desirability) - water and food have their own bars
-                    const walkerLevels = {
-                        religion: levels.religion,
-                        desirability: levels.desirability
-                    };
-                    this.renderWalkerCoverageBar(ctx, bx, by - 10, bw, 6, walkerLevels);
-
-                    // Evolution bar (shows progress toward upgrade/downgrade)
-                    this.renderEvolutionBar(ctx, bx, by + bh + 2, bw, 4, building.evolutionProgress);
-
-                    // Show level number in top-left corner
+                    // Level number top-left
                     ctx.fillStyle = '#fff';
                     ctx.font = 'bold 12px sans-serif';
                     ctx.fillText(building.level, bx + 6, by + 14);
 
-                    // Show water coverage bar (vertical) in top-right
-                    const waterBarW = 6;
-                    const waterBarH = 16;
-                    const waterBarX = bx + bw - waterBarW - 4;
-                    const waterBarY = by + 4;
+                    // Coverage dots inside building (row of colored squares)
+                    const dotTypes = [
+                        { key: 'water', color: '#4169E1' },
+                        { key: 'food', color: '#DAA520' },
+                        { key: 'religion', color: '#9370DB' },
+                        { key: 'desirability', color: '#2ecc71' },
+                    ];
+                    const dotSize = 6;
+                    const dotGap = 2;
+                    const totalDotsW = dotTypes.length * dotSize + (dotTypes.length - 1) * dotGap;
+                    const dotsX = bx + (bw - totalDotsW) / 2;
+                    const dotsY = by + 18;
 
-                    // Bar Background
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                    ctx.fillRect(waterBarX, waterBarY, waterBarW, waterBarH);
+                    for (let i = 0; i < dotTypes.length; i++) {
+                        const dt = dotTypes[i];
+                        const level = levels[dt.key] || 0;
+                        const dx = dotsX + i * (dotSize + dotGap);
 
-                    // Bar Border
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
+                        // Dim background
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                        ctx.fillRect(dx, dotsY, dotSize, dotSize);
 
-                    // Tax Cooldown Bar (Gold) - Below Evolution Bar
+                        // Colored fill (opacity maps to level)
+                        if (level > 0) {
+                            ctx.globalAlpha = 0.3 + 0.7 * Math.min(1, level);
+                            ctx.fillStyle = dt.color;
+                            ctx.fillRect(dx, dotsY, dotSize, dotSize);
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+
+                    // Evolution bar at bottom inside edge
+                    this.renderEvolutionBar(ctx, bx + 2, by + bh - 6, bw - 4, 4, building.evolutionProgress);
+
+                    // Tax cooldown bar just above evolution bar
                     if (building.taxCooldown > 0) {
-                        const taxBarH = 4;
-                        const taxBarY = by + bh + 8;
+                        const taxBarH = 3;
+                        const taxBarY = by + bh - 10;
                         const taxPct = building.taxCooldown / TAX_COOLDOWN;
 
-                        // Background
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                        ctx.fillRect(bx, taxBarY, bw, taxBarH);
-
-                        // Fill
-                        ctx.fillStyle = '#FFD700'; // Gold
-                        ctx.fillRect(bx, taxBarY, bw * taxPct, taxBarH);
-
-                        // Border
-                        ctx.strokeStyle = '#000';
-                        ctx.strokeRect(bx, taxBarY, bw, taxBarH);
+                        ctx.fillRect(bx + 2, taxBarY, bw - 4, taxBarH);
+                        ctx.fillStyle = '#FFD700';
+                        ctx.fillRect(bx + 2, taxBarY, (bw - 4) * taxPct, taxBarH);
                     }
 
-                    // Bar Fill
-                    if (levels.water > 0) {
-                        ctx.fillStyle = '#4169E1'; // Blue
-                        const fillH = Math.min(1, levels.water) * waterBarH;
-                        ctx.fillRect(waterBarX, waterBarY + waterBarH - fillH, waterBarW, fillH);
+                } else {
+                    // --- SERVICE/PRODUCTION BUILDING OVERLAY ---
+
+                    // Employment bar at top inside edge
+                    if (building.type.workersNeeded > 0) {
+                        const fill = building.workers / building.type.workersNeeded;
+                        this.renderEmploymentBar(ctx, bx + 2, by + 2, bw - 4, 4, fill, building.isStaffed());
                     }
 
-
-                    // Bar Border
-                    ctx.strokeStyle = '#87CEEB'; // SkyBlue border
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(waterBarX, waterBarY, waterBarW, waterBarH);
-
-                    // Show food storage bar (vertical) next to water bar
-                    if (building.foodStorage !== undefined) {
-                        const foodBarW = 6;
-                        const foodBarH = 16;
-                        const foodBarX = waterBarX - foodBarW - 2;
-                        const foodBarY = by + 4;
-
-                        // Bar Background
-                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                        ctx.fillRect(foodBarX, foodBarY, foodBarW, foodBarH);
-
-                        // Bar Fill
-                        const capacity = building.getFoodCapacity();
-                        if (capacity > 0 && building.foodStorage > 0) {
-                            ctx.fillStyle = '#DAA520'; // Gold for food
-                            const fillH = Math.min(1, building.foodStorage / capacity) * foodBarH;
-                            ctx.fillRect(foodBarX, foodBarY + foodBarH - fillH, foodBarW, fillH);
+                    // Overall storage bar at bottom inside edge
+                    if (building.storage && building.type.goods?.storage) {
+                        const storageEntries = Object.entries(building.type.goods.storage);
+                        let totalStored = 0;
+                        let totalCapacity = 0;
+                        for (const [goodType, capacity] of storageEntries) {
+                            totalStored += building.storage[goodType] || 0;
+                            totalCapacity += capacity;
                         }
-
-                        // Bar Border
-                        ctx.strokeStyle = '#DAA520';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(foodBarX, foodBarY, foodBarW, foodBarH);
+                        if (totalCapacity > 0) {
+                            this.renderStorageIndicator(ctx, bx + 2, by + bh - 8, bw - 4, 6, totalStored, totalCapacity, '#DAA520');
+                        }
                     }
-                }
-
-                // Employment indicator for service buildings
-                if (building.type.workersNeeded > 0) {
-                    const fill = building.workers / building.type.workersNeeded;
-                    this.renderEmploymentBar(ctx, bx, by - 8, bw, 4, fill, building.isStaffed());
-                }
-
-                // Storage indicator for buildings with goods (Farm, Market)
-                if (building.storage && building.storage.food > 0) {
-                    this.renderStorageIndicator(ctx, bx, by + bh + 2, bw, 8, building.storage.food, building.getMaxStorage('food'));
                 }
             }
+
+            // === HOVER DETAIL (around building, emoji + bars) ===
+            if (debug.showOverlays && building === hoveredBuilding) {
+                this.renderHoverDetail(ctx, building, bx, by, bw, bh);
+            }
+        }
+    }
+
+    renderHoverDetail(ctx, building, bx, by, bw, bh) {
+        if (!building.type.goods?.storage) return;
+
+        const goodTypes = Object.keys(building.type.goods.storage);
+        if (goodTypes.length === 0) return;
+
+        const barW = 60;
+        const barH = 10;
+        const emojiW = 14;
+        const rowH = barH + 3;
+        const panelH = goodTypes.length * rowH + 6;
+        const panelW = emojiW + barW + 8;
+
+        // Position: prefer right side, fall back to left
+        let px = bx + bw + 4;
+        const canvasW = ctx.canvas.width;
+        if (px + panelW > canvasW) {
+            px = bx - panelW - 4;
+        }
+        let py = by;
+
+        // Panel background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(px, py, panelW, panelH);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px, py, panelW, panelH);
+
+        // Draw each good row
+        for (let i = 0; i < goodTypes.length; i++) {
+            const goodType = goodTypes[i];
+            const meta = GOODS_META[goodType] || { emoji: '📦', color: '#888' };
+            const current = building.storage[goodType] || 0;
+            const max = building.getMaxStorage(goodType);
+
+            const rowY = py + 3 + i * rowH;
+
+            // Emoji
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(meta.emoji, px + 3, rowY + barH - 1);
+
+            // Bar
+            const barX = px + emojiW + 2;
+            this.renderStorageIndicator(ctx, barX, rowY, barW, barH, current, max, meta.color);
         }
     }
 
@@ -536,28 +557,28 @@ export class Renderer {
         ctx.strokeRect(x, y, width, height);
     }
 
-    // Render storage indicator for buildings with goods
-    renderStorageIndicator(ctx, x, y, width, height, current, max) {
+    // Render storage indicator bar with number inside
+    renderStorageIndicator(ctx, x, y, width, height, current, max, color = '#DAA520') {
         // Background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.fillRect(x, y, width, height);
 
         // Fill based on storage level
-        const fill = Math.min(1, current / max);
+        const fill = Math.min(1, max > 0 ? current / max : 0);
         if (fill > 0) {
-            ctx.fillStyle = '#DAA520';  // Gold for food
+            ctx.fillStyle = color;
             ctx.fillRect(x, y, width * fill, height);
         }
 
         // Border
-        ctx.strokeStyle = '#DAA520';
+        ctx.strokeStyle = color;
         ctx.lineWidth = 1;
         ctx.strokeRect(x, y, width, height);
 
         // Text showing amount
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 9px sans-serif';
-        ctx.fillText(`${Math.floor(current)}`, x + 2, y + 7);
+        ctx.fillText(`${Math.floor(current)}`, x + 2, y + height - 2);
     }
 
     renderEntities(entities) {

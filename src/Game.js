@@ -173,7 +173,8 @@ export class Game {
         this.renderer.renderRoads(this.grid, this.roadNetwork, this.debug);
 
         // Render buildings
-        this.renderer.renderBuildings(this.buildingManager.buildings, this.debug);
+        const hoveredBuilding = this.input.getHoveredBuilding(this.grid);
+        this.renderer.renderBuildings(this.buildingManager.buildings, this.debug, hoveredBuilding);
 
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities);
