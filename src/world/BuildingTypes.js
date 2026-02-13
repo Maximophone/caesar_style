@@ -5,6 +5,7 @@ export const TAX_COOLDOWN = 10;
 // Metadata for goods rendering (emoji + bar color)
 export const GOODS_META = {
     food: { emoji: '🌾', color: '#DAA520' },
+    iron: { emoji: '⛏️', color: '#708090' },
 };
 
 export const HOUSE_LEVELS = [
@@ -55,7 +56,8 @@ export const BUILDING_CATEGORIES = {
     food: { key: '4', name: 'Food', buildings: ['farm', 'market', 'warehouse'] },
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
-    administration: { key: '7', name: 'Admin', buildings: ['tax_office'] }
+    administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
+    industry: { key: '8', name: 'Industry', buildings: ['mine'] }
 };
 
 // Building type configurations
@@ -180,9 +182,27 @@ export const BUILDING_TYPES = {
         workersNeeded: 4,
         cost: 100,
         goods: {
-            receives: ['food'],
-            storage: { food: 800 },
-            emits: ['food']
+            receives: ['food', 'iron'],
+            storage: { food: 800, iron: 400 },
+            emits: ['food', 'iron']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ]
+    },
+    mine: {
+        id: 'mine',
+        name: 'Mine',
+        width: 3,
+        height: 3,
+        color: '#555555',  // Dark gray
+        workersNeeded: 8,
+        cost: 150,
+        requiredResource: 'iron_ore',
+        goods: {
+            produces: { iron: 6 },     // iron at 6 units/sec when staffed
+            storage: { iron: 200 },
+            emits: ['iron']
         },
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }

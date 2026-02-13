@@ -55,6 +55,9 @@ export class Renderer {
                 if (grid.resources && grid.resources[y][x] === 'fertility') {
                     ctx.fillStyle = 'rgba(218, 165, 32, 0.3)'; // Goldenrod semi-transparent
                     ctx.fillRect(x * ts, y * ts, ts, ts);
+                } else if (grid.resources && grid.resources[y][x] === 'iron_ore') {
+                    ctx.fillStyle = 'rgba(112, 128, 144, 0.35)'; // Slate gray semi-transparent
+                    ctx.fillRect(x * ts, y * ts, ts, ts);
                 }
             }
         }
@@ -192,6 +195,8 @@ export class Renderer {
                     baseName = 'warehouse';
                 } else if (building.type.id === 'tax_office') {
                     baseName = 'tax_office';
+                } else if (building.type.id === 'mine') {
+                    baseName = 'mine';
                 }
 
                 if (baseName) {

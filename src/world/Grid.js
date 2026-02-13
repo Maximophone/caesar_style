@@ -27,14 +27,13 @@ export class Grid {
         }
 
         // Generate 'fertility' clusters
-        const numClusters = Math.floor((this.width * this.height) / 50); // density control
+        const numFertilityClusters = Math.floor((this.width * this.height) / 50);
 
-        for (let i = 0; i < numClusters; i++) {
+        for (let i = 0; i < numFertilityClusters; i++) {
             const cx = Math.floor(Math.random() * this.width);
             const cy = Math.floor(Math.random() * this.height);
             const radius = 2 + Math.floor(Math.random() * 3); // 2-4 radius
 
-            // Draw circular blob
             for (let dy = -radius; dy <= radius; dy++) {
                 for (let dx = -radius; dx <= radius; dx++) {
                     const x = cx + dx;
@@ -42,9 +41,31 @@ export class Grid {
 
                     if (this.isInBounds(x, y)) {
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        // Add randomness to edges
                         if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
                             this.resources[y][x] = 'fertility';
+                        }
+                    }
+                }
+            }
+        }
+
+        // Generate 'iron_ore' clusters (much rarer, smaller pockets)
+        const numIronClusters = Math.floor((this.width * this.height) / 250);
+
+        for (let i = 0; i < numIronClusters; i++) {
+            const cx = Math.floor(Math.random() * this.width);
+            const cy = Math.floor(Math.random() * this.height);
+            const radius = 1 + Math.floor(Math.random() * 2); // 1-2 radius
+
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = cx + dx;
+                    const y = cy + dy;
+
+                    if (this.isInBounds(x, y) && this.resources[y][x] === null) {
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
+                            this.resources[y][x] = 'iron_ore';
                         }
                     }
                 }
