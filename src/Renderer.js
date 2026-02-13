@@ -330,11 +330,15 @@ export class Renderer {
                     }
                 }
             }
+        }
 
-            // === HOVER DETAIL (around building, emoji + bars) ===
-            if (debug.showOverlays && building === hoveredBuilding) {
-                this.renderHoverDetail(ctx, building, bx, by, bw, bh);
-            }
+        // === HOVER DETAIL (second pass, drawn on top of everything) ===
+        if (debug.showOverlays && hoveredBuilding) {
+            const bx = hoveredBuilding.x * ts;
+            const by = hoveredBuilding.y * ts;
+            const bw = hoveredBuilding.width * ts;
+            const bh = hoveredBuilding.height * ts;
+            this.renderHoverDetail(ctx, hoveredBuilding, bx, by, bw, bh);
         }
     }
 
