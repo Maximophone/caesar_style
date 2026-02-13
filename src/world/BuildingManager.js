@@ -133,21 +133,11 @@ export class BuildingManager {
         for (const building of this.buildings) {
             building.update(deltaTime, this.grid);
 
-            // Spawn walker if ready (and staffed)
-            // For markets: also need goods to distribute
-            if (building.shouldSpawnWalker()) {
-                // Markets need goods to distribute
-                if (building.type.acceptsGoods && !building.hasGoodsToDistribute()) {
-                    // Market has no goods, don't spawn distributor
-                } else {
-                    this.spawnWalker(building);
-                    building.onWalkerSpawned();
+            // Check each walker slot for readiness
+            for (let i = 0; i < building.walkerSlots.length; i++) {
+                if (building.isWalkerSlotReady(i)) {
+                    this.spawnWalkerFromSlot(building, i);
                 }
-            }
-
-            // Spawn cart walker for producer buildings (farms)
-            if (building.shouldSpawnCartWalker()) {
-                this.spawnCartWalker(building);
             }
         }
     }
@@ -201,20 +191,33 @@ export class BuildingManager {
         }
     }
 
-    spawnWalker(building) {
+    // Unified walker spawning from a slot
+    spawnWalkerFromSlot(building, slotIndex) {
         if (building.roadAccessX === undefined) return;
 
-        // Get a random path from the building's road access
+        const slot = building.walkerSlots[slotIndex];
+        const config = slot.config;
+
+        if (config.type === 'service') {
+            this.spawnServiceWalker(building, slotIndex, config);
+        } else if (config.type === 'cart') {
+            this.spawnCartWalker(building, slotIndex, config);
+        }
+    }
+
+    // Spawn a service walker (random patrol, coverage emitting)
+    spawnServiceWalker(building, slotIndex, config) {
+        const pathLength = config.pathLength || 15;
         const path = this.roadNetwork.getRandomPath(
             building.roadAccessX,
             building.roadAccessY,
-            15
+            pathLength
         );
 
         if (path.length > 1) {
-            // For markets with goods, take goods for distribution
+            // Load cargo if this building distributes goods
             let cargo = null;
-            if (building.type.acceptsGoods && building.hasGoodsToDistribute()) {
+            if (building.type.goods?.distributes && building.hasGoodsToDistribute()) {
                 cargo = building.takeGoodsForDistributor();
             }
 
@@ -223,28 +226,29 @@ export class BuildingManager {
                 building.roadAccessY,
                 path,
                 building,
-                building.type.coverageType,
-                building.type.walkerColor || '#ff0000',
-                cargo  // Pass cargo for distribution
+                slotIndex,
+                config.coverageType,
+                building.type.color,
+                cargo
             );
             this.entityManager.addEntity(walker);
+            building.onWalkerSpawned(slotIndex);
         }
     }
 
-    // Spawn cart walker to transport goods from producer to receiver
-    spawnCartWalker(building) {
-        if (building.roadAccessX === undefined) return;
+    // Spawn a cart walker (A* targeted delivery)
+    spawnCartWalker(building, slotIndex, config) {
+        // Determine what goods to emit
+        const emits = building.type.goods?.emits;
+        if (!emits || emits.length === 0) return;
 
-        // Determine what good we are transporting
-        const goodType = building.type.produces || 'food'; // Warehouse default
+        // Find the good type we have enough of
+        const goodType = emits.find(g => (building.storage?.[g] || 0) >= GOODS_CONFIG.CART_CAPACITY);
+        if (!goodType) return;
 
         // Find best target building
-        const target = this.findNearestAcceptingBuilding(goodType, building);
-
-        if (!target) {
-            // No target found, don't spawn
-            return;
-        }
+        const target = this.findAcceptingBuilding(goodType, building);
+        if (!target) return;
 
         // Get path to target building
         const path = this.roadNetwork.findPath(
@@ -255,7 +259,6 @@ export class BuildingManager {
         );
 
         if (path && path.length >= 1) {
-            // Take goods from building storage
             const cargo = building.takeGoodsForCart();
 
             if (cargo.amount > 0) {
@@ -265,33 +268,32 @@ export class BuildingManager {
                     path,
                     building,
                     target,
-                    cargo
+                    cargo,
+                    slotIndex,
+                    building.type.color
                 );
                 this.entityManager.addEntity(cartWalker);
-                building.onCartWalkerSpawned();
+                building.onWalkerSpawned(slotIndex);
             }
         }
     }
 
     // Find the most empty building that accepts a given good type
-    findNearestAcceptingBuilding(goodType, fromBuilding) {
+    findAcceptingBuilding(goodType, fromBuilding) {
         let best = null;
         let lowestFillPercent = Infinity;
 
-        // If source is a warehouse, don't deliver to other warehouses (prevent loops)
-        const isFromWarehouse = fromBuilding.type.id === 'warehouse';
-
         for (const building of this.buildings) {
             if (building === fromBuilding) continue;
-            if (!building.type.acceptsGoods?.includes(goodType)) continue;
+            if (!building.type.goods?.receives?.includes(goodType)) continue;
             if (building.roadAccessX === undefined) continue;
 
-            // Prevention logic: Warehouse -> Warehouse not allowed
-            if (isFromWarehouse && building.type.id === 'warehouse') continue;
+            // Don't deliver to buildings that also emit the same good (prevents loops)
+            if (building.type.goods?.emits?.includes(goodType)) continue;
 
             // Check if building has space for goods
             const current = building.storage?.[goodType] || 0;
-            const max = building.maxStorage || 0;
+            const max = building.getMaxStorage(goodType);
             if (current >= max) continue;  // Full, skip
 
             // Calculate fill percentage (lower = more empty = better)

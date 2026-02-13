@@ -61,7 +61,6 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A0522D',  // Start as Tent color
-        spawnsWalker: false,
         coverageNeeds: ['water', 'food', 'religion'],
         cost: 30
     },
@@ -71,11 +70,9 @@ export const BUILDING_TYPES = {
         width: 1,
         height: 1,
         color: '#4169E1',  // Blue
-        spawnsWalker: false,
         staticCoverage: {
             type: 'water',
-            // Coverage by Manhattan distance: {distance: amount}
-            distanceAmounts: { 1: 60, 2: 40, 3: 20 }  // Max coverage at each distance
+            distanceAmounts: { 1: 60, 2: 40, 3: 20 }
         },
         cost: 20
     },
@@ -84,20 +81,12 @@ export const BUILDING_TYPES = {
         name: 'Fountain',
         width: 1,
         height: 1,
-        color: '#00BFFF',  // Deep Sky Blue (brighter/richer than Well)
-        spawnsWalker: false,
+        color: '#00BFFF',  // Deep Sky Blue
         staticCoverage: {
             type: 'water',
-            // Better coverage over longer distance
-            distanceAmounts: {
-                1: 90,
-                2: 70,
-                3: 50,
-                4: 30,
-                5: 10
-            }
+            distanceAmounts: { 1: 90, 2: 70, 3: 50, 4: 30, 5: 10 }
         },
-        cost: 70  // Expensive
+        cost: 70
     },
     market: {
         id: 'market',
@@ -105,17 +94,16 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#DAA520',  // Goldenrod
-        spawnsWalker: true,
-        walkerColor: '#FFD700',  // Gold
-        coverageType: 'food',
         workersNeeded: 5,
-        maxWalkers: 1,
         cost: 60,
-        employees: 5,
-        sprite: 'market',
-        // Goods storage
-        acceptsGoods: ['food'],
-        maxStorage: 400
+        goods: {
+            receives: ['food'],
+            storage: { food: 400 },
+            distributes: ['food']
+        },
+        walkers: [
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' }
+        ]
     },
     temple: {
         id: 'temple',
@@ -123,12 +111,11 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#9370DB',  // Purple
-        spawnsWalker: true,
-        walkerColor: '#DDA0DD',  // Plum
-        coverageType: 'religion',
         workersNeeded: 8,
-        maxWalkers: 2,
-        cost: 200
+        cost: 200,
+        walkers: [
+            { type: 'service', max: 2, spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
+        ]
     },
     small_garden: {
         id: 'small_garden',
@@ -136,7 +123,6 @@ export const BUILDING_TYPES = {
         width: 1,
         height: 1,
         color: '#228B22',  // Forest Green
-        spawnsWalker: false,
         needsRoadAccess: false,
         staticCoverage: {
             type: 'desirability',
@@ -150,7 +136,6 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#006400',  // Dark Green
-        spawnsWalker: false,
         needsRoadAccess: false,
         staticCoverage: {
             type: 'desirability',
@@ -161,18 +146,20 @@ export const BUILDING_TYPES = {
     farm: {
         id: 'farm',
         name: 'Farm',
-        width: 3,
-        height: 3,
+        width: 4,
+        height: 4,
         color: '#8B7355',  // Wheat/tan color
-        spawnsWalker: false,  // Spawns cart walkers via special logic
         workersNeeded: 6,
         cost: 120,
-        sprite: 'farm',
         requiredResource: 'fertility',
-        // Goods production
-        produces: 'food',
-        productionRate: 10,  // Units per second when staffed
-        maxStorage: 200
+        goods: {
+            produces: { food: 10 },    // food at 10 units/sec when staffed
+            storage: { food: 200 },
+            emits: ['food']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ]
     },
     warehouse: {
         id: 'warehouse',
@@ -180,14 +167,16 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#8B4513',  // Saddle brown
-        spawnsWalker: false,
         workersNeeded: 4,
         cost: 100,
-        sprite: 'warehouse',
-        // Goods storage - accepts multiple goods
-        acceptsGoods: ['food'],
-        distributesGoods: true, // Enables spawning cart walkers to move goods
-        maxStorage: 800  // Large storage capacity
+        goods: {
+            receives: ['food'],
+            storage: { food: 800 },
+            emits: ['food']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ]
     },
     tax_office: {
         id: 'tax_office',
@@ -195,12 +184,11 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A52A2A',  // Brown
-        spawnsWalker: true,
-        walkerColor: '#FF4500',  // Orange Red
-        coverageType: 'tax',   // Special coverage type
         workersNeeded: 4,
-        maxWalkers: 1,
-        cost: 100
+        cost: 100,
+        walkers: [
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
+        ]
     }
 };
 

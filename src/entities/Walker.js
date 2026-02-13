@@ -1,7 +1,7 @@
 import { GOODS_CONFIG } from '../world/BuildingTypes.js';
 
 export class Walker {
-    constructor(x, y, path, originBuilding, coverageType = null, color = '#ff0000', cargo = null) {
+    constructor(x, y, path, originBuilding, slotIndex, coverageType = null, color = '#ff0000', cargo = null) {
         // Position (sub-tile precision for smooth movement)
         this.x = x;
         this.y = y;
@@ -17,6 +17,7 @@ export class Walker {
 
         // Origin building (to return to)
         this.originBuilding = originBuilding;
+        this.slotIndex = slotIndex;
 
         // Movement speed (tiles per second)
         this.speed = 2;
@@ -138,7 +139,7 @@ export class Walker {
             if (this.cargo && this.cargo.amount > 0) {
                 this.originBuilding.returnGoods(this.cargo.type, this.cargo.amount);
             }
-            this.originBuilding.onWalkerReturned();
+            this.originBuilding.onWalkerReturned(this.slotIndex);
         }
         entityManager.removeEntity(this);
     }

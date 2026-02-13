@@ -1,10 +1,10 @@
 import { GOODS_CONFIG } from '../world/BuildingTypes.js';
 
 /**
- * CartWalker - Transports goods from producer buildings (farms) to receiver buildings (markets)
+ * CartWalker - Transports goods from producer buildings to receiver buildings
  */
 export class CartWalker {
-    constructor(x, y, path, originBuilding, targetBuilding, cargo) {
+    constructor(x, y, path, originBuilding, targetBuilding, cargo, slotIndex, color = '#CD853F') {
         // Position (sub-tile precision for smooth movement)
         this.x = x;
         this.y = y;
@@ -22,6 +22,7 @@ export class CartWalker {
         // Buildings
         this.originBuilding = originBuilding;
         this.targetBuilding = targetBuilding;
+        this.slotIndex = slotIndex;
 
         // Movement speed (tiles per second) - carts are slower than regular walkers
         this.speed = 1.5;
@@ -30,7 +31,7 @@ export class CartWalker {
         this.cargo = cargo;  // { type: 'food', amount: 100 }
 
         // Visual
-        this.color = '#CD853F';  // Peru/tan color for cart
+        this.color = color;
     }
 
     update(deltaTime, roadNetwork, entityManager, grid, economy) {
@@ -109,15 +110,14 @@ export class CartWalker {
 
         const received = this.targetBuilding.receiveGoods(this.cargo.type, this.cargo.amount);
 
-        // If market couldn't accept all, we lose the excess (for simplicity)
-        // Could be enhanced later to return excess to farm
+        // If target couldn't accept all, we lose the excess (for simplicity)
         this.cargo.amount = 0;
         this.delivered = true;
     }
 
     onReturnHome(entityManager) {
         if (this.originBuilding) {
-            this.originBuilding.onCartWalkerReturned();
+            this.originBuilding.onWalkerReturned(this.slotIndex);
         }
         entityManager.removeEntity(this);
     }

@@ -360,7 +360,7 @@ export class Renderer {
 
                 // Storage indicator for buildings with goods (Farm, Market)
                 if (building.storage && building.storage.food > 0) {
-                    this.renderStorageIndicator(ctx, bx, by + bh + 2, bw, 8, building.storage.food, building.type.maxStorage || 200);
+                    this.renderStorageIndicator(ctx, bx, by + bh + 2, bw, 8, building.storage.food, building.getMaxStorage('food'));
                 }
             }
         }

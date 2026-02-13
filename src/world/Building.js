@@ -14,11 +14,12 @@ export class Building {
         this.roadAccessX = undefined;
         this.roadAccessY = undefined;
 
-        // Walker spawning (only for service buildings)
-        this.spawnInterval = 5; // seconds
-        this.spawnTimer = 2;    // Start with a short delay
-        this.maxWalkers = type.maxWalkers || 1;  // From config, default 1
-        this.activeWalkers = 0;
+        // Unified walker slots (one per config entry)
+        this.walkerSlots = (type.walkers || []).map(config => ({
+            config,
+            spawnTimer: 2,     // Start with a short delay
+            activeCount: 0,
+        }));
 
         // Employment (for service buildings that need workers)
         this.workers = 0;
@@ -52,32 +53,22 @@ export class Building {
             this.taxCooldown = 0;
         }
 
-        // Storage for goods (farms, markets)
-        if (type.maxStorage) {
+        // Storage for goods (from type.goods config)
+        const goods = type.goods;
+        if (goods && goods.storage) {
             this.storage = {};
-            this.maxStorage = type.maxStorage;
-
-            // Initialize storage for produced goods
-            if (type.produces) {
-                this.storage[type.produces] = 0;
-            }
-            // Initialize storage for accepted goods
-            if (type.acceptsGoods) {
-                for (const good of type.acceptsGoods) {
-                    this.storage[good] = 0;
-                }
+            // Initialize all storage slots from config
+            for (const [goodType, capacity] of Object.entries(goods.storage)) {
+                this.storage[goodType] = 0;
             }
         }
-
-        // Cart walker spawning (for producers like farms)
-        this.cartSpawnTimer = 3;  // Start with a short delay
-        this.cartSpawnInterval = 8;
-        this.activeCartWalkers = 0;
     }
 
     update(deltaTime, grid) {
-        this.spawnTimer -= deltaTime;
-        this.cartSpawnTimer -= deltaTime;
+        // Tick walker slot timers
+        for (const slot of this.walkerSlots) {
+            slot.spawnTimer -= deltaTime;
+        }
 
         // Produce goods if this is a producer building
         this.produceGoods(deltaTime, grid);
@@ -264,20 +255,46 @@ export class Building {
         return this.workers >= needed;
     }
 
-    shouldSpawnWalker() {
-        return this.type.spawnsWalker &&
-            this.isStaffed() &&
-            this.spawnTimer <= 0 &&
-            this.activeWalkers < this.maxWalkers;
+    // Check if a walker slot is ready to spawn
+    isWalkerSlotReady(slotIndex) {
+        const slot = this.walkerSlots[slotIndex];
+        if (!slot) return false;
+
+        const { config } = slot;
+
+        // Must be staffed
+        if (!this.isStaffed()) return false;
+
+        // Timer must have elapsed
+        if (slot.spawnTimer > 0) return false;
+
+        // Must not exceed max active
+        if (slot.activeCount >= config.max) return false;
+
+        // Cart walkers need goods to emit
+        if (config.type === 'cart') {
+            if (!this.hasGoodsToEmit()) return false;
+        }
+
+        // Service walkers with distributes need goods to distribute
+        if (config.type === 'service' && this.type.goods?.distributes) {
+            if (!this.hasGoodsToDistribute()) return false;
+        }
+
+        return true;
     }
 
-    onWalkerSpawned() {
-        this.spawnTimer = this.spawnInterval;
-        this.activeWalkers++;
+    onWalkerSpawned(slotIndex) {
+        const slot = this.walkerSlots[slotIndex];
+        if (!slot) return;
+        slot.spawnTimer = slot.config.spawnInterval;
+        slot.activeCount++;
     }
 
-    onWalkerReturned() {
-        this.activeWalkers = Math.max(0, this.activeWalkers - 1);
+    onWalkerReturned(slotIndex) {
+        const slot = this.walkerSlots[slotIndex];
+        if (!slot) return;
+        slot.activeCount = Math.max(0, slot.activeCount - 1);
     }
 
     // Called when a walker passes nearby - sets to full
@@ -348,9 +365,15 @@ export class Building {
 
     // ===== GOODS PRODUCTION & STORAGE =====
 
+    // Get max storage for a good type from config
+    getMaxStorage(goodType) {
+        return this.type.goods?.storage?.[goodType] || 0;
+    }
+
     // Produce goods (for farms) - called each frame
     produceGoods(deltaTime, grid) {
-        if (!this.type.produces || !this.storage) return;
+        const produces = this.type.goods?.produces;
+        if (!produces || !this.storage) return;
         if (!this.isStaffed()) return;
 
         // Calculate efficiency based on resource coverage
@@ -368,109 +391,91 @@ export class Building {
                 }
             }
 
-            // 0% efficiency if no tiles match, up to 100% if all match.
-            // Actually, let's establish a baseline. 
-            // If we want it strictly location-based:
             efficiency = matchedTiles / totalTiles;
         }
 
-        const goodType = this.type.produces;
-        const rate = this.type.productionRate || 1;
-        const amount = rate * efficiency * deltaTime;
+        // Produce each good type
+        for (const [goodType, rate] of Object.entries(produces)) {
+            const amount = rate * efficiency * deltaTime;
+            const maxStorage = this.getMaxStorage(goodType);
 
-        // Add to storage, capped at max
-        this.storage[goodType] = Math.min(
-            this.maxStorage,
-            (this.storage[goodType] || 0) + amount
-        );
+            this.storage[goodType] = Math.min(
+                maxStorage,
+                (this.storage[goodType] || 0) + amount
+            );
+        }
     }
 
-    // Check if this building should spawn a cart walker (Farm or Warehouse)
-    shouldSpawnCartWalker() {
-        if (!this.storage) return false;
+    // Check if building has goods to emit via cart walkers
+    hasGoodsToEmit() {
+        const emits = this.type.goods?.emits;
+        if (!emits || !this.storage) return false;
 
-        // Check if building produces goods OR distributes them (Warehouse)
-        const produces = this.type.produces;
-        const distributes = this.type.distributesGoods;
-
-        if (!produces && !distributes) return false;
-        if (!this.isStaffed()) return false;
-        if (this.cartSpawnTimer > 0) return false;
-        if (this.activeCartWalkers > 0) return false;  // Only one cart at a time per building
-
-        // Determine what good to transport
-        const goodType = produces || 'food'; // Default to food for warehouses for now
-
-        return (this.storage[goodType] || 0) >= GOODS_CONFIG.CART_CAPACITY;
+        for (const goodType of emits) {
+            if ((this.storage[goodType] || 0) >= GOODS_CONFIG.CART_CAPACITY) return true;
+        }
+        return false;
     }
 
     // Take goods from storage for cart walker
     takeGoodsForCart() {
-        if (!this.storage) return { type: null, amount: 0 };
+        const emits = this.type.goods?.emits;
+        if (!emits || !this.storage) return { type: null, amount: 0 };
 
-        const produces = this.type.produces;
-        const distributes = this.type.distributesGoods;
-
-        if (!produces && !distributes) return { type: null, amount: 0 };
-
-        const goodType = produces || 'food'; // Warehouse distributes food
-        const available = this.storage[goodType] || 0;
-
-        // For warehouses, only distribute if we have enough for a full cart
-        // This prevents micro-transfers
-        if (distributes && available < GOODS_CONFIG.CART_CAPACITY) {
-            return { type: null, amount: 0 };
+        // Find the first emittable good with enough stock
+        for (const goodType of emits) {
+            const available = this.storage[goodType] || 0;
+            if (available >= GOODS_CONFIG.CART_CAPACITY) {
+                const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
+                this.storage[goodType] -= amount;
+                return { type: goodType, amount };
+            }
         }
 
-        const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
-        this.storage[goodType] -= amount;
-
-        return { type: goodType, amount };
+        return { type: null, amount: 0 };
     }
 
-    onCartWalkerSpawned() {
-        this.cartSpawnTimer = this.cartSpawnInterval;
-        this.activeCartWalkers++;
-    }
-
-    onCartWalkerReturned() {
-        this.activeCartWalkers = Math.max(0, this.activeCartWalkers - 1);
-    }
-
-    // Receive goods from a cart walker (for markets)
+    // Receive goods from a cart walker
     receiveGoods(goodType, amount) {
         if (!this.storage) return 0;
-        if (!this.type.acceptsGoods?.includes(goodType)) return 0;
+        if (!this.type.goods?.receives?.includes(goodType)) return 0;
 
         const current = this.storage[goodType] || 0;
-        const space = this.maxStorage - current;
+        const maxStorage = this.getMaxStorage(goodType);
+        const space = maxStorage - current;
         const received = Math.min(amount, space);
 
         this.storage[goodType] = current + received;
-        return received;  // Return amount actually received
+        return received;
     }
 
-    // Check if market has goods to distribute
+    // Check if building has goods to distribute via service walkers
     hasGoodsToDistribute() {
-        if (!this.storage || !this.type.acceptsGoods) return false;
+        const distributes = this.type.goods?.distributes;
+        if (!distributes || !this.storage) return false;
 
-        for (const goodType of this.type.acceptsGoods) {
+        for (const goodType of distributes) {
             if ((this.storage[goodType] || 0) > 0) return true;
         }
         return false;
     }
 
-    // Take goods from market for distributor walker
+    // Take goods for distributor (service) walker
     takeGoodsForDistributor() {
-        if (!this.storage || !this.type.acceptsGoods) return { type: null, amount: 0 };
+        const distributes = this.type.goods?.distributes;
+        if (!distributes || !this.storage) return { type: null, amount: 0 };
 
-        // Take food (the primary good for markets)
-        const goodType = 'food';
-        const available = this.storage[goodType] || 0;
-        const amount = Math.min(available, GOODS_CONFIG.DISTRIBUTOR_CAPACITY);
+        // Take the first distributable good
+        for (const goodType of distributes) {
+            const available = this.storage[goodType] || 0;
+            if (available > 0) {
+                const amount = Math.min(available, GOODS_CONFIG.DISTRIBUTOR_CAPACITY);
+                this.storage[goodType] -= amount;
+                return { type: goodType, amount };
+            }
+        }
 
-        this.storage[goodType] -= amount;
-        return { type: goodType, amount };
+        return { type: null, amount: 0 };
     }
 
     // Return leftover goods from distributor walker
@@ -481,7 +486,8 @@ export class Building {
 
     // Get storage percentage for rendering
     getStoragePercent(goodType) {
-        if (!this.storage || !this.maxStorage) return 0;
-        return (this.storage[goodType] || 0) / this.maxStorage;
+        const maxStorage = this.getMaxStorage(goodType);
+        if (!this.storage || maxStorage <= 0) return 0;
+        return (this.storage[goodType] || 0) / maxStorage;
     }
 }
