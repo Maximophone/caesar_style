@@ -18,6 +18,7 @@ export class SaveManager {
             grid: {
                 width: game.grid.width,
                 height: game.grid.height,
+                terrain: SaveManager._serializeTerrain(game.grid),
                 resources: SaveManager._serializeResources(game.grid),
             },
 
@@ -56,10 +57,18 @@ export class SaveManager {
         // Re-create grid arrays
         for (let y = 0; y < gd.height; y++) {
             game.grid.tiles[y] = [];
+            game.grid.terrain[y] = [];
             game.grid.resources[y] = [];
             for (let x = 0; x < gd.width; x++) {
                 game.grid.tiles[y][x] = null;
+                game.grid.terrain[y][x] = null;
                 game.grid.resources[y][x] = null;
+            }
+        }
+        // Restore terrain from sparse list (backward compat: may be missing in old saves)
+        if (gd.terrain) {
+            for (const entry of gd.terrain) {
+                game.grid.terrain[entry.y][entry.x] = entry.type;
             }
         }
         // Restore resources from sparse list
@@ -150,6 +159,19 @@ export class SaveManager {
     }
 
     // ------ Private helpers ------
+
+    static _serializeTerrain(grid) {
+        const entries = [];
+        for (let y = 0; y < grid.height; y++) {
+            for (let x = 0; x < grid.width; x++) {
+                const t = grid.terrain[y][x];
+                if (t !== null) {
+                    entries.push({ x, y, type: t });
+                }
+            }
+        }
+        return entries;
+    }
 
     static _serializeResources(grid) {
         const entries = [];

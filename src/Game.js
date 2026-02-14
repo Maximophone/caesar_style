@@ -27,6 +27,7 @@ export class Game {
         // Initialize systems
         this.assetManager = new AssetManager();
         this.grid = new Grid(this.gridWidth, this.gridHeight);
+        this.grid.generateTerrain();
         this.grid.generateResources();
         this.roadNetwork = new RoadNetwork(this.grid);
         this.entityManager = new EntityManager();
@@ -102,6 +103,9 @@ export class Game {
         this.assetManager.applyTransparencyFromCorner('garden_small_south', 40);
         this.assetManager.applyTransparencyFromCorner('garden_large_south', 40);
         this.assetManager.applyTransparencyFromCorner('farm_south', 40);
+
+        // Try to load optional tile spritesheets (water, etc.)
+        await this.assetManager.tryLoadImage('water_tiles', `assets/water_tiles.png?t=${t}`);
 
         // Try to load optional directional sprites for buildings
         // These won't fail if they don't exist
@@ -263,7 +267,7 @@ export class Game {
     }
 
     placeRoad(x, y) {
-        if (this.grid.getTile(x, y) === null) {
+        if (this.grid.getTile(x, y) === null && this.grid.getTerrain(x, y) === null) {
             if (!this.economy.canAfford(ROAD_COST)) return;
 
             this.economy.spend(ROAD_COST);
@@ -319,6 +323,7 @@ export class Game {
 
         // Fresh grid
         this.grid = new Grid(this.gridWidth, this.gridHeight);
+        this.grid.generateTerrain();
         this.grid.generateResources();
         this.roadNetwork = new RoadNetwork(this.grid);
         this.buildingManager.grid = this.grid;

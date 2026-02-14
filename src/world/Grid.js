@@ -1,4 +1,4 @@
-import { RESOURCE_TYPES } from './BuildingTypes.js';
+import { RESOURCE_TYPES, TERRAIN_TYPES } from './BuildingTypes.js';
 
 // Spawning strategy implementations
 const SPAWN_STRATEGIES = {
@@ -16,6 +16,7 @@ const SPAWN_STRATEGIES = {
                     const y = cy + dy;
 
                     if (grid.isInBounds(x, y)) {
+                        if (grid.terrain[y][x] !== null) continue;
                         if (!config.allowOverlap && grid.resources[y][x] !== null) continue;
 
                         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -36,15 +37,53 @@ export class Grid {
 
         // 2D array of tiles, null = empty
         this.tiles = [];
+        // 2D array of terrain (e.g., 'water'), null = land
+        this.terrain = [];
         // 2D array of resources (e.g., 'fertility')
         this.resources = [];
 
         for (let y = 0; y < height; y++) {
             this.tiles[y] = [];
+            this.terrain[y] = [];
             this.resources[y] = [];
             for (let x = 0; x < width; x++) {
                 this.tiles[y][x] = null;
+                this.terrain[y][x] = null;
                 this.resources[y][x] = null;
+            }
+        }
+    }
+
+    generateTerrain() {
+        // Clear existing terrain
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                this.terrain[y][x] = null;
+            }
+        }
+
+        // Generate each terrain type from config
+        for (const [terrainId, config] of Object.entries(TERRAIN_TYPES)) {
+            const { count, radiusMin, radiusMax } = config.spawn;
+
+            for (let i = 0; i < count; i++) {
+                const cx = Math.floor(Math.random() * this.width);
+                const cy = Math.floor(Math.random() * this.height);
+                const radius = radiusMin + Math.floor(Math.random() * (radiusMax - radiusMin + 1));
+
+                for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const x = cx + dx;
+                        const y = cy + dy;
+
+                        if (this.isInBounds(x, y)) {
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
+                                this.terrain[y][x] = terrainId;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -71,6 +110,11 @@ export class Grid {
         return this.resources[y][x];
     }
 
+    getTerrain(x, y) {
+        if (!this.isInBounds(x, y)) return null;
+        return this.terrain[y][x];
+    }
+
     isInBounds(x, y) {
         return x >= 0 && x < this.width && y >= 0 && y < this.height;
     }
@@ -86,12 +130,13 @@ export class Grid {
         return true;
     }
 
-    // Check if a rectangle of tiles is empty
+    // Check if a rectangle of tiles is empty (no buildings/roads and no impassable terrain)
     isAreaEmpty(x, y, width, height) {
         for (let dy = 0; dy < height; dy++) {
             for (let dx = 0; dx < width; dx++) {
                 if (!this.isInBounds(x + dx, y + dy)) return false;
                 if (this.getTile(x + dx, y + dy) !== null) return false;
+                if (this.terrain[y + dy][x + dx] !== null) return false;
             }
         }
         return true;

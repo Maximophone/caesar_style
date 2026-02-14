@@ -1,5 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
-import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES } from './world/BuildingTypes.js';
+import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES, TERRAIN_TYPES } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -45,6 +45,33 @@ export class Renderer {
                 } else {
                     // Fallback to solid color
                     this.sprites.grass.render(ctx, x * ts, y * ts, ts, ts);
+                }
+
+                // Draw terrain overlay (e.g. water)
+                const terrainType = grid.terrain && grid.terrain[y][x];
+                if (terrainType) {
+                    const terrainImg = this.assetManager.getImage(`${terrainType}_tiles`);
+                    if (terrainImg && debug.useSprites) {
+                        // Same 3x3 variant spritesheet pattern as grass
+                        const twW = terrainImg.width / 3;
+                        const twH = terrainImg.height / 3;
+                        const seed = Math.sin(x * 7.4631 + y * 53.127) * 29871.3217;
+                        const variant = Math.floor((seed - Math.floor(seed)) * 9);
+                        const col = variant % 3;
+                        const row = Math.floor(variant / 3);
+                        ctx.drawImage(
+                            terrainImg,
+                            col * twW, row * twH, twW, twH,
+                            x * ts, y * ts, ts, ts
+                        );
+                    } else {
+                        // Fallback to solid color
+                        const terrainConfig = TERRAIN_TYPES[terrainType];
+                        if (terrainConfig) {
+                            ctx.fillStyle = terrainConfig.color;
+                            ctx.fillRect(x * ts, y * ts, ts, ts);
+                        }
+                    }
                 }
 
                 // Draw subtle grid lines
@@ -804,6 +831,7 @@ export class Renderer {
         } else if (input.mode === 'road') {
             const ROAD_COST = 5; // Should ideally come from BuildingTypes.js
             if (grid.getTile(x, y) !== null) isValid = false;
+            if (isValid && grid.getTerrain(x, y) !== null) isValid = false;
             if (isValid && !economy.canAfford(ROAD_COST)) isValid = false;
         }
 

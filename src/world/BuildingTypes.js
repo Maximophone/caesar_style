@@ -2,6 +2,16 @@
 // Upgrade threshold = next level's maintenance threshold for stability
 export const TAX_COOLDOWN = 10;
 
+// Terrain types — impassable tiles generated during map creation
+export const TERRAIN_TYPES = {
+    water: {
+        id: 'water',
+        name: 'Water',
+        color: 'rgba(30, 100, 180, 0.7)',
+        spawn: { strategy: 'cluster', count: 4, radiusMin: 3, radiusMax: 6 }
+    }
+};
+
 // Map resource definitions — each entry drives spawning and rendering
 export const RESOURCE_TYPES = {
     fertility: {
