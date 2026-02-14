@@ -8,7 +8,10 @@ export const TERRAIN_TYPES = {
         id: 'water',
         name: 'Water',
         color: '#1E64B4',
-        spawn: { strategy: 'cluster', count: 4, radiusMin: 3, radiusMax: 6 }
+        spawn: [
+            { strategy: 'cluster', count: 2, radiusMin: 4, radiusMax: 8 },
+            { strategy: 'river', count: 2, widthMin: 2, widthMax: 4, segments: 8, drift: 6 }
+        ]
     }
 };
 
@@ -20,7 +23,7 @@ export const RESOURCE_TYPES = {
         color: 'rgba(218, 165, 32, 0.3)',
         spawn: {
             strategy: 'cluster',
-            density: 1 / 50,
+            density: 1 / 150,
             radiusMin: 2,
             radiusMax: 4,
             allowOverlap: true,
@@ -44,8 +47,8 @@ export const RESOURCE_TYPES = {
         color: 'rgba(180, 120, 60, 0.3)',
         spawn: {
             strategy: 'cluster',
-            density: 1 / 80,
-            radiusMin: 2,
+            density: 1 / 200,
+            radiusMin: 1,
             radiusMax: 3,
             allowOverlap: false,
         }
@@ -56,9 +59,9 @@ export const RESOURCE_TYPES = {
         color: 'rgba(10, 60, 10, 0.45)',
         spawn: {
             strategy: 'cluster',
-            density: 1 / 60,
-            radiusMin: 3,
-            radiusMax: 5,
+            density: 1 / 180,
+            radiusMin: 2,
+            radiusMax: 4,
             allowOverlap: false,
         }
     },
