@@ -143,11 +143,8 @@ export class Building {
     updateGoodsCoverage() {
         if (!this.coverageNeeds || !this.storage) return;
 
-        const levelConfig = HOUSE_LEVELS[this.level];
-        const consumes = (levelConfig && levelConfig.consumes) || this.type.goods?.consumes;
-        if (!consumes) return;
-
-        for (const goodType of Object.keys(consumes)) {
+        // Update coverage for all goods in storage that correspond to a coverage need
+        for (const [goodType, amount] of Object.entries(this.storage)) {
             if (!(goodType in this.coverageNeeds)) continue;
 
             const capacity = this.getMaxStorage(goodType);
@@ -156,7 +153,7 @@ export class Building {
                 continue;
             }
 
-            this.coverageNeeds[goodType] = ((this.storage[goodType] || 0) / capacity) * this.maxCoverage;
+            this.coverageNeeds[goodType] = (amount / capacity) * this.maxCoverage;
         }
     }
 
