@@ -114,6 +114,7 @@ export const BUILDING_TYPES = {
             storage: { food: 400, utensils: 200 },
             distributes: ['food', 'utensils']
         },
+        deliveryPriority: 10,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' }
@@ -188,6 +189,7 @@ export const BUILDING_TYPES = {
             storage: { food: 800, iron: 400, utensils: 400 },
             emits: ['food', 'iron', 'utensils']
         },
+        deliveryPriority: 1,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
         ]
@@ -237,6 +239,7 @@ export const BUILDING_TYPES = {
             productionCost: { iron: 1 }, // Consumes 1 Iron per 1 Utensil produced
             emits: ['utensils']
         },
+        deliveryPriority: 10,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
         ]

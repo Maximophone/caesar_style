@@ -283,10 +283,11 @@ export class BuildingManager {
         }
     }
 
-    // Find the most empty building that accepts a given good type
+    // Find the building that accepts a given good type, prioritizing based on config
     findAcceptingBuilding(goodType, fromBuilding) {
-        let best = null;
-        let lowestFillPercent = Infinity;
+        let bestBuilding = null;
+        let highestPriority = -Infinity;
+        let lowestFillAtHighestPriority = Infinity;
 
         for (const building of this.buildings) {
             if (building === fromBuilding) continue;
@@ -303,16 +304,25 @@ export class BuildingManager {
             const max = building.getMaxStorage(goodType);
             if (current >= max) continue;  // Full, skip
 
-            // Calculate fill percentage (lower = more empty = better)
+            // Get priority (default to 0 if not specified)
+            const priority = building.type.deliveryPriority || 0;
             const fillPercent = max > 0 ? current / max : 1;
 
-            if (fillPercent < lowestFillPercent) {
-                lowestFillPercent = fillPercent;
-                best = building;
+            if (priority > highestPriority) {
+                // Found a higher priority building, reset best
+                highestPriority = priority;
+                lowestFillAtHighestPriority = fillPercent;
+                bestBuilding = building;
+            } else if (priority === highestPriority) {
+                // Same priority, pick the emptiest one
+                if (fillPercent < lowestFillAtHighestPriority) {
+                    lowestFillAtHighestPriority = fillPercent;
+                    bestBuilding = building;
+                }
             }
         }
 
-        return best;
+        return bestBuilding;
     }
 
 }
