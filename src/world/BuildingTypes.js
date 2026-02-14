@@ -9,7 +9,7 @@ export const TERRAIN_TYPES = {
         name: 'Water',
         color: '#1E64B4',
         spawn: [
-            { strategy: 'cluster', count: 2, radiusMin: 4, radiusMax: 8 },
+            { strategy: 'cluster', count: 2, radiusMin: 6, radiusMax: 12 },
             { strategy: 'river', count: 2, widthMin: 2, widthMax: 4, segments: 8, drift: 6 }
         ]
     }
