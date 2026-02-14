@@ -261,10 +261,10 @@ export class Renderer {
             if (debug.showOverlays) {
                 // Draw Building Emoji in top-right corner
                 if (building.type.emoji) {
-                    ctx.font = '14px sans-serif';
+                    ctx.font = '11px sans-serif';
                     ctx.fillStyle = '#fff';
                     ctx.textAlign = 'right';
-                    ctx.fillText(building.type.emoji, bx + bw - 4, by + 14);
+                    ctx.fillText(building.type.emoji, bx + bw - 4, by + 12);
                     ctx.textAlign = 'left'; // Reset for other text
                 }
 
