@@ -259,6 +259,15 @@ export class Renderer {
 
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
+                // Draw Building Emoji in top-right corner
+                if (building.type.emoji) {
+                    ctx.font = '14px sans-serif';
+                    ctx.fillStyle = '#fff';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(building.type.emoji, bx + bw - 4, by + 14);
+                    ctx.textAlign = 'left'; // Reset for other text
+                }
+
                 if (building.coverageNeeds) {
                     // --- HOUSE OVERLAY ---
                     const levels = building.getCoverageLevels();

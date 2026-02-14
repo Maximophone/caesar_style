@@ -66,6 +66,7 @@ export const BUILDING_TYPES = {
     house: {
         id: 'house',
         name: 'House',
+        emoji: '🏠',
         width: 2,
         height: 2,
         color: '#A0522D',  // Start as Tent color
@@ -80,6 +81,7 @@ export const BUILDING_TYPES = {
     well: {
         id: 'well',
         name: 'Well',
+        emoji: '💧',
         width: 1,
         height: 1,
         color: '#4169E1',  // Blue
@@ -92,6 +94,7 @@ export const BUILDING_TYPES = {
     fountain: {
         id: 'fountain',
         name: 'Fountain',
+        emoji: '⛲',
         width: 1,
         height: 1,
         color: '#00BFFF',  // Deep Sky Blue
@@ -104,6 +107,7 @@ export const BUILDING_TYPES = {
     market: {
         id: 'market',
         name: 'Market',
+        emoji: '⚖️',
         width: 2,
         height: 2,
         color: '#DAA520',  // Goldenrod
@@ -122,6 +126,7 @@ export const BUILDING_TYPES = {
     temple: {
         id: 'temple',
         name: 'Temple',
+        emoji: '🏛️',
         width: 3,
         height: 3,
         color: '#9370DB',  // Purple
@@ -134,6 +139,7 @@ export const BUILDING_TYPES = {
     small_garden: {
         id: 'small_garden',
         name: 'Small Garden',
+        emoji: '🌿',
         width: 1,
         height: 1,
         color: '#228B22',  // Forest Green
@@ -147,6 +153,7 @@ export const BUILDING_TYPES = {
     large_garden: {
         id: 'large_garden',
         name: 'Large Garden',
+        emoji: '🌳',
         width: 2,
         height: 2,
         color: '#006400',  // Dark Green
@@ -160,6 +167,7 @@ export const BUILDING_TYPES = {
     farm: {
         id: 'farm',
         name: 'Farm',
+        emoji: '🌾',
         width: 4,
         height: 4,
         color: '#8B7355',  // Wheat/tan color
@@ -178,6 +186,7 @@ export const BUILDING_TYPES = {
     warehouse: {
         id: 'warehouse',
         name: 'Warehouse',
+        emoji: '📦',
         width: 3,
         height: 3,
         color: '#8B4513',  // Saddle brown
@@ -195,6 +204,7 @@ export const BUILDING_TYPES = {
     mine: {
         id: 'mine',
         name: 'Mine',
+        emoji: '⛏️',
         width: 3,
         height: 3,
         color: '#555555',  // Dark gray
@@ -213,6 +223,7 @@ export const BUILDING_TYPES = {
     tax_office: {
         id: 'tax_office',
         name: 'Tax Office',
+        emoji: '💰',
         width: 2,
         height: 2,
         color: '#A52A2A',  // Brown
@@ -225,6 +236,7 @@ export const BUILDING_TYPES = {
     workshop: {
         id: 'workshop',
         name: 'Workshop',
+        emoji: '🛠️',
         width: 2,
         height: 2,
         color: '#CD853F',  // Peru (bronze-ish)
