@@ -619,7 +619,10 @@ export class Renderer {
             if (entity.cargo && entity.cargo.amount > 0) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                 ctx.fillRect(x - 2, y - 12, size + 4, 10);
-                ctx.fillStyle = '#DAA520';  // Gold for food
+
+                const goodColor = GOODS_META[entity.cargo.type]?.color || '#FFFFFF';
+
+                ctx.fillStyle = goodColor;
                 ctx.font = 'bold 8px sans-serif';
                 ctx.fillText(`${Math.floor(entity.cargo.amount)}`, x, y - 4);
             }
