@@ -1,18 +1,10 @@
 # Caesar Style - Ideas & Future Plans
 
-## Economy Separation: Food vs Hardware
+## Economy Separation: Food vs Hardware ✅ DONE
 
-Split the distribution and storage systems into specialized buildings:
-
-**Food chain:**
-- **Granary** — food-only warehouse, cheaper, smaller (2x2)
-- **Market** — distributes food only to houses
-
-**Hardware/luxury chain:**
-- **Warehouse** — stores raw materials and finished goods (iron, clay, timber, utensils, pottery, furniture)
-- **Bazaar** — distributes luxury/manufactured goods (utensils, pottery, furniture) to houses
-
-This creates a natural two-track economy where players need to build both distribution networks. Markets handle the basic food supply, bazaars handle the premium goods needed for house evolution beyond L2.
+Implemented! Food and hardware now have separate pipelines:
+- **Food:** Farm/Fishing Wharf → Granary → Market → Houses
+- **Hardware:** Mine/Clay Pit/Lumber Camp → Workshop/Potter/Carpenter → Warehouse → Bazaar → Houses
 
 ## New Service Buildings
 

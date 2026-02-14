@@ -138,11 +138,11 @@ export const BUILDING_CATEGORIES = {
     roads: { key: '1', name: 'Roads', buildings: ['road', 'bridge'] },
     residential: { key: '2', name: 'Residential', buildings: ['house'] },
     water: { key: '3', name: 'Water', buildings: ['well', 'fountain'] },
-    food: { key: '4', name: 'Food', buildings: ['farm', 'fishing_wharf', 'market', 'warehouse'] },
+    food: { key: '4', name: 'Food', buildings: ['farm', 'fishing_wharf', 'granary', 'market'] },
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
-    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop', 'clay_pit', 'potter', 'lumber_camp', 'carpenter'] }
+    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] }
 };
 
 // Building type configurations
@@ -193,21 +193,18 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#DAA520',  // Goldenrod
-        workersNeeded: 3,  // Reduced from 5
+        workersNeeded: 2,
         cost: 60,
         goods: {
-            receives: ['food', 'fish', 'utensils', 'pottery', 'furniture'],
-            storage: { food: 400, fish: 400, utensils: 200, pottery: 200, furniture: 200 },
-            distributes: ['food', 'fish', 'utensils', 'pottery', 'furniture']
+            receives: ['food', 'fish'],
+            storage: { food: 400, fish: 400 },
+            distributes: ['food', 'fish']
         },
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'fish' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'pottery' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'furniture' }
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'fish' }
         ],
         desirability: { 1: -5 }
     },
@@ -282,18 +279,37 @@ export const BUILDING_TYPES = {
         ],
         desirability: { 1: -5 }
     },
+    granary: {
+        id: 'granary',
+        name: 'Granary',
+        width: 3,
+        height: 3,
+        color: '#B8860B',  // Dark goldenrod (food storage)
+        workersNeeded: 2,
+        cost: 100,
+        goods: {
+            receives: ['food', 'fish'],
+            storage: { food: 800, fish: 400 },
+            emits: ['food', 'fish']
+        },
+        deliveryPriority: 1,
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -10, 2: -5 }
+    },
     warehouse: {
         id: 'warehouse',
         name: 'Warehouse',
         width: 3,
         height: 3,
         color: '#8B4513',  // Saddle brown
-        workersNeeded: 2,  // Reduced from 4
+        workersNeeded: 2,
         cost: 100,
         goods: {
-            receives: ['food', 'fish', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
-            storage: { food: 800, fish: 400, iron: 400, utensils: 400, clay: 400, pottery: 400, timber: 400, furniture: 400 },
-            emits: ['food', 'fish', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture']
+            receives: ['iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
+            storage: { iron: 400, utensils: 400, clay: 400, pottery: 400, timber: 400, furniture: 400 },
+            emits: ['iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture']
         },
         deliveryPriority: 1,
         walkers: [
@@ -434,6 +450,28 @@ export const BUILDING_TYPES = {
         deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -5 }
+    },
+    bazaar: {
+        id: 'bazaar',
+        name: 'Bazaar',
+        width: 2,
+        height: 2,
+        color: '#CD853F',  // Peru (craft/trade)
+        workersNeeded: 3,
+        cost: 80,
+        goods: {
+            receives: ['utensils', 'pottery', 'furniture'],
+            storage: { utensils: 200, pottery: 200, furniture: 200 },
+            distributes: ['utensils', 'pottery', 'furniture']
+        },
+        deliveryPriority: 10,
+        deliveryFillThreshold: 0.5,
+        walkers: [
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'pottery' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'furniture' }
         ],
         desirability: { 1: -5 }
     }
