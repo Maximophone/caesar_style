@@ -107,7 +107,7 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#DAA520',  // Goldenrod
-        workersNeeded: 5,
+        workersNeeded: 3,  // Reduced from 5
         cost: 60,
         goods: {
             receives: ['food', 'utensils'],
@@ -125,7 +125,7 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#9370DB',  // Purple
-        workersNeeded: 8,
+        workersNeeded: 4,  // Reduced from 8
         cost: 200,
         walkers: [
             { type: 'service', max: 2, spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
@@ -163,7 +163,7 @@ export const BUILDING_TYPES = {
         width: 4,
         height: 4,
         color: '#8B7355',  // Wheat/tan color
-        workersNeeded: 6,
+        workersNeeded: 3,  // Reduced from 6
         cost: 120,
         requiredResource: 'fertility',
         goods: {
@@ -181,7 +181,7 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#8B4513',  // Saddle brown
-        workersNeeded: 4,
+        workersNeeded: 2,  // Reduced from 4
         cost: 100,
         goods: {
             receives: ['food', 'iron', 'utensils'],
@@ -198,7 +198,7 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#555555',  // Dark gray
-        workersNeeded: 8,
+        workersNeeded: 4,  // Reduced from 8
         cost: 150,
         requiredResource: 'iron_ore',
         goods: {
@@ -216,7 +216,7 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A52A2A',  // Brown
-        workersNeeded: 4,
+        workersNeeded: 2,  // Reduced from 4
         cost: 100,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
@@ -228,7 +228,7 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#CD853F',  // Peru (bronze-ish)
-        workersNeeded: 6,
+        workersNeeded: 3,  // Reduced from 6
         cost: 120,
         goods: {
             receives: ['iron'],
