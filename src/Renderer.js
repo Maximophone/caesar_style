@@ -211,31 +211,16 @@ export class Renderer {
                 const direction = rotationToDirection[building.rotation] || 'south';
 
                 // Determine base sprite name based on building type
+                // Special cases where asset name differs from building ID
+                const SPRITE_NAME_MAP = {
+                    'small_garden': 'garden_small',
+                    'large_garden': 'garden_large',
+                };
                 let baseName = null;
                 if (building.type.id === 'house') {
                     baseName = `house_level_${building.level}`;
-                } else if (building.type.id === 'well') {
-                    baseName = 'well';
-                } else if (building.type.id === 'fountain') {
-                    baseName = 'fountain';
-                } else if (building.type.id === 'market') {
-                    baseName = 'market';
-                } else if (building.type.id === 'temple') {
-                    baseName = 'temple';
-                } else if (building.type.id === 'small_garden') {
-                    baseName = 'garden_small';
-                } else if (building.type.id === 'large_garden') {
-                    baseName = 'garden_large';
-                } else if (building.type.id === 'farm') {
-                    baseName = 'farm';
-                } else if (building.type.id === 'warehouse') {
-                    baseName = 'warehouse';
-                } else if (building.type.id === 'tax_office') {
-                    baseName = 'tax_office';
-                } else if (building.type.id === 'mine') {
-                    baseName = 'mine';
-                } else if (building.type.id === 'workshop') {
-                    baseName = 'workshop';
+                } else {
+                    baseName = SPRITE_NAME_MAP[building.type.id] || building.type.id;
                 }
 
                 if (baseName) {
