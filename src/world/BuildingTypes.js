@@ -176,7 +176,7 @@ export const BUILDING_TYPES = {
             emits: ['food']
         },
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', max: 2, spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
