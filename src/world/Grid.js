@@ -130,13 +130,20 @@ export class Grid {
         return true;
     }
 
-    // Check if a rectangle of tiles is empty (no buildings/roads and no impassable terrain)
-    isAreaEmpty(x, y, width, height) {
+    // Check if a rectangle of tiles is empty (no buildings/roads and correct terrain)
+    // If requiredTerrain is set, ALL tiles must have that terrain type.
+    // If requiredTerrain is null (default), ALL tiles must have NO terrain.
+    isAreaEmpty(x, y, width, height, requiredTerrain = null) {
         for (let dy = 0; dy < height; dy++) {
             for (let dx = 0; dx < width; dx++) {
                 if (!this.isInBounds(x + dx, y + dy)) return false;
                 if (this.getTile(x + dx, y + dy) !== null) return false;
-                if (this.terrain[y + dy][x + dx] !== null) return false;
+                const terrain = this.terrain[y + dy][x + dx];
+                if (requiredTerrain) {
+                    if (terrain !== requiredTerrain) return false;
+                } else {
+                    if (terrain !== null) return false;
+                }
             }
         }
         return true;

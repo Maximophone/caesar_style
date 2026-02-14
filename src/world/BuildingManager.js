@@ -15,8 +15,8 @@ export class BuildingManager {
         const width = type.width;
         const height = type.height;
 
-        // Check if area is empty
-        if (!this.grid.isAreaEmpty(x, y, width, height)) {
+        // Check if area is empty (pass requiredTerrain for buildings like Fishing Wharf)
+        if (!this.grid.isAreaEmpty(x, y, width, height, type.requiredTerrain || null)) {
             return null;
         }
 

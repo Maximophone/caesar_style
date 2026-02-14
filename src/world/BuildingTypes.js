@@ -7,7 +7,7 @@ export const TERRAIN_TYPES = {
     water: {
         id: 'water',
         name: 'Water',
-        color: 'rgba(30, 100, 180, 0.7)',
+        color: '#1E64B4',
         spawn: { strategy: 'cluster', count: 4, radiusMin: 3, radiusMax: 6 }
     }
 };
@@ -73,6 +73,7 @@ export const GOODS_META = {
     pottery: { emoji: '🏺', color: '#CD853F' },
     timber: { emoji: '🪵', color: '#8B6914' },
     furniture: { emoji: '🪑', color: '#DEB887' },
+    fish: { emoji: '🐟', color: '#1E90FF' },
 };
 
 export const HOUSE_LEVELS = [
@@ -102,7 +103,7 @@ export const HOUSE_LEVELS = [
         name: 'Stone House',
         color: '#654321',  // Dark brown
         population: 4,
-        requirements: { water: 0.6, food: 0.5, religion: 0.2, pottery: 0.2 },
+        requirements: { water: 0.6, food: 0.5, religion: 0.2, pottery: 0.2, fish: 0.3 },
         upgradeThreshold: 0.8,
         taxMultiplier: 2
         // No desirability — neutral
@@ -112,7 +113,7 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, pottery: 0.4, desirability: 0.4 },
+        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, pottery: 0.4, fish: 0.5, desirability: 0.4 },
         upgradeThreshold: 0.8,
         taxMultiplier: 3,
         desirability: { 1: 15, 2: 10, 3: 5 }
@@ -122,7 +123,7 @@ export const HOUSE_LEVELS = [
         name: 'Palace',
         color: '#2F1B14',  // Near-black brown
         population: 10,
-        requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, desirability: 0.6 },
+        requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, fish: 0.7, desirability: 0.6 },
         upgradeThreshold: null,
         taxMultiplier: 5,
         desirability: { 1: 25, 2: 20, 3: 15, 4: 10, 5: 5 }
@@ -134,7 +135,7 @@ export const BUILDING_CATEGORIES = {
     roads: { key: '1', name: 'Roads', buildings: ['road'] },
     residential: { key: '2', name: 'Residential', buildings: ['house'] },
     water: { key: '3', name: 'Water', buildings: ['well', 'fountain'] },
-    food: { key: '4', name: 'Food', buildings: ['farm', 'market', 'warehouse'] },
+    food: { key: '4', name: 'Food', buildings: ['farm', 'fishing_wharf', 'market', 'warehouse'] },
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
@@ -149,12 +150,12 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A0522D',  // Start as Tent color
-        coverageNeeds: ['water', 'food', 'religion', 'utensils', 'pottery', 'furniture', 'desirability'],
+        coverageNeeds: ['water', 'food', 'fish', 'religion', 'utensils', 'pottery', 'furniture', 'desirability'],
         cost: 30,
         goods: {
-            storage: { food: 5, utensils: 2, pottery: 2, furniture: 2 },
+            storage: { food: 5, fish: 5, utensils: 2, pottery: 2, furniture: 2 },
             dynamicCapacity: true,
-            consumes: { food: 0.1, utensils: 0.05, pottery: 0.05, furniture: 0.04 },
+            consumes: { food: 0.1, fish: 0.08, utensils: 0.05, pottery: 0.05, furniture: 0.04 },
         }
     },
     well: {
@@ -192,14 +193,15 @@ export const BUILDING_TYPES = {
         workersNeeded: 3,  // Reduced from 5
         cost: 60,
         goods: {
-            receives: ['food', 'utensils', 'pottery', 'furniture'],
-            storage: { food: 400, utensils: 200, pottery: 200, furniture: 200 },
-            distributes: ['food', 'utensils', 'pottery', 'furniture']
+            receives: ['food', 'fish', 'utensils', 'pottery', 'furniture'],
+            storage: { food: 400, fish: 400, utensils: 200, pottery: 200, furniture: 200 },
+            distributes: ['food', 'fish', 'utensils', 'pottery', 'furniture']
         },
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'fish' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'pottery' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'furniture' }
@@ -258,6 +260,25 @@ export const BUILDING_TYPES = {
         ],
         desirability: { 1: -10, 2: -5 }
     },
+    fishing_wharf: {
+        id: 'fishing_wharf',
+        name: 'Fishing Wharf',
+        width: 2,
+        height: 2,
+        color: '#1E90FF',  // Dodger blue
+        workersNeeded: 2,
+        cost: 80,
+        requiredTerrain: 'water',
+        goods: {
+            produces: { fish: 8 },
+            storage: { fish: 150 },
+            emits: ['fish']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -5 }
+    },
     warehouse: {
         id: 'warehouse',
         name: 'Warehouse',
@@ -267,9 +288,9 @@ export const BUILDING_TYPES = {
         workersNeeded: 2,  // Reduced from 4
         cost: 100,
         goods: {
-            receives: ['food', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
-            storage: { food: 800, iron: 400, utensils: 400, clay: 400, pottery: 400, timber: 400, furniture: 400 },
-            emits: ['food', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture']
+            receives: ['food', 'fish', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
+            storage: { food: 800, fish: 400, iron: 400, utensils: 400, clay: 400, pottery: 400, timber: 400, furniture: 400 },
+            emits: ['food', 'fish', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture']
         },
         deliveryPriority: 1,
         walkers: [

@@ -29,25 +29,7 @@ export class Renderer {
         // Draw grass background for each tile
         for (let y = 0; y < grid.height; y++) {
             for (let x = 0; x < grid.width; x++) {
-                if (grassImg && debug.useSprites) {
-                    // pseudo-random deterministic variant based on position
-                    const seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-                    const variant = Math.floor((seed - Math.floor(seed)) * 9);
-
-                    const col = variant % 3;
-                    const row = Math.floor(variant / 3);
-
-                    ctx.drawImage(
-                        grassImg,
-                        col * tileW, row * tileH, tileW, tileH,
-                        x * ts, y * ts, ts, ts
-                    );
-                } else {
-                    // Fallback to solid color
-                    this.sprites.grass.render(ctx, x * ts, y * ts, ts, ts);
-                }
-
-                // Draw terrain overlay (e.g. water)
+                // Check for terrain (e.g. water) — replaces grass entirely
                 const terrainType = grid.terrain && grid.terrain[y][x];
                 if (terrainType) {
                     const terrainImg = this.assetManager.getImage(`${terrainType}_tiles`);
@@ -65,13 +47,29 @@ export class Renderer {
                             x * ts, y * ts, ts, ts
                         );
                     } else {
-                        // Fallback to solid color
+                        // Fallback to solid opaque color
                         const terrainConfig = TERRAIN_TYPES[terrainType];
                         if (terrainConfig) {
                             ctx.fillStyle = terrainConfig.color;
                             ctx.fillRect(x * ts, y * ts, ts, ts);
                         }
                     }
+                } else if (grassImg && debug.useSprites) {
+                    // pseudo-random deterministic variant based on position
+                    const seed = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+                    const variant = Math.floor((seed - Math.floor(seed)) * 9);
+
+                    const col = variant % 3;
+                    const row = Math.floor(variant / 3);
+
+                    ctx.drawImage(
+                        grassImg,
+                        col * tileW, row * tileH, tileW, tileH,
+                        x * ts, y * ts, ts, ts
+                    );
+                } else {
+                    // Fallback to solid color
+                    this.sprites.grass.render(ctx, x * ts, y * ts, ts, ts);
                 }
 
                 // Draw subtle grid lines
@@ -817,8 +815,8 @@ export class Renderer {
                 width = type.width;
                 height = type.height;
 
-                // Check empty area
-                if (!grid.isAreaEmpty(x, y, width, height)) isValid = false;
+                // Check empty area (pass requiredTerrain for buildings like Fishing Wharf)
+                if (!grid.isAreaEmpty(x, y, width, height, type.requiredTerrain || null)) isValid = false;
 
                 // Check road access
                 if (isValid && type.needsRoadAccess !== false) {
