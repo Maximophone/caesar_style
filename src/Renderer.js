@@ -259,12 +259,14 @@ export class Renderer {
 
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
-                // Draw Building Emoji in top-right corner
+                // Draw Building Emoji - positioned to avoid bars
                 if (building.type.emoji) {
-                    ctx.font = '9px sans-serif';
+                    ctx.font = '8px sans-serif';
                     ctx.fillStyle = '#fff';
                     ctx.textAlign = 'right';
-                    ctx.fillText(building.type.emoji, bx + bw - 4, by + 11);
+                    // Move lower to avoid top employment bar (which is at Y=2..6)
+                    const emojiY = building.coverageNeeds ? by + 11 : by + 16;
+                    ctx.fillText(building.type.emoji, bx + bw - 4, emojiY);
                     ctx.textAlign = 'left'; // Reset for other text
                 }
 
