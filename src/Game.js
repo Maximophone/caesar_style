@@ -16,12 +16,12 @@ export class Game {
 
         // Game settings
         this.tileSize = 24;
-        this.gridWidth = 32;
-        this.gridHeight = 24;
+        this.gridWidth = 60; // Increased map size
+        this.gridHeight = 60;
 
-        // Set canvas size
-        this.canvas.width = this.gridWidth * this.tileSize;
-        this.canvas.height = this.gridHeight * this.tileSize;
+        // Set canvas size (Viewport)
+        this.canvas.width = 800;
+        this.canvas.height = 600;
 
         // Initialize systems
         this.assetManager = new AssetManager();
@@ -38,6 +38,10 @@ export class Game {
         // Timing
         this.lastTime = 0;
         this.running = false;
+
+        // Camera
+        this.camera = { x: 0, y: 0 };
+        this.cameraSpeed = 300; // pixels per second
 
         // Debug controls
         this.debug = {
@@ -156,15 +160,51 @@ export class Game {
     }
 
     update(deltaTime) {
+        this.handleCameraMovement(deltaTime);
         this.buildingManager.update(deltaTime);
         this.entityManager.update(deltaTime, this.roadNetwork, this.grid, this.economy);
         this.economy.update(deltaTime, this.buildingManager.buildings);
+    }
+
+    handleCameraMovement(deltaTime) {
+        let dx = 0;
+        let dy = 0;
+
+        // Arrow keys
+        if (this.input.keys['ArrowLeft']) dx -= 1;
+        if (this.input.keys['ArrowRight']) dx += 1;
+        if (this.input.keys['ArrowUp']) dy -= 1;
+        if (this.input.keys['ArrowDown']) dy += 1;
+
+        // Apply movement
+        if (dx !== 0 || dy !== 0) {
+            // Normalize diagonal movement
+            const length = Math.sqrt(dx * dx + dy * dy);
+            dx /= length;
+            dy /= length;
+
+            this.camera.x += dx * this.cameraSpeed * deltaTime;
+            this.camera.y += dy * this.cameraSpeed * deltaTime;
+        }
+
+        // Clamp camera to map bounds
+        // Allow scrolling a bit past the edge (e.g., half screen) for better visibility
+        const maxX = (this.gridWidth * this.tileSize) - this.canvas.width;
+        const maxY = (this.gridHeight * this.tileSize) - this.canvas.height;
+
+        // Ensure we don't scroll into negative (if map is smaller than canvas)
+        this.camera.x = Math.max(0, Math.min(this.camera.x, Math.max(0, maxX)));
+        this.camera.y = Math.max(0, Math.min(this.camera.y, Math.max(0, maxY)));
     }
 
     render() {
         // Clear canvas
         this.ctx.fillStyle = '#16213e';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.ctx.save();
+        // Apply camera translation
+        this.ctx.translate(-Math.floor(this.camera.x), -Math.floor(this.camera.y));
 
         // Render grid
         this.renderer.renderGrid(this.grid, this.debug);
@@ -179,7 +219,9 @@ export class Game {
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities);
 
-        // Render UI hints
+        this.ctx.restore();
+
+        // Render UI hints (fixed on screen)
         this.renderer.renderUI(this.input, this.economy, this.debug, this.buildingMenu);
     }
 

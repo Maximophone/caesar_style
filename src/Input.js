@@ -8,7 +8,12 @@ export class Input {
         this.mouseX = 0;
         this.mouseY = 0;
         this.isMouseDown = false;
+        // Store raw client coordinates for re-calculating tile under mouse during scroll
+        this.lastMouseClientX = 0;
+        this.lastMouseClientY = 0;
         this.mouseButton = null;
+        // Keyboard state
+        this.keys = {};
 
         this.setupEventListeners();
     }
@@ -24,18 +29,31 @@ export class Input {
 
         // Keyboard events
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
+        window.addEventListener('keyup', (e) => this.onKeyUp(e));
     }
 
     screenToTile(screenX, screenY) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = Math.floor((screenX - rect.left) / this.tileSize);
-        const y = Math.floor((screenY - rect.top) / this.tileSize);
+        const camX = this.game.camera ? this.game.camera.x : 0;
+        const camY = this.game.camera ? this.game.camera.y : 0;
+
+        const x = Math.floor((screenX - rect.left + camX) / this.tileSize);
+        const y = Math.floor((screenY - rect.top + camY) / this.tileSize);
         return { x, y };
     }
 
     onMouseDown(e) {
         this.isMouseDown = true;
         this.mouseButton = e.button;
+
+        // Middle mouse drag start
+        if (e.button === 1) {
+            e.preventDefault(); // Prevent default scroll
+            this.lastDragX = e.clientX;
+            this.lastDragY = e.clientY;
+            return;
+        }
+
         const { x, y } = this.screenToTile(e.clientX, e.clientY);
         this.game.onTileClick(x, y, e.button);
     }
@@ -46,11 +64,37 @@ export class Input {
     }
 
     onMouseMove(e) {
+        this.lastMouseClientX = e.clientX;
+        this.lastMouseClientY = e.clientY;
+
+        // Middle mouse drag
+        if (this.isMouseDown && this.mouseButton === 1) {
+            const dx = e.clientX - this.lastDragX;
+            const dy = e.clientY - this.lastDragY;
+
+            // Update camera position directly
+            // Dragging left moves camera right (world moves left)
+            this.game.camera.x -= dx;
+            this.game.camera.y -= dy;
+
+            // Update last pos
+            this.lastDragX = e.clientX;
+            this.lastDragY = e.clientY;
+
+            // Clamp camera
+            const maxX = (this.game.gridWidth * this.game.tileSize) - this.game.canvas.width;
+            const maxY = (this.game.gridHeight * this.game.tileSize) - this.game.canvas.height;
+            this.game.camera.x = Math.max(0, Math.min(this.game.camera.x, Math.max(0, maxX)));
+            this.game.camera.y = Math.max(0, Math.min(this.game.camera.y, Math.max(0, maxY)));
+
+            return;
+        }
+
         const { x, y } = this.screenToTile(e.clientX, e.clientY);
         this.mouseX = x;
         this.mouseY = y;
 
-        // Handle drag interactions
+        // Handle drag interactions (Left/Right click)
         if (this.isMouseDown) {
             if (this.mouseButton === 2) {
                 // Right click drag -> Delete
@@ -66,6 +110,8 @@ export class Input {
     }
 
     onKeyDown(e) {
+        this.keys[e.key] = true;
+
         // Debug controls
         if (e.key.toLowerCase() === 'o') {
             this.game.toggleOverlays();
@@ -89,6 +135,10 @@ export class Input {
         }
     }
 
+    onKeyUp(e) {
+        this.keys[e.key] = false;
+    }
+
     // Get current mode from building menu
     get mode() {
         return this.game.buildingMenu.placementMode || 'none';
@@ -104,7 +154,9 @@ export class Input {
     }
 
     getHoveredBuilding(grid) {
-        const tile = grid.getTile(this.mouseX, this.mouseY);
+        // Always recalculate based on current camera position
+        const { x, y } = this.screenToTile(this.lastMouseClientX, this.lastMouseClientY);
+        const tile = grid.getTile(x, y);
         if (tile && tile.type === 'building' && tile.building) {
             return tile.building;
         }

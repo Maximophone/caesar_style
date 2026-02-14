@@ -207,34 +207,38 @@ export class BuildingManager {
 
     // Spawn a service walker (random patrol, coverage emitting)
     spawnServiceWalker(building, slotIndex, config) {
-        const pathLength = config.pathLength || 15;
-        const path = this.roadNetwork.getRandomPath(
-            building.roadAccessX,
-            building.roadAccessY,
-            pathLength
-        );
+        // Path length becomes max steps for roaming
+        const maxSteps = config.pathLength || 15;
 
-        if (path.length > 1) {
-            // Load cargo if this building distributes goods
-            let cargo = null;
-            const goodToDistribute = config.coverageType;
-            if (building.type.goods?.distributes && building.hasGoodsToDistribute(goodToDistribute)) {
-                cargo = building.takeGoodsForDistributor(goodToDistribute);
-            }
+        // No pre-calculated path anymore. 
+        // We just need to check if there is ANY road connected to spawn point.
+        // If not, don't spawn.
+        const startX = building.roadAccessX;
+        const startY = building.roadAccessY;
 
-            const walker = new Walker(
-                building.roadAccessX,
-                building.roadAccessY,
-                path,
-                building,
-                slotIndex,
-                config.coverageType,
-                building.type.color,
-                cargo
-            );
-            this.entityManager.addEntity(walker);
-            building.onWalkerSpawned(slotIndex);
+        if (this.roadNetwork.getConnectedRoads(startX, startY).length === 0) {
+            return; // No road access
         }
+
+        // Load cargo if this building distributes goods
+        let cargo = null;
+        const goodToDistribute = config.coverageType;
+        if (building.type.goods?.distributes && building.hasGoodsToDistribute(goodToDistribute)) {
+            cargo = building.takeGoodsForDistributor(goodToDistribute);
+        }
+
+        const walker = new Walker(
+            startX,
+            startY,
+            maxSteps,
+            building,
+            slotIndex,
+            config.coverageType,
+            building.type.color,
+            cargo
+        );
+        this.entityManager.addEntity(walker);
+        building.onWalkerSpawned(slotIndex);
     }
 
     // Spawn a cart walker (A* targeted delivery)

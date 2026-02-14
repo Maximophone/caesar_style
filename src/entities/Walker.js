@@ -1,7 +1,7 @@
 import { GOODS_CONFIG, GOODS_META } from '../world/BuildingTypes.js';
 
 export class Walker {
-    constructor(x, y, path, originBuilding, slotIndex, coverageType = null, color = '#ff0000', cargo = null) {
+    constructor(x, y, maxSteps, originBuilding, slotIndex, coverageType = null, color = '#ff0000', cargo = null) {
         // Position (sub-tile precision for smooth movement)
         this.x = x;
         this.y = y;
@@ -10,10 +10,22 @@ export class Walker {
         this.dx = 0;
         this.dy = 0;
 
-        // Path following
-        this.path = path;
-        this.pathIndex = 0;
+        // Roaming logic
+        this.maxSteps = maxSteps || 20;
+        this.stepsTaken = 0;
         this.returning = false;
+
+        // Current movement target (next tile center)
+        this.targetX = x;
+        this.targetY = y;
+
+        // Previous position to avoid immediate backtracking
+        this.lastX = x;
+        this.lastY = y;
+
+        // Path specifically for returning home
+        this.returnPath = null;
+        this.returnPathIndex = 0;
 
         // Origin building (to return to)
         this.originBuilding = originBuilding;
@@ -32,42 +44,24 @@ export class Walker {
     }
 
     update(deltaTime, roadNetwork, entityManager, grid, economy) {
-        if (this.path.length === 0) return;
-
-        // Get current target
-        const target = this.path[this.pathIndex];
-
-        // Calculate direction
-        const toX = target.x - this.x;
-        const toY = target.y - this.y;
+        // Calculate distance to current target tile center
+        const toX = this.targetX - this.x;
+        const toY = this.targetY - this.y;
         const dist = Math.sqrt(toX * toX + toY * toY);
 
         if (dist < 0.05) {
-            // Reached waypoint
-            this.x = target.x;
-            this.y = target.y;
+            // Reached target tile center
+            this.x = this.targetX;
+            this.y = this.targetY;
 
-            // Emit coverage to nearby buildings
+            // Emit coverage
             this.emitCoverage(grid, economy);
 
+            // Decide next move
             if (this.returning) {
-                this.pathIndex--;
-                if (this.pathIndex < 0) {
-                    // Returned home
-                    this.onReturnHome(entityManager);
-                    return;
-                }
+                this.handleReturnMovement(entityManager);
             } else {
-                this.pathIndex++;
-                if (this.pathIndex >= this.path.length) {
-                    // End of outbound path, start returning
-                    this.returning = true;
-                    this.pathIndex = this.path.length - 2;
-                    if (this.pathIndex < 0) {
-                        this.onReturnHome(entityManager);
-                        return;
-                    }
-                }
+                this.handleRoamingMovement(roadNetwork, entityManager);
             }
         } else {
             // Move towards target
@@ -75,21 +69,97 @@ export class Walker {
             const moveY = (toY / dist) * this.speed * deltaTime;
 
             // Don't overshoot
-            if (Math.abs(moveX) > Math.abs(toX)) {
-                this.x = target.x;
-            } else {
-                this.x += moveX;
-            }
+            if (Math.abs(moveX) > Math.abs(toX)) this.x = this.targetX;
+            else this.x += moveX;
 
-            if (Math.abs(moveY) > Math.abs(toY)) {
-                this.y = target.y;
-            } else {
-                this.y += moveY;
-            }
+            if (Math.abs(moveY) > Math.abs(toY)) this.y = this.targetY;
+            else this.y += moveY;
 
             // Update direction for rendering
             this.dx = toX / dist;
             this.dy = toY / dist;
+        }
+    }
+
+    handleRoamingMovement(roadNetwork, entityManager) {
+        this.stepsTaken++;
+
+        // Check if we should return home
+        if (this.stepsTaken >= this.maxSteps) {
+            this.startReturning(roadNetwork, entityManager);
+            return;
+        }
+
+        // Find available roads
+        const currentTileX = Math.round(this.x);
+        const currentTileY = Math.round(this.y);
+        const neighbors = roadNetwork.getConnectedRoads(currentTileX, currentTileY);
+
+        // Filter valid moves
+        // 1. Must be a road (getConnectedRoads handles this)
+        // 2. Try to avoid going back to the tile we just came from
+        let options = neighbors.filter(n => !(n.x === Math.round(this.lastX) && n.y === Math.round(this.lastY)));
+
+        // If dead end (only option is back), use all neighbors (forces turning back)
+        if (options.length === 0) {
+            options = neighbors;
+        }
+
+        // If stranded (no roads at all??), despawn
+        if (options.length === 0) {
+            this.onReturnHome(entityManager);
+            return;
+        }
+
+        // Pick random next tile
+        const next = options[Math.floor(Math.random() * options.length)];
+
+        // Set new target
+        this.lastX = this.x;
+        this.lastY = this.y;
+        this.targetX = next.x;
+        this.targetY = next.y;
+    }
+
+    startReturning(roadNetwork, entityManager) {
+        this.returning = true;
+
+        // Calculate path back to origin
+        if (this.originBuilding && this.originBuilding.roadAccessX !== undefined) {
+            this.returnPath = roadNetwork.findPath(
+                Math.round(this.x),
+                Math.round(this.y),
+                this.originBuilding.roadAccessX,
+                this.originBuilding.roadAccessY
+            );
+
+            if (this.returnPath && this.returnPath.length > 1) {
+                this.returnPathIndex = 1; // Start at 1 (0 is current tile)
+
+                // Set first target
+                const next = this.returnPath[this.returnPathIndex];
+                this.targetX = next.x;
+                this.targetY = next.y;
+            } else {
+                // Determine we are already there or cant find path
+                this.onReturnHome(entityManager);
+            }
+        } else {
+            // Origin gone?
+            this.onReturnHome(entityManager);
+        }
+    }
+
+    handleReturnMovement(entityManager) {
+        this.returnPathIndex++;
+
+        if (this.returnPath && this.returnPathIndex < this.returnPath.length) {
+            const next = this.returnPath[this.returnPathIndex];
+            this.targetX = next.x;
+            this.targetY = next.y;
+        } else {
+            // Reached home
+            this.onReturnHome(entityManager);
         }
     }
 
