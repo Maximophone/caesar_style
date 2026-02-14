@@ -427,6 +427,52 @@ export class Renderer {
         }
     }
 
+    // Render upgrade preview overlay when U is held and hovering a building
+    renderUpgradePreview(building, economy) {
+        const ctx = this.ctx;
+        const ts = this.tileSize;
+        const bx = building.x * ts;
+        const by = building.y * ts;
+        const bw = building.width * ts;
+        const bh = building.height * ts;
+
+        if (!building.canUpgrade()) {
+            // Not upgradeable — red tint
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
+            ctx.fillRect(bx, by, bw, bh);
+            return;
+        }
+
+        const cost = building.getUpgradeCost();
+        const canAfford = economy.canAfford(cost);
+
+        // Highlight tint
+        ctx.fillStyle = canAfford ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)';
+        ctx.fillRect(bx, by, bw, bh);
+
+        // Border
+        ctx.strokeStyle = canAfford ? 'rgba(46, 204, 113, 0.8)' : 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bx, by, bw, bh);
+
+        // Cost label (centered above building)
+        const nextLevel = building.buildingLevel + 1;
+        const label = `L${nextLevel}: ${cost} Dn`;
+
+        ctx.font = 'bold 12px monospace';
+        const textW = ctx.measureText(label).width;
+        const labelX = bx + (bw - textW) / 2 - 4;
+        const labelY = by - 18;
+
+        // Background pill
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(labelX - 2, labelY - 10, textW + 8, 16);
+
+        // Text
+        ctx.fillStyle = canAfford ? '#2ecc71' : '#e74c3c';
+        ctx.fillText(label, labelX + 2, labelY + 2);
+    }
+
     // Apply fade from full color (100% coverage) to gray (0% coverage)
     applyFadeTint(hexColor, coverage) {
         // Parse hex color

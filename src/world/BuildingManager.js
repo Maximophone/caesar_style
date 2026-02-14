@@ -1,7 +1,7 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
 import { CartWalker } from '../entities/CartWalker.js';
-import { BUILDING_TYPES, GOODS_CONFIG, HOUSE_LEVELS } from './BuildingTypes.js';
+import { BUILDING_TYPES, GOODS_CONFIG, WALKER_CONFIG, HOUSE_LEVELS } from './BuildingTypes.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -248,7 +248,7 @@ export class BuildingManager {
     // Spawn a service walker (random patrol, coverage emitting)
     spawnServiceWalker(building, slotIndex, config) {
         // Path length becomes max steps for roaming
-        const maxSteps = config.pathLength || 15;
+        const maxSteps = config.pathLength || WALKER_CONFIG.DEFAULT_PATH_LENGTH;
 
         // No pre-calculated path anymore. 
         // We just need to check if there is ANY road connected to spawn point.

@@ -19,6 +19,9 @@ export class Input {
         this.newGamePending = false;
         this.newGameTimer = null;
 
+        // Upgrade mode (held while U is pressed)
+        this.upgradeMode = false;
+
         this.setupEventListeners();
     }
 
@@ -77,6 +80,11 @@ export class Input {
 
         const { x, y, inSidebar } = this.screenToTile(e.clientX, e.clientY);
         if (!inSidebar) {
+            // Upgrade mode: left-click upgrades building
+            if (this.upgradeMode && e.button === 0) {
+                this.game.upgradeBuilding(x, y);
+                return;
+            }
             this.game.onTileClick(x, y, e.button);
         }
     }
@@ -180,10 +188,9 @@ export class Input {
             return;
         }
 
-        // Upgrade building: U key
+        // Upgrade mode: hold U
         if (e.key.toLowerCase() === 'u') {
-            const { x, y } = this.screenToTile(this.lastMouseClientX, this.lastMouseClientY);
-            this.game.upgradeBuilding(x, y);
+            this.upgradeMode = true;
             return;
         }
 
@@ -196,6 +203,10 @@ export class Input {
 
     onKeyUp(e) {
         this.keys[e.key] = false;
+
+        if (e.key.toLowerCase() === 'u') {
+            this.upgradeMode = false;
+        }
     }
 
     // Get current mode from building menu

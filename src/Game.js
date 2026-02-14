@@ -240,6 +240,11 @@ export class Game {
         const hoveredBuilding = this.input.getHoveredBuilding(this.grid);
         this.renderer.renderBuildings(this.buildingManager.buildings, this.debug, hoveredBuilding);
 
+        // Render upgrade preview (when U is held)
+        if (this.input.upgradeMode && hoveredBuilding) {
+            this.renderer.renderUpgradePreview(hoveredBuilding, this.economy);
+        }
+
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities);
 

@@ -169,7 +169,7 @@ export const BUILDING_TYPES = {
         color: '#4169E1',  // Blue
         staticCoverage: {
             type: 'water',
-            distanceAmounts: { 1: 60, 2: 50, 3: 40, 4: 30, 5: 20 }
+            distanceAmounts: { 1: 60, 2: 50, 3: 40, 4: 30, 5: 20, 6: 20 }
         },
         desirability: { 1: -5 },
         cost: 20
@@ -182,7 +182,7 @@ export const BUILDING_TYPES = {
         color: '#00BFFF',  // Deep Sky Blue
         staticCoverage: {
             type: 'water',
-            distanceAmounts: { 1: 90, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20, 8: 20 }
+            distanceAmounts: { 1: 90, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20, 8: 20, 9: 20, 10: 20 }
         },
         desirability: { 1: 15, 2: 10, 3: 5 },
         cost: 60
@@ -217,7 +217,7 @@ export const BUILDING_TYPES = {
         workersNeeded: 4,  // Reduced from 8
         cost: 200,
         walkers: [
-            { type: 'service', spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
+            { type: 'service', spawnInterval: 5, coverageType: 'religion' }
         ],
         desirability: { 1: 20, 2: 15, 3: 10, 4: 5 }
     },
@@ -345,7 +345,7 @@ export const BUILDING_TYPES = {
         workersNeeded: 2,  // Reduced from 4
         cost: 100,
         walkers: [
-            { type: 'service', spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
+            { type: 'service', spawnInterval: 5, coverageType: 'tax' }
         ],
         desirability: { 1: -5 }
     },
@@ -480,6 +480,11 @@ export const BUILDING_TYPES = {
 // Road cost (not a building but needs a cost)
 export const ROAD_COST = 5;
 export const BRIDGE_COST = 30;
+
+// Walker configuration
+export const WALKER_CONFIG = {
+    DEFAULT_PATH_LENGTH: 40,         // Default max steps for service walkers before returning
+};
 
 // Goods transport configuration
 export const GOODS_CONFIG = {
