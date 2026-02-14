@@ -28,7 +28,7 @@ export class Input {
 
         // Mouse events
         this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        window.addEventListener('mouseup', (e) => this.onMouseUp(e));
         this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
 
         // Keyboard events
