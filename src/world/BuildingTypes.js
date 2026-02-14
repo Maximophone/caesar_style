@@ -28,13 +28,41 @@ export const RESOURCE_TYPES = {
             allowOverlap: false,
         }
     },
+    clay: {
+        id: 'clay',
+        name: 'Clay Deposits',
+        color: 'rgba(180, 120, 60, 0.3)',
+        spawn: {
+            strategy: 'cluster',
+            density: 1 / 80,
+            radiusMin: 2,
+            radiusMax: 3,
+            allowOverlap: false,
+        }
+    },
+    timber: {
+        id: 'timber',
+        name: 'Forest',
+        color: 'rgba(10, 60, 10, 0.45)',
+        spawn: {
+            strategy: 'cluster',
+            density: 1 / 60,
+            radiusMin: 3,
+            radiusMax: 5,
+            allowOverlap: false,
+        }
+    },
 };
 
 // Metadata for goods rendering (emoji + bar color)
 export const GOODS_META = {
     food: { emoji: '🌾', color: '#DAA520' },
     iron: { emoji: '⛏️', color: '#708090' },
-    utensils: { emoji: '🥄', color: '#C0C0C0' }, // Silver/Metal color
+    utensils: { emoji: '🥄', color: '#C0C0C0' },
+    clay: { emoji: '🧱', color: '#B4783C' },
+    pottery: { emoji: '🏺', color: '#CD853F' },
+    timber: { emoji: '🪵', color: '#8B6914' },
+    furniture: { emoji: '🪑', color: '#DEB887' },
 };
 
 export const HOUSE_LEVELS = [
@@ -64,7 +92,7 @@ export const HOUSE_LEVELS = [
         name: 'Stone House',
         color: '#654321',  // Dark brown
         population: 4,
-        requirements: { water: 0.6, food: 0.5, religion: 0.2 },
+        requirements: { water: 0.6, food: 0.5, religion: 0.2, pottery: 0.2 },
         upgradeThreshold: 0.8,
         taxMultiplier: 2
         // No desirability — neutral
@@ -74,10 +102,20 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, desirability: 0.4 },
-        upgradeThreshold: null,
+        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, pottery: 0.4, desirability: 0.4 },
+        upgradeThreshold: 0.8,
         taxMultiplier: 3,
         desirability: { 1: 15, 2: 10, 3: 5 }
+    },
+    {
+        // Level 5: Palace
+        name: 'Palace',
+        color: '#2F1B14',  // Near-black brown
+        population: 10,
+        requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, desirability: 0.6 },
+        upgradeThreshold: null,
+        taxMultiplier: 5,
+        desirability: { 1: 25, 2: 20, 3: 15, 4: 10, 5: 5 }
     }
 ];
 
@@ -90,7 +128,7 @@ export const BUILDING_CATEGORIES = {
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
-    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop'] }
+    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop', 'clay_pit', 'potter', 'lumber_camp', 'carpenter'] }
 };
 
 // Building type configurations
@@ -101,12 +139,12 @@ export const BUILDING_TYPES = {
         width: 2,
         height: 2,
         color: '#A0522D',  // Start as Tent color
-        coverageNeeds: ['water', 'food', 'religion', 'utensils', 'desirability'],
+        coverageNeeds: ['water', 'food', 'religion', 'utensils', 'pottery', 'furniture', 'desirability'],
         cost: 30,
         goods: {
-            storage: { food: 5, utensils: 2 },  // per-inhabitant capacity (lower for utensils)
+            storage: { food: 5, utensils: 2, pottery: 2, furniture: 2 },
             dynamicCapacity: true,
-            consumes: { food: 0.1, utensils: 0.05 }, // consuming utensils slower than food
+            consumes: { food: 0.1, utensils: 0.05, pottery: 0.05, furniture: 0.04 },
         }
     },
     well: {
@@ -144,15 +182,17 @@ export const BUILDING_TYPES = {
         workersNeeded: 3,  // Reduced from 5
         cost: 60,
         goods: {
-            receives: ['food', 'utensils'],
-            storage: { food: 400, utensils: 200 },
-            distributes: ['food', 'utensils']
+            receives: ['food', 'utensils', 'pottery', 'furniture'],
+            storage: { food: 400, utensils: 200, pottery: 200, furniture: 200 },
+            distributes: ['food', 'utensils', 'pottery', 'furniture']
         },
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' }
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'pottery' },
+            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'furniture' }
         ],
         desirability: { 1: -5 }
     },
@@ -217,9 +257,9 @@ export const BUILDING_TYPES = {
         workersNeeded: 2,  // Reduced from 4
         cost: 100,
         goods: {
-            receives: ['food', 'iron', 'utensils'],
-            storage: { food: 800, iron: 400, utensils: 400 },
-            emits: ['food', 'iron', 'utensils']
+            receives: ['food', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
+            storage: { food: 800, iron: 400, utensils: 400, clay: 400, pottery: 400, timber: 400, furniture: 400 },
+            emits: ['food', 'iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture']
         },
         deliveryPriority: 1,
         walkers: [
@@ -280,6 +320,88 @@ export const BUILDING_TYPES = {
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -15, 2: -10, 3: -5 }
+    },
+    clay_pit: {
+        id: 'clay_pit',
+        name: 'Clay Pit',
+        width: 3,
+        height: 3,
+        color: '#B4783C',  // Terracotta
+        workersNeeded: 3,
+        cost: 100,
+        requiredResource: 'clay',
+        goods: {
+            produces: { clay: 8 },
+            storage: { clay: 150 },
+            emits: ['clay']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -10, 2: -5 }
+    },
+    potter: {
+        id: 'potter',
+        name: 'Potter',
+        width: 2,
+        height: 2,
+        color: '#CD853F',  // Peru
+        workersNeeded: 3,
+        cost: 100,
+        goods: {
+            receives: ['clay'],
+            storage: { clay: 100, pottery: 100 },
+            produces: { pottery: 8 },
+            productionCost: { clay: 1 },
+            emits: ['pottery']
+        },
+        deliveryPriority: 10,
+        deliveryFillThreshold: 0.5,
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -10, 2: -5 }
+    },
+    lumber_camp: {
+        id: 'lumber_camp',
+        name: 'Lumber Camp',
+        width: 3,
+        height: 3,
+        color: '#8B6914',  // Dark goldenrod
+        workersNeeded: 3,
+        cost: 100,
+        requiredResource: 'timber',
+        goods: {
+            produces: { timber: 8 },
+            storage: { timber: 150 },
+            emits: ['timber']
+        },
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -10, 2: -5 }
+    },
+    carpenter: {
+        id: 'carpenter',
+        name: 'Carpenter',
+        width: 2,
+        height: 2,
+        color: '#DEB887',  // Burlywood
+        workersNeeded: 3,
+        cost: 120,
+        goods: {
+            receives: ['timber'],
+            storage: { timber: 100, furniture: 100 },
+            produces: { furniture: 6 },
+            productionCost: { timber: 1 },
+            emits: ['furniture']
+        },
+        deliveryPriority: 10,
+        deliveryFillThreshold: 0.5,
+        walkers: [
+            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+        ],
+        desirability: { 1: -5 }
     }
 };
 

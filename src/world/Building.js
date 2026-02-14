@@ -162,6 +162,7 @@ export class Building {
 
         const levels = this.getCoverageLevels();
         const evolutionSpeed = 0.05;  // Progress per second
+        const maxLevel = HOUSE_LEVELS.length - 1;
 
         // Check if we meet requirements for current level
         const meetsCurrentRequirements = this.meetsLevelRequirements(this.level, levels);
@@ -172,7 +173,7 @@ export class Building {
         } else {
             // Meeting requirements - check if we're exceeding (upgrade progress)
             // ONLY count surplus if we can actually upgrade (next level exists and requirements met)
-            const canUpgrade = this.level < 4 && this.meetsLevelRequirements(this.level + 1, levels);
+            const canUpgrade = this.level < maxLevel && this.meetsLevelRequirements(this.level + 1, levels);
 
             if (canUpgrade) {
                 const surplus = this.calculateSurplus(this.level, levels);
@@ -185,7 +186,7 @@ export class Building {
         }
 
         // Handle level changes
-        if (this.evolutionProgress >= 1.0 && this.level < 4) {
+        if (this.evolutionProgress >= 1.0 && this.level < maxLevel) {
             // Check if we actually meet next level requirements before upgrading
             if (this.meetsLevelRequirements(this.level + 1, levels)) {
                 // Upgrade!
