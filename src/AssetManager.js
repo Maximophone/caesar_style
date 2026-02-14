@@ -122,6 +122,29 @@ export class AssetManager {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
+        // Check if any corner pixel is already transparent
+        const w = canvas.width;
+        const h = canvas.height;
+
+        const getAlpha = (x, y) => {
+            const index = (y * w + x) * 4;
+            return data[index + 3];
+        };
+
+        const corners = [
+            { x: 0, y: 0, name: 'Top-Left' },
+            { x: w - 1, y: 0, name: 'Top-Right' },
+            { x: 0, y: h - 1, name: 'Bottom-Left' },
+            { x: w - 1, y: h - 1, name: 'Bottom-Right' }
+        ];
+
+        for (const corner of corners) {
+            if (getAlpha(corner.x, corner.y) < 10) {
+                console.log(`[AssetManager] ${name} already has a transparent background (detected at ${corner.name}). Skipping removal.`);
+                return;
+            }
+        }
+
         // Get key color from top-left pixel
         const r = data[0];
         const g = data[1];
