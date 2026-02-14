@@ -84,7 +84,8 @@ export class Game {
             'fountain_south': `assets/fountain_south.png?t=${t}`,
             'garden_small_south': `assets/garden_small_south.png?t=${t}`,
             'garden_large_south': `assets/garden_large_south.png?t=${t}`,
-            'farm_south': `assets/farm_south.png?t=${t}`
+            'farm_south': `assets/farm_south.png?t=${t}`,
+            'granary': `assets/granary.png?t=${t}`
         });
 
         // Apply transparency at runtime as requested by user to keep source image editable
@@ -103,6 +104,7 @@ export class Game {
         this.assetManager.applyTransparencyFromCorner('garden_small_south', 40);
         this.assetManager.applyTransparencyFromCorner('garden_large_south', 40);
         this.assetManager.applyTransparencyFromCorner('farm_south', 40);
+        this.assetManager.applyTransparencyFromCorner('granary', 40);
 
         // Try to load optional tile spritesheets (water, etc.)
         await this.assetManager.tryLoadImage('water_tiles', `assets/water_tiles.png?t=${t}`);
@@ -123,8 +125,10 @@ export class Game {
         const directions = ['south', 'north', 'east', 'west'];
         const baseNames = [
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
-            'well', 'fountain', 'market', 'temple', 'farm', 'warehouse',
-            'garden_small', 'garden_large', 'tax_office', 'mine', 'workshop'
+            'well', 'fountain', 'market', 'temple', 'farm', 'fishing_wharf',
+            'granary', 'warehouse', 'bazaar',
+            'garden_small', 'garden_large', 'tax_office', 'mine', 'workshop',
+            'clay_pit', 'potter', 'lumber_camp', 'carpenter'
         ];
 
         const loadPromises = [];
