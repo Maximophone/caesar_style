@@ -2,6 +2,34 @@
 // Upgrade threshold = next level's maintenance threshold for stability
 export const TAX_COOLDOWN = 10;
 
+// Map resource definitions — each entry drives spawning and rendering
+export const RESOURCE_TYPES = {
+    fertility: {
+        id: 'fertility',
+        name: 'Fertile Land',
+        color: 'rgba(218, 165, 32, 0.3)',
+        spawn: {
+            strategy: 'cluster',
+            density: 1 / 50,
+            radiusMin: 2,
+            radiusMax: 4,
+            allowOverlap: true,
+        }
+    },
+    iron_ore: {
+        id: 'iron_ore',
+        name: 'Iron Ore',
+        color: 'rgba(112, 128, 144, 0.35)',
+        spawn: {
+            strategy: 'cluster',
+            density: 1 / 250,
+            radiusMin: 1,
+            radiusMax: 2,
+            allowOverlap: false,
+        }
+    },
+};
+
 // Metadata for goods rendering (emoji + bar color)
 export const GOODS_META = {
     food: { emoji: '🌾', color: '#DAA520' },

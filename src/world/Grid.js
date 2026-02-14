@@ -1,3 +1,34 @@
+import { RESOURCE_TYPES } from './BuildingTypes.js';
+
+// Spawning strategy implementations
+const SPAWN_STRATEGIES = {
+    cluster(grid, resourceId, config) {
+        const numClusters = Math.floor(grid.width * grid.height * config.density);
+
+        for (let i = 0; i < numClusters; i++) {
+            const cx = Math.floor(Math.random() * grid.width);
+            const cy = Math.floor(Math.random() * grid.height);
+            const radius = config.radiusMin + Math.floor(Math.random() * (config.radiusMax - config.radiusMin + 1));
+
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = cx + dx;
+                    const y = cy + dy;
+
+                    if (grid.isInBounds(x, y)) {
+                        if (!config.allowOverlap && grid.resources[y][x] !== null) continue;
+
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
+                            grid.resources[y][x] = resourceId;
+                        }
+                    }
+                }
+            }
+        }
+    },
+};
+
 export class Grid {
     constructor(width, height) {
         this.width = width;
@@ -26,49 +57,11 @@ export class Grid {
             }
         }
 
-        // Generate 'fertility' clusters
-        const numFertilityClusters = Math.floor((this.width * this.height) / 50);
-
-        for (let i = 0; i < numFertilityClusters; i++) {
-            const cx = Math.floor(Math.random() * this.width);
-            const cy = Math.floor(Math.random() * this.height);
-            const radius = 2 + Math.floor(Math.random() * 3); // 2-4 radius
-
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    const x = cx + dx;
-                    const y = cy + dy;
-
-                    if (this.isInBounds(x, y)) {
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
-                            this.resources[y][x] = 'fertility';
-                        }
-                    }
-                }
-            }
-        }
-
-        // Generate 'iron_ore' clusters (much rarer, smaller pockets)
-        const numIronClusters = Math.floor((this.width * this.height) / 250);
-
-        for (let i = 0; i < numIronClusters; i++) {
-            const cx = Math.floor(Math.random() * this.width);
-            const cy = Math.floor(Math.random() * this.height);
-            const radius = 1 + Math.floor(Math.random() * 2); // 1-2 radius
-
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    const x = cx + dx;
-                    const y = cy + dy;
-
-                    if (this.isInBounds(x, y) && this.resources[y][x] === null) {
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist <= radius - 0.5 || (dist <= radius + 0.5 && Math.random() > 0.5)) {
-                            this.resources[y][x] = 'iron_ore';
-                        }
-                    }
-                }
+        // Generate each resource type from config
+        for (const [resourceId, config] of Object.entries(RESOURCE_TYPES)) {
+            const strategy = SPAWN_STRATEGIES[config.spawn.strategy];
+            if (strategy) {
+                strategy(this, resourceId, config.spawn);
             }
         }
     }

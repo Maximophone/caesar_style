@@ -1,5 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
-import { TAX_COOLDOWN, GOODS_META } from './world/BuildingTypes.js';
+import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -52,12 +52,13 @@ export class Renderer {
                 ctx.strokeRect(x * ts, y * ts, ts, ts);
 
                 // Draw resources
-                if (grid.resources && grid.resources[y][x] === 'fertility') {
-                    ctx.fillStyle = 'rgba(218, 165, 32, 0.3)'; // Goldenrod semi-transparent
-                    ctx.fillRect(x * ts, y * ts, ts, ts);
-                } else if (grid.resources && grid.resources[y][x] === 'iron_ore') {
-                    ctx.fillStyle = 'rgba(112, 128, 144, 0.35)'; // Slate gray semi-transparent
-                    ctx.fillRect(x * ts, y * ts, ts, ts);
+                const resourceType = grid.resources && grid.resources[y][x];
+                if (resourceType) {
+                    const resourceConfig = RESOURCE_TYPES[resourceType];
+                    if (resourceConfig) {
+                        ctx.fillStyle = resourceConfig.color;
+                        ctx.fillRect(x * ts, y * ts, ts, ts);
+                    }
                 }
             }
         }
