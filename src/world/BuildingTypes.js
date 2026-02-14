@@ -115,6 +115,7 @@ export const BUILDING_TYPES = {
             distributes: ['food', 'utensils']
         },
         deliveryPriority: 10,
+        deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' }
@@ -240,6 +241,7 @@ export const BUILDING_TYPES = {
             emits: ['utensils']
         },
         deliveryPriority: 10,
+        deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
         ]

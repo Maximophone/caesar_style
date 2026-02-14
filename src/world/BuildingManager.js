@@ -305,8 +305,15 @@ export class BuildingManager {
             if (current >= max) continue;  // Full, skip
 
             // Get priority (default to 0 if not specified)
-            const priority = building.type.deliveryPriority || 0;
+            let priority = building.type.deliveryPriority || 0;
             const fillPercent = max > 0 ? current / max : 1;
+
+            // If above fill threshold, drop to base priority so lower-priority
+            // buildings (e.g. warehouses) can receive deliveries too
+            const threshold = building.type.deliveryFillThreshold;
+            if (threshold !== undefined && fillPercent >= threshold) {
+                priority = 0;
+            }
 
             if (priority > highestPriority) {
                 // Found a higher priority building, reset best
