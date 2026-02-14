@@ -90,7 +90,7 @@ export const HOUSE_LEVELS = [
         upgradeThreshold: 0.4,
         taxMultiplier: 1,
         desirability: { 1: -10, 2: -8, 3: -5, 4: -2 },
-        consumes: { food: 0.1 } // Tents only eat basic food
+        consumes: {} // Tents require no goods, so they consume none
     },
     {
         // Level 2: Shack
@@ -101,7 +101,7 @@ export const HOUSE_LEVELS = [
         upgradeThreshold: 0.8,
         taxMultiplier: 1,
         desirability: { 1: -5, 2: -3, 3: -1 },
-        consumes: { food: 0.12, fish: 0.05 } // Shacks start eating fish
+        consumes: { food: 0.12 } // Shacks only require food
     },
     {
         // Level 3: Stone House
