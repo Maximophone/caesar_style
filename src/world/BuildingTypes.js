@@ -89,7 +89,7 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.1 },  // Survival needs
         upgradeThreshold: 0.4,
         taxMultiplier: 1,
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -8, 3: -5, 4: -2 }
     },
     {
         // Level 2: Shack
@@ -99,7 +99,7 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.4, food: 0.1 },
         upgradeThreshold: 0.8,
         taxMultiplier: 1,
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -1 }
     },
     {
         // Level 3: Stone House
@@ -119,7 +119,7 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, pottery: 0.4, fish: 0.5, desirability: 0.4 },
         upgradeThreshold: 0.8,
         taxMultiplier: 3,
-        desirability: { 1: 15, 2: 10, 3: 5 }
+        desirability: { 1: 15, 2: 12, 3: 10, 4: 7, 5: 4, 6: 2 }
     },
     {
         // Level 5: Palace
@@ -129,7 +129,7 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, fish: 0.7, desirability: 0.6 },
         upgradeThreshold: null,
         taxMultiplier: 5,
-        desirability: { 1: 25, 2: 20, 3: 15, 4: 10, 5: 5 }
+        desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 }
     }
 ];
 
@@ -142,7 +142,7 @@ export const BUILDING_CATEGORIES = {
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
-    industry: { key: '8', name: 'Industry', buildings: ['mine', 'workshop', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] }
+    industry: { key: '8', name: 'Industry', buildings: ['mine', 'forge', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] }
 };
 
 // Building type configurations
@@ -171,7 +171,7 @@ export const BUILDING_TYPES = {
             type: 'water',
             distanceAmounts: { 1: 60, 2: 50, 3: 40, 4: 30, 5: 20, 6: 20 }
         },
-        desirability: { 1: -5 },
+        desirability: { 1: -5, 2: -3, 3: -1 },
         cost: 20
     },
     fountain: {
@@ -184,7 +184,7 @@ export const BUILDING_TYPES = {
             type: 'water',
             distanceAmounts: { 1: 90, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20, 8: 20, 9: 20, 10: 20 }
         },
-        desirability: { 1: 15, 2: 10, 3: 5 },
+        desirability: { 1: 15, 2: 12, 3: 10, 4: 7, 5: 4, 6: 2 },
         cost: 60
     },
     market: {
@@ -206,7 +206,7 @@ export const BUILDING_TYPES = {
             { type: 'service', spawnInterval: 5, coverageType: 'food' },
             { type: 'service', spawnInterval: 5, coverageType: 'fish' }
         ],
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     },
     temple: {
         id: 'temple',
@@ -219,7 +219,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'service', spawnInterval: 5, coverageType: 'religion' }
         ],
-        desirability: { 1: 20, 2: 15, 3: 10, 4: 5 }
+        desirability: { 1: 20, 2: 18, 3: 15, 4: 12, 5: 8, 6: 5, 7: 3, 8: 1 }
     },
     small_garden: {
         id: 'small_garden',
@@ -228,7 +228,7 @@ export const BUILDING_TYPES = {
         height: 1,
         color: '#228B22',  // Forest Green
         needsRoadAccess: false,
-        desirability: { 1: 30, 2: 20, 3: 10 },
+        desirability: { 1: 30, 2: 22, 3: 15, 4: 8, 5: 3 },
         cost: 10
     },
     large_garden: {
@@ -238,7 +238,7 @@ export const BUILDING_TYPES = {
         height: 2,
         color: '#006400',  // Dark Green
         needsRoadAccess: false,
-        desirability: { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 },
+        desirability: { 1: 50, 2: 42, 3: 34, 4: 26, 5: 18, 6: 10, 7: 4 },
         cost: 30
     },
     farm: {
@@ -258,7 +258,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -8, 3: -6, 4: -4, 5: -2, 6: -1 }
     },
     fishing_wharf: {
         id: 'fishing_wharf',
@@ -277,7 +277,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     },
     granary: {
         id: 'granary',
@@ -296,7 +296,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
     warehouse: {
         id: 'warehouse',
@@ -315,7 +315,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
     mine: {
         id: 'mine',
@@ -334,7 +334,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -30, 2: -20, 3: -10, 4: -5 }
+        desirability: { 1: -30, 2: -25, 3: -20, 4: -15, 5: -10, 6: -6, 7: -3, 8: -1 }
     },
     tax_office: {
         id: 'tax_office',
@@ -347,11 +347,11 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'service', spawnInterval: 5, coverageType: 'tax' }
         ],
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     },
-    workshop: {
-        id: 'workshop',
-        name: 'Workshop',
+    forge: {
+        id: 'forge',
+        name: 'Forge',
         width: 4,
         height: 4,
         color: '#CD853F',  // Peru (bronze-ish)
@@ -369,7 +369,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -15, 2: -10, 3: -5 }
+        desirability: { 1: -20, 2: -16, 3: -12, 4: -8, 5: -5, 6: -3, 7: -1 }
     },
     clay_pit: {
         id: 'clay_pit',
@@ -388,7 +388,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -8, 3: -6, 4: -4, 5: -2, 6: -1 }
     },
     potter: {
         id: 'potter',
@@ -410,7 +410,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
     lumber_camp: {
         id: 'lumber_camp',
@@ -429,7 +429,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -10, 2: -5 }
+        desirability: { 1: -10, 2: -8, 3: -6, 4: -4, 5: -2, 6: -1 }
     },
     carpenter: {
         id: 'carpenter',
@@ -451,7 +451,7 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     },
     bazaar: {
         id: 'bazaar',
@@ -473,7 +473,7 @@ export const BUILDING_TYPES = {
             { type: 'service', spawnInterval: 5, coverageType: 'pottery' },
             { type: 'service', spawnInterval: 5, coverageType: 'furniture' }
         ],
-        desirability: { 1: -5 }
+        desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     }
 };
 

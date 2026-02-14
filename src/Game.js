@@ -127,7 +127,7 @@ export class Game {
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
             'well', 'fountain', 'market', 'temple', 'farm', 'fishing_wharf',
             'granary', 'warehouse', 'bazaar',
-            'garden_small', 'garden_large', 'tax_office', 'mine', 'workshop',
+            'garden_small', 'garden_large', 'tax_office', 'mine', 'forge',
             'clay_pit', 'potter', 'lumber_camp', 'carpenter'
         ];
 
