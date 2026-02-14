@@ -249,31 +249,16 @@ export class Renderer {
                 ctx.strokeRect(bx + 2, by + 2, bw - 4, bh - 4);
             }
 
-            // Door indicator with Building Emoji (only when not using sprites)
+            // Door indicator (not sprites only)
             if (building.doorX !== undefined && !drawn) {
                 ctx.fillStyle = '#5a3e1b';
-                const doorSize = ts / 2;
-                const doorX = building.doorX * ts + (ts - doorSize) / 2;
-                const doorY = building.doorY * ts + (ts - doorSize) / 2;
-                ctx.fillRect(doorX, doorY, doorSize, doorSize);
-
-                // Draw Emoji centered in the door indicator
-                if (building.type.emoji) {
-                    ctx.font = '7px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#fff';
-                    // Center in the door indicator: doorX + doorSize/2, doorY + doorSize/2
-                    ctx.fillText(building.type.emoji, doorX + doorSize / 2, doorY + doorSize / 2 + 1);
-                    // Reset text alignment for other renders
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'alphabetic';
-                }
+                const doorX = building.doorX * ts + ts / 4;
+                const doorY = building.doorY * ts + ts / 4;
+                ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
-
                 if (building.coverageNeeds) {
                     // --- HOUSE OVERLAY ---
                     const levels = building.getCoverageLevels();
