@@ -265,9 +265,7 @@ export class Building {
 
         // Service walkers with distributes need goods to distribute
         if (config.type === 'service' && this.type.goods?.distributes) {
-            // If walker has specific coverage type (e.g. 'utensils'), check for that specific good
-            const goodToCheck = config.coverageType;
-            if (!this.hasGoodsToDistribute(goodToCheck)) return false;
+            if (!this.hasGoodsToDistribute()) return false;
         }
 
         return true;
@@ -464,13 +462,9 @@ export class Building {
     }
 
     // Check if building has goods to distribute via service walkers
-    hasGoodsToDistribute(specificGood = null) {
+    hasGoodsToDistribute() {
         const distributes = this.type.goods?.distributes;
         if (!distributes || !this.storage) return false;
-
-        if (specificGood) {
-            return distributes.includes(specificGood) && (this.storage[specificGood] || 0) > 0;
-        }
 
         for (const goodType of distributes) {
             if ((this.storage[goodType] || 0) > 0) return true;
@@ -479,22 +473,9 @@ export class Building {
     }
 
     // Take goods for distributor (service) walker
-    takeGoodsForDistributor(specificGood = null) {
+    takeGoodsForDistributor() {
         const distributes = this.type.goods?.distributes;
         if (!distributes || !this.storage) return { type: null, amount: 0 };
-
-        // If specific good requested (e.g. market walker for utensils), try to take that
-        if (specificGood) {
-            if (distributes.includes(specificGood)) {
-                const available = this.storage[specificGood] || 0;
-                if (available > 0) {
-                    const amount = Math.min(available, GOODS_CONFIG.DISTRIBUTOR_CAPACITY);
-                    this.storage[specificGood] -= amount;
-                    return { type: specificGood, amount };
-                }
-            }
-            return { type: null, amount: 0 };
-        }
 
         // Take the first distributable good
         for (const goodType of distributes) {

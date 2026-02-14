@@ -217,9 +217,8 @@ export class BuildingManager {
         if (path.length > 1) {
             // Load cargo if this building distributes goods
             let cargo = null;
-            const goodToDistribute = config.coverageType;
-            if (building.type.goods?.distributes && building.hasGoodsToDistribute(goodToDistribute)) {
-                cargo = building.takeGoodsForDistributor(goodToDistribute);
+            if (building.type.goods?.distributes && building.hasGoodsToDistribute()) {
+                cargo = building.takeGoodsForDistributor();
             }
 
             const walker = new Walker(
