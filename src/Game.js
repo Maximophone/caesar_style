@@ -198,15 +198,17 @@ export class Game {
 
             this.camera.x += dx * this.cameraSpeed * deltaTime;
             this.camera.y += dy * this.cameraSpeed * deltaTime;
-        }
 
-        // Clamp camera to map bounds
-        // VIEWPORT CHANGE: Map is only 800px wide now.
+            this.clampCamera();
+        }
+    }
+
+    clampCamera() {
+        // VIEWPORT: Map area is 800px wide, Sidebar starts at 800px.
         const viewWidth = 800;
         const maxX = (this.gridWidth * this.tileSize) - viewWidth;
         const maxY = (this.gridHeight * this.tileSize) - this.canvas.height;
 
-        // Ensure we don't scroll into negative (if map is smaller than canvas)
         this.camera.x = Math.max(0, Math.min(this.camera.x, Math.max(0, maxX)));
         this.camera.y = Math.max(0, Math.min(this.camera.y, Math.max(0, maxY)));
     }

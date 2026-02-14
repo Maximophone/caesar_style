@@ -104,11 +104,8 @@ export class Input {
             this.lastDragX = e.clientX;
             this.lastDragY = e.clientY;
 
-            // Clamp camera
-            const maxX = (this.game.gridWidth * this.game.tileSize) - this.game.canvas.width;
-            const maxY = (this.game.gridHeight * this.game.tileSize) - this.game.canvas.height;
-            this.game.camera.x = Math.max(0, Math.min(this.game.camera.x, Math.max(0, maxX)));
-            this.game.camera.y = Math.max(0, Math.min(this.game.camera.y, Math.max(0, maxY)));
+            // Clamp camera using centralized logic
+            this.game.clampCamera();
 
             return;
         }
