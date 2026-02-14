@@ -631,109 +631,110 @@ export class Renderer {
 
     renderUI(input, economy, debug, buildingMenu) {
         const ctx = this.ctx;
+        const sidebarX = 800;
+        const sidebarW = 200;
+        const canvasH = ctx.canvas.height;
+
+        // --- Render Sidebar Background ---
+        ctx.fillStyle = '#0f3460'; // Premium dark blue for sidebar
+        ctx.fillRect(sidebarX, 0, sidebarW, canvasH);
+
+        // Sidebar separator line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sidebarX, 0);
+        ctx.lineTo(sidebarX, canvasH);
+        ctx.stroke();
+
         const menuData = buildingMenu ? buildingMenu.getDisplayData() : null;
 
         // --- Prepare lines to render ---
         const lines = [];
         const selectionText = buildingMenu ? buildingMenu.getSelectionText() : 'Loading...';
-        lines.push({ text: `Selected: ${selectionText}`, color: '#fff', font: 'bold 14px monospace' });
+        lines.push({ text: `Current:`, color: '#f1c40f', font: 'bold 12px monospace' });
+        lines.push({ text: selectionText, color: '#fff', font: '13px monospace' });
+        lines.push({ text: '', height: 10 }); // Spacer
 
         if (menuData) {
             if (menuData.mode === 'categories') {
-                lines.push({ text: 'Categories:', color: '#f1c40f', font: '14px monospace' });
+                lines.push({ text: 'CATEGORIES', color: '#f1c40f', font: 'bold 14px monospace' });
+                lines.push({ text: '────────────', color: 'rgba(255,255,255,0.2)', font: '12px monospace' });
                 for (const cat of menuData.items) {
-                    lines.push({ text: ` [${cat.key}] ${cat.name}`, color: '#fff', font: '13px monospace' });
+                    lines.push({ text: `[${cat.key}] ${cat.name}`, color: '#fff', font: '13px monospace' });
                 }
             } else {
-                lines.push({ text: `${menuData.categoryName}:`, color: '#f1c40f', font: '14px monospace' });
+                lines.push({ text: menuData.categoryName.toUpperCase(), color: '#f1c40f', font: 'bold 14px monospace' });
+                lines.push({ text: '────────────', color: 'rgba(255,255,255,0.2)', font: '12px monospace' });
                 for (const item of menuData.items) {
-                    const marker = item.selected ? '>' : ' ';
+                    const marker = item.selected ? '> ' : '  ';
                     lines.push({
-                        text: `${marker}[${item.key}] ${item.name} (${item.cost} Dn)`,
+                        text: `${marker}[${item.key}] ${item.name}`,
                         color: item.selected ? '#f1c40f' : '#fff',
                         font: '13px monospace'
                     });
+                    lines.push({
+                        text: `    Cost: ${item.cost} Dn`,
+                        color: item.selected ? '#f1c40f' : '#aaa',
+                        font: '11px monospace'
+                    });
                 }
+                lines.push({ text: '', height: 5 });
                 lines.push({ text: ' [ESC] Back', color: '#aaa', font: '12px monospace' });
             }
         }
 
-        // Action hints
-        lines.push({ text: '', height: 5 }); // Spacer
-        lines.push({ text: 'LClick: Place | RClick: Remove', color: '#888', font: '12px monospace' });
-
-        // Debug & System hints
-        let debugText = '[O]verlays: ' + (debug && debug.showOverlays ? 'ON' : 'OFF');
-        debugText += ' | [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
-        lines.push({ text: debugText, color: '#888', font: '12px monospace' });
-        lines.push({ text: '[F5] Save | [F9] Load | [N] New', color: '#888', font: '12px monospace' });
-
-        // --- Calculate dimensions ---
+        // --- Calculate dimensions & Start Position ---
         const padding = 15;
-        const lineSpacing = 4;
-        let maxWidth = 250; // Minimum width
-        let totalHeight = padding * 2;
-
-        ctx.save();
-        for (const line of lines) {
-            if (line.text === '') {
-                totalHeight += line.height || 10;
-                continue;
-            }
-            ctx.font = line.font;
-            const metrics = ctx.measureText(line.text);
-            maxWidth = Math.max(maxWidth, metrics.width + padding * 2);
-
-            // Extract font size for height estimation (e.g., "14px monospace" -> 14)
-            const fontSize = parseInt(line.font) || 14;
-            totalHeight += fontSize + lineSpacing;
-        }
-        ctx.restore();
-
-        // --- Render Background ---
-        const menuX = 10;
-        const menuY = 10;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(menuX, menuY, maxWidth, totalHeight);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(menuX, menuY, maxWidth, totalHeight);
+        const lineSpacing = 5;
+        const contentX = sidebarX + padding;
+        let currentY = 100; // Start below Economy HUD
 
         // --- Render Text ---
-        let currentY = menuY + padding;
         for (const line of lines) {
             if (line.text === '') {
                 currentY += line.height || 10;
                 continue;
             }
-            const fontSize = parseInt(line.font) || 14;
             ctx.font = line.font;
             ctx.fillStyle = line.color;
-            ctx.fillText(line.text, menuX + padding, currentY + fontSize);
+            const fontSize = parseInt(line.font) || 14;
+            ctx.fillText(line.text, contentX, currentY + fontSize);
             currentY += fontSize + lineSpacing;
         }
 
-        // --- Economy HUD (top-right) ---
-        if (economy) {
-            const hudWidth = 160;
-            const hudX = ctx.canvas.width - hudWidth - 10;
-            const hudY = 10;
-            const hudH = 75;
+        // --- System hints (fixed at bottom of sidebar) ---
+        let footerY = canvasH - 70;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(sidebarX + 5, footerY - 5, sidebarW - 10, 65);
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-            ctx.fillRect(hudX, hudY, hudWidth, hudH);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.strokeRect(hudX, hudY, hudWidth, hudH);
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#888';
+        ctx.fillText('LClick: Place | RClick: Remove', contentX, footerY + 10);
+
+        let debugText = '[O] Overlays | [P] Sprites';
+        ctx.fillText(debugText, contentX, footerY + 25);
+        ctx.fillText('[F5] Save | [F9] Load | [N] New', contentX, footerY + 40);
+
+        // --- Economy HUD (top of sidebar) ---
+        if (economy) {
+            const hudY = 10;
+            const hudH = 80;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(sidebarX + 10, hudY, sidebarW - 20, hudH);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.strokeRect(sidebarX + 10, hudY, sidebarW - 20, hudH);
 
             ctx.font = 'bold 14px monospace';
             ctx.fillStyle = '#f1c40f'; // Gold for money
-            ctx.fillText(`💰 ${economy.money}`, hudX + 12, hudY + 25);
+            ctx.fillText(`💰 ${economy.money} Dn`, sidebarX + 25, hudY + 25);
 
             ctx.fillStyle = '#3498db'; // Blue for population
-            ctx.fillText(`👥 ${economy.population}`, hudX + 12, hudY + 45);
+            ctx.fillText(`👥 ${economy.population}`, sidebarX + 25, hudY + 45);
 
             ctx.fillStyle = '#27ae60'; // Green for employed
-            ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, hudX + 12, hudY + 65);
+            ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, sidebarX + 25, hudY + 65);
         }
     }
 
@@ -770,7 +771,10 @@ export class Renderer {
     renderPlacementPreview(input, grid, buildingManager, economy) {
         if (input.mode === 'none') return;
 
-        const { x, y } = input.screenToTile(input.lastMouseClientX, input.lastMouseClientY);
+        const { x, y, inSidebar } = input.screenToTile(input.lastMouseClientX, input.lastMouseClientY);
+        // If mouse is in sidebar area, don't show preview on map
+        if (inSidebar) return;
+
         const ts = this.tileSize;
         const ctx = this.ctx;
 

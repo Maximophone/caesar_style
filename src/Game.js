@@ -20,8 +20,8 @@ export class Game {
         this.gridWidth = 60; // Increased map size
         this.gridHeight = 60;
 
-        // Set canvas size (Viewport)
-        this.canvas.width = 800;
+        // Set canvas size (Viewport: 800px map + 200px sidebar)
+        this.canvas.width = 1000;
         this.canvas.height = 600;
 
         // Initialize systems
@@ -201,8 +201,9 @@ export class Game {
         }
 
         // Clamp camera to map bounds
-        // Allow scrolling a bit past the edge (e.g., half screen) for better visibility
-        const maxX = (this.gridWidth * this.tileSize) - this.canvas.width;
+        // VIEWPORT CHANGE: Map is only 800px wide now.
+        const viewWidth = 800;
+        const maxX = (this.gridWidth * this.tileSize) - viewWidth;
         const maxY = (this.gridHeight * this.tileSize) - this.canvas.height;
 
         // Ensure we don't scroll into negative (if map is smaller than canvas)

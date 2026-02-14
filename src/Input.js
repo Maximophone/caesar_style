@@ -38,12 +38,24 @@ export class Input {
 
     screenToTile(screenX, screenY) {
         const rect = this.canvas.getBoundingClientRect();
+        const mouseCanvasX = screenX - rect.left;
+
+        // SIDEBAR CHECK: If mouse is in sidebar area, return invalid tile
+        if (mouseCanvasX >= 800) {
+            return { x: -1, y: -1, inSidebar: true };
+        }
+
         const camX = this.game.camera ? this.game.camera.x : 0;
         const camY = this.game.camera ? this.game.camera.y : 0;
 
-        const x = Math.floor((screenX - rect.left + camX) / this.tileSize);
+        const x = Math.floor((mouseCanvasX + camX) / this.tileSize);
         const y = Math.floor((screenY - rect.top + camY) / this.tileSize);
-        return { x, y };
+        return { x, y, inSidebar: false };
+    }
+
+    isInSidebar(screenX) {
+        const rect = this.canvas.getBoundingClientRect();
+        return (screenX - rect.left) >= 800;
     }
 
     onMouseDown(e) {
@@ -58,8 +70,15 @@ export class Input {
             return;
         }
 
-        const { x, y } = this.screenToTile(e.clientX, e.clientY);
-        this.game.onTileClick(x, y, e.button);
+        if (this.isInSidebar(e.clientX)) {
+            // Sidebar interaction (maybe in future handled here, but Menu handles keys for now)
+            return;
+        }
+
+        const { x, y, inSidebar } = this.screenToTile(e.clientX, e.clientY);
+        if (!inSidebar) {
+            this.game.onTileClick(x, y, e.button);
+        }
     }
 
     onMouseUp(e) {
@@ -94,12 +113,12 @@ export class Input {
             return;
         }
 
-        const { x, y } = this.screenToTile(e.clientX, e.clientY);
+        const { x, y, inSidebar } = this.screenToTile(e.clientX, e.clientY);
         this.mouseX = x;
         this.mouseY = y;
 
-        // Handle drag interactions (Left/Right click)
-        if (this.isMouseDown) {
+        // Handle drag interactions (Left/Right click) - only if in map area
+        if (this.isMouseDown && !inSidebar) {
             if (this.mouseButton === 2) {
                 // Right click drag -> Delete
                 this.game.onTileClick(x, y, 2);
