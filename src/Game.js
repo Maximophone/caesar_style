@@ -77,6 +77,7 @@ export class Game {
             'house_level_2': `assets/house_level_2.png?t=${t}`,
             'house_level_3': `assets/house_level_3.png?t=${t}`,
             'house_level_4': `assets/house_level_4.png?t=${t}`,
+            'house_level_5': `assets/house_level_5.png?t=${t}`,
             'market': `assets/market.png?t=${t}`,
             'temple': `assets/temple.png?t=${t}`,
             // Single-direction sprites (using _south suffix)
@@ -97,6 +98,7 @@ export class Game {
         this.assetManager.applyTransparencyFromCorner('house_level_2', 40);
         this.assetManager.applyTransparencyFromCorner('house_level_3', 40);
         this.assetManager.applyTransparencyFromCorner('house_level_4', 40);
+        this.assetManager.applyTransparencyFromCorner('house_level_5', 40);
         this.assetManager.applyTransparencyFromCorner('market', 40);
         this.assetManager.applyTransparencyFromCorner('temple', 40);
         this.assetManager.applyTransparencyFromCorner('well_south', 40);
@@ -124,7 +126,7 @@ export class Game {
         const t = Date.now();
         const directions = ['south', 'north', 'east', 'west'];
         const baseNames = [
-            'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
+            'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4', 'house_level_5',
             'well', 'fountain', 'market', 'temple', 'farm', 'fishing_wharf',
             'granary', 'warehouse', 'bazaar',
             'garden_small', 'garden_large', 'tax_office', 'mine', 'forge',
