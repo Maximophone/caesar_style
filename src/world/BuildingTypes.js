@@ -89,7 +89,8 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.1 },  // Survival needs
         upgradeThreshold: 0.4,
         taxMultiplier: 1,
-        desirability: { 1: -10, 2: -8, 3: -5, 4: -2 }
+        desirability: { 1: -10, 2: -8, 3: -5, 4: -2 },
+        consumes: { food: 0.1 } // Tents only eat basic food
     },
     {
         // Level 2: Shack
@@ -99,7 +100,8 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.4, food: 0.1 },
         upgradeThreshold: 0.8,
         taxMultiplier: 1,
-        desirability: { 1: -5, 2: -3, 3: -1 }
+        desirability: { 1: -5, 2: -3, 3: -1 },
+        consumes: { food: 0.12, fish: 0.05 } // Shacks start eating fish
     },
     {
         // Level 3: Stone House
@@ -108,7 +110,8 @@ export const HOUSE_LEVELS = [
         population: 4,
         requirements: { water: 0.6, food: 0.5, religion: 0.2, pottery: 0.2, fish: 0.3 },
         upgradeThreshold: 0.8,
-        taxMultiplier: 2
+        taxMultiplier: 2,
+        consumes: { food: 0.15, fish: 0.1, pottery: 0.05 }
         // No desirability — neutral
     },
     {
@@ -119,7 +122,8 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, pottery: 0.4, fish: 0.5, desirability: 0.4 },
         upgradeThreshold: 0.8,
         taxMultiplier: 3,
-        desirability: { 1: 15, 2: 12, 3: 10, 4: 7, 5: 4, 6: 2 }
+        desirability: { 1: 15, 2: 12, 3: 10, 4: 7, 5: 4, 6: 2 },
+        consumes: { food: 0.18, fish: 0.15, utensils: 0.06, pottery: 0.08 }
     },
     {
         // Level 5: Palace
@@ -129,7 +133,8 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, fish: 0.7, desirability: 0.6 },
         upgradeThreshold: null,
         taxMultiplier: 5,
-        desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 }
+        desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 },
+        consumes: { food: 0.2, fish: 0.2, utensils: 0.1, pottery: 0.1, furniture: 0.08 }
     }
 ];
 
@@ -158,7 +163,7 @@ export const BUILDING_TYPES = {
         goods: {
             storage: { food: 5, fish: 5, utensils: 2, pottery: 2, furniture: 2 },
             dynamicCapacity: true,
-            consumes: { food: 0.1, fish: 0.08, utensils: 0.05, pottery: 0.05, furniture: 0.04 },
+            // consumes moved to HOUSE_LEVELS for per-level tuning
         }
     },
     well: {

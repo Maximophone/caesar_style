@@ -124,9 +124,10 @@ export class Building {
         return taxAmount;
     }
 
-    // Consume goods based on type.goods.consumes config
+    // Consume goods based on type.goods.consumes config OR per-level config
     consumeGoods(deltaTime) {
-        const consumes = this.type.goods?.consumes;
+        const levelConfig = HOUSE_LEVELS[this.level];
+        const consumes = (levelConfig && levelConfig.consumes) || this.type.goods?.consumes;
         if (!consumes || !this.storage) return;
 
         const population = this.getPopulation ? this.getPopulation() : 0;
@@ -142,7 +143,8 @@ export class Building {
     updateGoodsCoverage() {
         if (!this.coverageNeeds || !this.storage) return;
 
-        const consumes = this.type.goods?.consumes;
+        const levelConfig = HOUSE_LEVELS[this.level];
+        const consumes = (levelConfig && levelConfig.consumes) || this.type.goods?.consumes;
         if (!consumes) return;
 
         for (const goodType of Object.keys(consumes)) {
