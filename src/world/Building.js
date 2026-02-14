@@ -240,12 +240,13 @@ export class Building {
         return minSurplus === Infinity ? 0 : Math.max(0, minSurplus);
     }
 
-    // Check if building has enough workers to function
+    // Check if building has enough workers to function at base level
     isStaffed() {
-        return this.workers >= this.getEffectiveWorkersNeeded();
+        const base = this.type.workersNeeded || 0;
+        return this.workers >= base;
     }
 
-    // Get effective workers needed (accounts for building upgrades)
+    // Get effective workers needed for FULL capacity (accounts for building upgrades)
     getEffectiveWorkersNeeded() {
         const base = this.type.workersNeeded || 0;
         if (this.walkerSlots.length === 0) return base;
@@ -254,12 +255,20 @@ export class Building {
         return base + extraWalkers;
     }
 
-    // Get effective max walkers for a given slot (based on building level)
+    // Get effective max walkers for a given slot, based on building level AND current workers
+    // Base workers support 1 walker/slot. Each extra (walkerSlots.length) workers unlocks +1/slot.
     getEffectiveWalkerMax(slotIndex) {
         const slot = this.walkerSlots[slotIndex];
         if (!slot) return 0;
-        // Every slot starts at 1, each upgrade adds 1
-        return this.buildingLevel;
+
+        const base = this.type.workersNeeded || 0;
+        const numSlots = this.walkerSlots.length;
+        // How many extra workers beyond base do we have?
+        const extraWorkers = Math.max(0, this.workers - base);
+        // Each set of numSlots extra workers unlocks +1 walker per slot
+        const workerSupportedLevel = 1 + Math.floor(extraWorkers / numSlots);
+        // Cap by the building's upgrade level
+        return Math.min(this.buildingLevel, workerSupportedLevel);
     }
 
     // Check if this building can be upgraded

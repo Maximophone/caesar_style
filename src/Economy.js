@@ -53,7 +53,7 @@ export class Economy {
         let totalEmployed = 0;
 
         for (const building of needsWorkers) {
-            const needed = building.type.workersNeeded;
+            const needed = building.getEffectiveWorkersNeeded();
             const assigned = Math.min(needed, available);
             building.workers = assigned;
             available -= assigned;
