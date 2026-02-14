@@ -631,84 +631,109 @@ export class Renderer {
 
     renderUI(input, economy, debug, buildingMenu) {
         const ctx = this.ctx;
-
-        // Get menu display data
         const menuData = buildingMenu ? buildingMenu.getDisplayData() : null;
 
-        // Calculate menu dimensions based on content
-        let menuHeight = 85;  // Base height for selection + controls + debug
-        if (menuData) {
-            menuHeight += (menuData.mode === 'categories') ? 15 : 15;
-        }
-
-        // Background for info box
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, 10, 400, menuHeight);
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px monospace';
-
-        // Current selection
+        // --- Prepare lines to render ---
+        const lines = [];
         const selectionText = buildingMenu ? buildingMenu.getSelectionText() : 'Loading...';
-        ctx.fillText(`Selected: ${selectionText}`, 20, 30);
+        lines.push({ text: `Selected: ${selectionText}`, color: '#fff', font: 'bold 14px monospace' });
 
-        // Display categories or sub-menu
         if (menuData) {
             if (menuData.mode === 'categories') {
-                // Show all categories
-                let line = '';
+                lines.push({ text: 'Categories:', color: '#f1c40f', font: '14px monospace' });
                 for (const cat of menuData.items) {
-                    line += `[${cat.key}] ${cat.name}  `;
+                    lines.push({ text: ` [${cat.key}] ${cat.name}`, color: '#fff', font: '13px monospace' });
                 }
-                ctx.fillText(line, 20, 50);
             } else {
-                // Show buildings in selected category
-                ctx.fillStyle = '#f1c40f';  // Yellow for category name
-                ctx.fillText(`${menuData.categoryName}:`, 20, 50);
-
-                ctx.fillStyle = '#fff';
-                let line = '';
+                lines.push({ text: `${menuData.categoryName}:`, color: '#f1c40f', font: '14px monospace' });
                 for (const item of menuData.items) {
                     const marker = item.selected ? '>' : ' ';
-                    line += `${marker}[${item.key}] ${item.name} (${item.cost})  `;
+                    lines.push({
+                        text: `${marker}[${item.key}] ${item.name} (${item.cost} Dn)`,
+                        color: item.selected ? '#f1c40f' : '#fff',
+                        font: '13px monospace'
+                    });
                 }
-                ctx.fillText(line, 20, 65);
-                ctx.fillStyle = '#aaa';
-                ctx.fillText('[ESC] Back', 20, 80);
+                lines.push({ text: ' [ESC] Back', color: '#aaa', font: '12px monospace' });
             }
         }
 
-        // Controls hint
-        const controlsY = menuData && menuData.mode === 'buildings' ? 95 : 65;
-        ctx.fillStyle = '#888';
-        ctx.fillText('LClick: Place  RClick: Remove', 20, controlsY);
+        // Action hints
+        lines.push({ text: '', height: 5 }); // Spacer
+        lines.push({ text: 'LClick: Place | RClick: Remove', color: '#888', font: '12px monospace' });
 
-        // Debug hints
+        // Debug & System hints
         let debugText = '[O]verlays: ' + (debug && debug.showOverlays ? 'ON' : 'OFF');
-        debugText += '  [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
-        ctx.fillText(debugText, 20, controlsY + 15);
+        debugText += ' | [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
+        lines.push({ text: debugText, color: '#888', font: '12px monospace' });
+        lines.push({ text: '[F5] Save | [F9] Load | [N] New', color: '#888', font: '12px monospace' });
 
-        // Save/Load hints
-        ctx.fillText('[F5] Save  [F9] Load  [N] New', 20, controlsY + 30);
+        // --- Calculate dimensions ---
+        const padding = 15;
+        const lineSpacing = 4;
+        let maxWidth = 250; // Minimum width
+        let totalHeight = padding * 2;
 
-        // Economy HUD (top-right)
+        ctx.save();
+        for (const line of lines) {
+            if (line.text === '') {
+                totalHeight += line.height || 10;
+                continue;
+            }
+            ctx.font = line.font;
+            const metrics = ctx.measureText(line.text);
+            maxWidth = Math.max(maxWidth, metrics.width + padding * 2);
+
+            // Extract font size for height estimation (e.g., "14px monospace" -> 14)
+            const fontSize = parseInt(line.font) || 14;
+            totalHeight += fontSize + lineSpacing;
+        }
+        ctx.restore();
+
+        // --- Render Background ---
+        const menuX = 10;
+        const menuY = 10;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillRect(menuX, menuY, maxWidth, totalHeight);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(menuX, menuY, maxWidth, totalHeight);
+
+        // --- Render Text ---
+        let currentY = menuY + padding;
+        for (const line of lines) {
+            if (line.text === '') {
+                currentY += line.height || 10;
+                continue;
+            }
+            const fontSize = parseInt(line.font) || 14;
+            ctx.font = line.font;
+            ctx.fillStyle = line.color;
+            ctx.fillText(line.text, menuX + padding, currentY + fontSize);
+            currentY += fontSize + lineSpacing;
+        }
+
+        // --- Economy HUD (top-right) ---
         if (economy) {
-            const hudWidth = 150;
+            const hudWidth = 160;
             const hudX = ctx.canvas.width - hudWidth - 10;
+            const hudY = 10;
+            const hudH = 75;
 
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(hudX, 10, hudWidth, 70);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(hudX, hudY, hudWidth, hudH);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.strokeRect(hudX, hudY, hudWidth, hudH);
 
             ctx.font = 'bold 14px monospace';
-
             ctx.fillStyle = '#f1c40f'; // Gold for money
-            ctx.fillText(`💰 ${economy.money}`, hudX + 10, 30);
+            ctx.fillText(`💰 ${economy.money}`, hudX + 12, hudY + 25);
 
             ctx.fillStyle = '#3498db'; // Blue for population
-            ctx.fillText(`👥 ${economy.population}`, hudX + 10, 50);
+            ctx.fillText(`👥 ${economy.population}`, hudX + 12, hudY + 45);
 
             ctx.fillStyle = '#27ae60'; // Green for employed
-            ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, hudX + 10, 70);
+            ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, hudX + 12, hudY + 65);
         }
     }
 
