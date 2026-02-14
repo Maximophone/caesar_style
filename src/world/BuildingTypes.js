@@ -18,7 +18,8 @@ export const HOUSE_LEVELS = [
         population: 1,
         requirements: { water: 0.1 },  // Survival needs
         upgradeThreshold: 0.4,
-        taxMultiplier: 1
+        taxMultiplier: 1,
+        desirability: { 1: -10, 2: -5 }
     },
     {
         // Level 2: Shack
@@ -27,7 +28,8 @@ export const HOUSE_LEVELS = [
         population: 2,
         requirements: { water: 0.4, food: 0.1 },
         upgradeThreshold: 0.8,
-        taxMultiplier: 1
+        taxMultiplier: 1,
+        desirability: { 1: -5 }
     },
     {
         // Level 3: Stone House
@@ -37,15 +39,17 @@ export const HOUSE_LEVELS = [
         requirements: { water: 0.6, food: 0.5, religion: 0.2 },
         upgradeThreshold: 0.8,
         taxMultiplier: 2
+        // No desirability — neutral
     },
     {
         // Level 4: Villa
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, desirability: 0.4 }, // 0.1 normalized = 10 if max is 100
+        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.2, desirability: 0.4 },
         upgradeThreshold: null,
-        taxMultiplier: 3
+        taxMultiplier: 3,
+        desirability: { 1: 15, 2: 10, 3: 5 }
     }
 ];
 
@@ -87,6 +91,7 @@ export const BUILDING_TYPES = {
             type: 'water',
             distanceAmounts: { 1: 60, 2: 40, 3: 20 }
         },
+        desirability: { 1: -5 },
         cost: 20
     },
     fountain: {
@@ -99,6 +104,7 @@ export const BUILDING_TYPES = {
             type: 'water',
             distanceAmounts: { 1: 90, 2: 70, 3: 50, 4: 30, 5: 10 }
         },
+        desirability: { 1: 15, 2: 10, 3: 5 },
         cost: 70
     },
     market: {
@@ -119,7 +125,8 @@ export const BUILDING_TYPES = {
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' }
-        ]
+        ],
+        desirability: { 1: -5 }
     },
     temple: {
         id: 'temple',
@@ -131,7 +138,8 @@ export const BUILDING_TYPES = {
         cost: 200,
         walkers: [
             { type: 'service', max: 2, spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
-        ]
+        ],
+        desirability: { 1: 20, 2: 15, 3: 10, 4: 5 }
     },
     small_garden: {
         id: 'small_garden',
@@ -140,10 +148,7 @@ export const BUILDING_TYPES = {
         height: 1,
         color: '#228B22',  // Forest Green
         needsRoadAccess: false,
-        staticCoverage: {
-            type: 'desirability',
-            distanceAmounts: { 1: 30, 2: 20, 3: 10 }
-        },
+        desirability: { 1: 30, 2: 20, 3: 10 },
         cost: 10
     },
     large_garden: {
@@ -153,10 +158,7 @@ export const BUILDING_TYPES = {
         height: 2,
         color: '#006400',  // Dark Green
         needsRoadAccess: false,
-        staticCoverage: {
-            type: 'desirability',
-            distanceAmounts: { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 }
-        },
+        desirability: { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 },
         cost: 30
     },
     farm: {
@@ -175,7 +177,8 @@ export const BUILDING_TYPES = {
         },
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
-        ]
+        ],
+        desirability: { 1: -10, 2: -5 }
     },
     warehouse: {
         id: 'warehouse',
@@ -193,7 +196,8 @@ export const BUILDING_TYPES = {
         deliveryPriority: 1,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
-        ]
+        ],
+        desirability: { 1: -10, 2: -5 }
     },
     mine: {
         id: 'mine',
@@ -211,7 +215,8 @@ export const BUILDING_TYPES = {
         },
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
-        ]
+        ],
+        desirability: { 1: -30, 2: -20, 3: -10, 4: -5 }
     },
     tax_office: {
         id: 'tax_office',
@@ -223,7 +228,8 @@ export const BUILDING_TYPES = {
         cost: 100,
         walkers: [
             { type: 'service', max: 1, spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
-        ]
+        ],
+        desirability: { 1: -5 }
     },
     workshop: {
         id: 'workshop',
@@ -244,7 +250,8 @@ export const BUILDING_TYPES = {
         deliveryFillThreshold: 0.5,
         walkers: [
             { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
-        ]
+        ],
+        desirability: { 1: -15, 2: -10, 3: -5 }
     }
 };
 

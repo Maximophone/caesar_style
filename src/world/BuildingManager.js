@@ -1,7 +1,7 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
 import { CartWalker } from '../entities/CartWalker.js';
-import { BUILDING_TYPES, GOODS_CONFIG } from './BuildingTypes.js';
+import { BUILDING_TYPES, GOODS_CONFIG, HOUSE_LEVELS } from './BuildingTypes.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -153,7 +153,7 @@ export class BuildingManager {
             }
         }
 
-        // Then apply coverage from each source
+        // Then apply coverage from each source (water from wells/fountains)
         for (const building of this.buildings) {
             const staticCoverage = building.type.staticCoverage;
             if (!staticCoverage) continue;
@@ -186,6 +186,46 @@ export class BuildingManager {
                 // Add coverage based on distance (cumulative)
                 if (minDist <= maxDist && distanceAmounts[minDist] !== undefined) {
                     other.addCoverage(coverageType, distanceAmounts[minDist]);
+                }
+            }
+        }
+
+        // Apply desirability from ALL buildings (uses type.desirability or HOUSE_LEVELS)
+        this.applyDesirability();
+    }
+
+    // Apply desirability emissions from all buildings to nearby houses
+    applyDesirability() {
+        for (const building of this.buildings) {
+            // Get desirability config: from HOUSE_LEVELS for houses, from type for others
+            let desirabilityMap = building.type.desirability;
+            if (building.coverageNeeds && building.level !== undefined) {
+                // House — use level-dependent desirability
+                const levelConfig = HOUSE_LEVELS[building.level];
+                desirabilityMap = levelConfig?.desirability;
+            }
+
+            if (!desirabilityMap) continue;
+
+            const centerX = building.x + Math.floor(building.width / 2);
+            const centerY = building.y + Math.floor(building.height / 2);
+            const maxDist = Math.max(...Object.keys(desirabilityMap).map(Number));
+
+            for (const other of this.buildings) {
+                if (other === building) continue;
+                if (!other.coverageNeeds) continue;
+
+                // Manhattan distance to closest tile of receiving house
+                let minDist = Infinity;
+                for (let dy = 0; dy < other.height; dy++) {
+                    for (let dx = 0; dx < other.width; dx++) {
+                        const dist = Math.abs(other.x + dx - centerX) + Math.abs(other.y + dy - centerY);
+                        minDist = Math.min(minDist, dist);
+                    }
+                }
+
+                if (minDist <= maxDist && desirabilityMap[minDist] !== undefined) {
+                    other.addCoverage('desirability', desirabilityMap[minDist]);
                 }
             }
         }

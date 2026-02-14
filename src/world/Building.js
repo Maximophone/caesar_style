@@ -291,13 +291,13 @@ export class Building {
         }
     }
 
-    // Called by static coverage sources - adds amount (cumulative, capped at max)
+    // Called by static coverage sources - adds amount (cumulative, clamped to [0, max])
     addCoverage(coverageType, amount) {
         if (this.coverageNeeds && coverageType in this.coverageNeeds) {
-            this.coverageNeeds[coverageType] = Math.min(
+            this.coverageNeeds[coverageType] = Math.max(0, Math.min(
                 this.maxCoverage,
                 this.coverageNeeds[coverageType] + amount
-            );
+            ));
         }
     }
 
