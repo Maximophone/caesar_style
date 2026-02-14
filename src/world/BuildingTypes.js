@@ -135,7 +135,7 @@ export const HOUSE_LEVELS = [
 
 // Building categories for menu
 export const BUILDING_CATEGORIES = {
-    roads: { key: '1', name: 'Roads', buildings: ['road'] },
+    roads: { key: '1', name: 'Roads', buildings: ['road', 'bridge'] },
     residential: { key: '2', name: 'Residential', buildings: ['house'] },
     water: { key: '3', name: 'Water', buildings: ['well', 'fountain'] },
     food: { key: '4', name: 'Food', buildings: ['farm', 'fishing_wharf', 'market', 'warehouse'] },
@@ -441,6 +441,7 @@ export const BUILDING_TYPES = {
 
 // Road cost (not a building but needs a cost)
 export const ROAD_COST = 5;
+export const BRIDGE_COST = 30;
 
 // Goods transport configuration
 export const GOODS_CONFIG = {

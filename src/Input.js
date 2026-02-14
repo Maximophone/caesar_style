@@ -122,7 +122,7 @@ export class Input {
             } else if (this.mouseButton === 0) {
                 // Left click drag -> Place road (if in road mode)
                 const menu = this.game.buildingMenu;
-                if (menu.placementMode === 'road') {
+                if (menu.placementMode === 'road' || menu.placementMode === 'bridge') {
                     this.game.onTileClick(x, y, 0);
                 }
             }

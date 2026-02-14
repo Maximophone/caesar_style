@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, BUILDING_CATEGORIES, ROAD_COST } from '../world/BuildingTypes.js';
+import { BUILDING_TYPES, BUILDING_CATEGORIES, ROAD_COST, BRIDGE_COST } from '../world/BuildingTypes.js';
 
 /**
  * BuildingMenu - Manages categorized building selection
@@ -75,6 +75,9 @@ export class BuildingMenu {
         if (buildingId === 'road') {
             this.placementMode = 'road';
             this.selectedBuilding = null;
+        } else if (buildingId === 'bridge') {
+            this.placementMode = 'bridge';
+            this.selectedBuilding = null;
         } else {
             this.placementMode = 'building';
             this.selectedBuilding = BUILDING_TYPES[buildingId];
@@ -113,6 +116,14 @@ export class BuildingMenu {
                         selected: this.placementMode === 'road'
                     };
                 }
+                if (buildingId === 'bridge') {
+                    return {
+                        key: String(index + 1),
+                        name: 'Bridge',
+                        cost: BRIDGE_COST,
+                        selected: this.placementMode === 'bridge'
+                    };
+                }
                 const building = BUILDING_TYPES[buildingId];
                 return {
                     key: String(index + 1),
@@ -130,6 +141,9 @@ export class BuildingMenu {
     getSelectionText() {
         if (this.placementMode === 'road') {
             return `Road (${ROAD_COST} Dn)`;
+        }
+        if (this.placementMode === 'bridge') {
+            return `Bridge (${BRIDGE_COST} Dn)`;
         }
         if (this.selectedBuilding) {
             return `${this.selectedBuilding.name} (${this.selectedBuilding.cost} Dn)`;

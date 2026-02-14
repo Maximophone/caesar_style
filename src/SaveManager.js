@@ -22,8 +22,11 @@ export class SaveManager {
                 resources: SaveManager._serializeResources(game.grid),
             },
 
-            // Roads as array of "x,y" strings
+            // Roads as array of "x,y" strings (includes bridges for pathfinding)
             roads: Array.from(game.roadNetwork.roads),
+
+            // Bridges: subset of road network positions that are on water
+            bridges: SaveManager._serializeBridges(game.grid, game.roadNetwork),
 
             // Buildings
             buildings: game.buildingManager.buildings.map(b => b.toJSON()),
@@ -76,12 +79,13 @@ export class SaveManager {
             game.grid.resources[entry.y][entry.x] = entry.type;
         }
 
-        // --- Roads ---
+        // --- Roads & Bridges ---
+        const bridgeSet = new Set(data.bridges || []);
         game.roadNetwork.roads = new Set(data.roads);
-        // Also set grid tiles for roads
+        // Set grid tiles: bridges get { type: 'bridge' }, roads get { type: 'road' }
         for (const key of data.roads) {
             const [x, y] = key.split(',').map(Number);
-            game.grid.setTile(x, y, { type: 'road' });
+            game.grid.setTile(x, y, { type: bridgeSet.has(key) ? 'bridge' : 'road' });
         }
 
         // --- Buildings ---
@@ -171,6 +175,18 @@ export class SaveManager {
             }
         }
         return entries;
+    }
+
+    static _serializeBridges(grid, roadNetwork) {
+        const bridges = [];
+        for (const key of roadNetwork.roads) {
+            const [x, y] = key.split(',').map(Number);
+            const tile = grid.getTile(x, y);
+            if (tile && tile.type === 'bridge') {
+                bridges.push(key);
+            }
+        }
+        return bridges;
     }
 
     static _serializeResources(grid) {

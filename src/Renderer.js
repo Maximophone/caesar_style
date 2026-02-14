@@ -1,5 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
-import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES, TERRAIN_TYPES } from './world/BuildingTypes.js';
+import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES, TERRAIN_TYPES, BRIDGE_COST } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -137,6 +137,9 @@ export class Renderer {
         for (let y = 0; y < grid.height; y++) {
             for (let x = 0; x < grid.width; x++) {
                 if (roadNetwork.hasRoad(x, y)) {
+                    const tile = grid.getTile(x, y);
+                    const isBridge = tile && tile.type === 'bridge';
+
                     if (canDrawSprites) {
                         // Calculate bitmask (N=1, E=2, S=4, W=8)
                         let mask = 0;
@@ -146,10 +149,18 @@ export class Renderer {
                         if (roadNetwork.hasRoad(x - 1, y)) mask |= 8; // West
 
                         const mapping = tileMap[mask] || tileMap[0];
-                        this.renderRotatedTile(ctx, roadImg, x, y, ts, tileW, tileH, mapping.c, mapping.r, mapping.rot);
+
+                        if (isBridge) {
+                            // Draw bridge: tint the road sprite with a wooden brown overlay
+                            this.renderRotatedTile(ctx, roadImg, x, y, ts, tileW, tileH, mapping.c, mapping.r, mapping.rot);
+                            ctx.fillStyle = 'rgba(139, 90, 43, 0.35)';
+                            ctx.fillRect(x * ts, y * ts, ts, ts);
+                        } else {
+                            this.renderRotatedTile(ctx, roadImg, x, y, ts, tileW, tileH, mapping.c, mapping.r, mapping.rot);
+                        }
                     } else {
-                        // Fallback: Simple gray rectangle
-                        ctx.fillStyle = '#7f8c8d';
+                        // Fallback: colored rectangle
+                        ctx.fillStyle = isBridge ? '#8B5A2B' : '#7f8c8d';
                         ctx.fillRect(x * ts, y * ts, ts, ts);
 
                         // Optional: Darker border
@@ -831,6 +842,10 @@ export class Renderer {
             if (grid.getTile(x, y) !== null) isValid = false;
             if (isValid && grid.getTerrain(x, y) !== null) isValid = false;
             if (isValid && !economy.canAfford(ROAD_COST)) isValid = false;
+        } else if (input.mode === 'bridge') {
+            if (grid.getTile(x, y) !== null) isValid = false;
+            if (isValid && grid.getTerrain(x, y) !== 'water') isValid = false;
+            if (isValid && !economy.canAfford(BRIDGE_COST)) isValid = false;
         }
 
         // Draw footprint highlight

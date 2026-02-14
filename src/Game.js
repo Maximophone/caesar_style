@@ -5,7 +5,7 @@ import { RoadNetwork } from './world/RoadNetwork.js';
 import { EntityManager } from './entities/EntityManager.js';
 import { BuildingManager } from './world/BuildingManager.js';
 import { Economy } from './Economy.js';
-import { ROAD_COST } from './world/BuildingTypes.js';
+import { ROAD_COST, BRIDGE_COST } from './world/BuildingTypes.js';
 import { AssetManager } from './AssetManager.js';
 import { BuildingMenu } from './ui/BuildingMenu.js';
 import { SaveManager } from './SaveManager.js';
@@ -258,6 +258,8 @@ export class Game {
         if (button === 0) { // Left click
             if (this.input.mode === 'road') {
                 this.placeRoad(x, y);
+            } else if (this.input.mode === 'bridge') {
+                this.placeBridge(x, y);
             } else if (this.input.mode === 'building') {
                 this.placeBuilding(x, y);
             }
@@ -276,6 +278,16 @@ export class Game {
         }
     }
 
+    placeBridge(x, y) {
+        if (this.grid.getTile(x, y) === null && this.grid.getTerrain(x, y) === 'water') {
+            if (!this.economy.canAfford(BRIDGE_COST)) return;
+
+            this.economy.spend(BRIDGE_COST);
+            this.grid.setTile(x, y, { type: 'bridge' });
+            this.roadNetwork.addRoad(x, y); // Bridges join the road network for pathfinding
+        }
+    }
+
     placeBuilding(x, y) {
         const type = this.input.selectedBuildingType;
         if (!this.economy.canAfford(type.cost)) return;
@@ -289,7 +301,7 @@ export class Game {
     removeTile(x, y) {
         const tile = this.grid.getTile(x, y);
         if (tile) {
-            if (tile.type === 'road') {
+            if (tile.type === 'road' || tile.type === 'bridge') {
                 this.roadNetwork.removeRoad(x, y);
             } else if (tile.type === 'building') {
                 this.buildingManager.removeBuilding(x, y);
