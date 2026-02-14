@@ -338,9 +338,17 @@ export class Renderer {
                 } else {
                     // --- SERVICE/PRODUCTION BUILDING OVERLAY ---
 
+                    // Building level indicator (top-left, for upgraded buildings)
+                    if (building.canUpgrade() && building.buildingLevel > 1) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.fillText(`L${building.buildingLevel}`, bx + 4, by + 14);
+                    }
+
                     // Employment bar at top inside edge
                     if (building.type.workersNeeded > 0) {
-                        const fill = building.workers / building.type.workersNeeded;
+                        const needed = building.getEffectiveWorkersNeeded();
+                        const fill = needed > 0 ? building.workers / needed : 1;
                         this.renderEmploymentBar(ctx, bx + 2, by + 2, bw - 4, 4, fill, building.isStaffed());
                     }
 
@@ -733,9 +741,7 @@ export class Renderer {
         ctx.font = '10px monospace';
         ctx.fillStyle = '#888';
         ctx.fillText('LClick: Place | RClick: Remove', contentX, footerY + 10);
-
-        let debugText = '[O] Overlays | [P] Sprites';
-        ctx.fillText(debugText, contentX, footerY + 25);
+        ctx.fillText('[U] Upgrade | [O] Overlays', contentX, footerY + 25);
         ctx.fillText('[F5] Save | [F9] Load | [N] New', contentX, footerY + 40);
 
         // --- Economy HUD (top of sidebar) ---

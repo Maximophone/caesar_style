@@ -21,6 +21,9 @@ export class Building {
             activeCount: 0,
         }));
 
+        // Building upgrade level (for buildings with walkers, not houses)
+        this.buildingLevel = 1;
+
         // Employment (for service buildings that need workers)
         this.workers = 0;
 
@@ -239,8 +242,35 @@ export class Building {
 
     // Check if building has enough workers to function
     isStaffed() {
-        const needed = this.type.workersNeeded || 0;
-        return this.workers >= needed;
+        return this.workers >= this.getEffectiveWorkersNeeded();
+    }
+
+    // Get effective workers needed (accounts for building upgrades)
+    getEffectiveWorkersNeeded() {
+        const base = this.type.workersNeeded || 0;
+        if (this.walkerSlots.length === 0) return base;
+        // Each upgrade level adds 1 extra walker per slot = that many extra workers
+        const extraWalkers = (this.buildingLevel - 1) * this.walkerSlots.length;
+        return base + extraWalkers;
+    }
+
+    // Get effective max walkers for a given slot (based on building level)
+    getEffectiveWalkerMax(slotIndex) {
+        const slot = this.walkerSlots[slotIndex];
+        if (!slot) return 0;
+        // Every slot starts at 1, each upgrade adds 1
+        return this.buildingLevel;
+    }
+
+    // Check if this building can be upgraded
+    canUpgrade() {
+        return this.walkerSlots.length > 0 && !this.coverageNeeds;
+    }
+
+    // Get cost to upgrade to the next level
+    getUpgradeCost() {
+        const baseCost = this.type.upgradeCost || Math.floor(this.type.cost * 0.75);
+        return baseCost * this.buildingLevel;
     }
 
     // Check if a walker slot is ready to spawn
@@ -256,8 +286,8 @@ export class Building {
         // Timer must have elapsed
         if (slot.spawnTimer > 0) return false;
 
-        // Must not exceed max active
-        if (slot.activeCount >= config.max) return false;
+        // Must not exceed max active (based on building upgrade level)
+        if (slot.activeCount >= this.getEffectiveWalkerMax(slotIndex)) return false;
 
         // Cart walkers need goods to emit
         if (config.type === 'cart') {
@@ -542,6 +572,7 @@ export class Building {
             roadAccessX: this.roadAccessX,
             roadAccessY: this.roadAccessY,
             rotation: this.rotation || 0,
+            buildingLevel: this.buildingLevel,
         };
 
         // Walker slot timers (drop activeCount — walkers are transient)
@@ -578,6 +609,7 @@ export class Building {
         b.roadAccessX = data.roadAccessX;
         b.roadAccessY = data.roadAccessY;
         b.rotation = data.rotation || 0;
+        b.buildingLevel = data.buildingLevel || 1;
 
         // Restore walker slot timers (activeCount starts at 0 — no active walkers)
         if (data.walkerSlots) {

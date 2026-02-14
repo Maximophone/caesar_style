@@ -169,7 +169,7 @@ export const BUILDING_TYPES = {
         color: '#4169E1',  // Blue
         staticCoverage: {
             type: 'water',
-            distanceAmounts: { 1: 60, 2: 40, 3: 20 }
+            distanceAmounts: { 1: 60, 2: 50, 3: 40, 4: 30, 5: 20 }
         },
         desirability: { 1: -5 },
         cost: 20
@@ -182,16 +182,16 @@ export const BUILDING_TYPES = {
         color: '#00BFFF',  // Deep Sky Blue
         staticCoverage: {
             type: 'water',
-            distanceAmounts: { 1: 90, 2: 70, 3: 50, 4: 30, 5: 10 }
+            distanceAmounts: { 1: 90, 2: 70, 3: 60, 4: 50, 5: 40, 6: 30, 7: 20, 8: 20 }
         },
         desirability: { 1: 15, 2: 10, 3: 5 },
-        cost: 70
+        cost: 60
     },
     market: {
         id: 'market',
         name: 'Market',
-        width: 2,
-        height: 2,
+        width: 3,
+        height: 3,
         color: '#DAA520',  // Goldenrod
         workersNeeded: 2,
         cost: 60,
@@ -203,21 +203,21 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'food' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'fish' }
+            { type: 'service', spawnInterval: 5, coverageType: 'food' },
+            { type: 'service', spawnInterval: 5, coverageType: 'fish' }
         ],
         desirability: { 1: -5 }
     },
     temple: {
         id: 'temple',
         name: 'Temple',
-        width: 3,
-        height: 3,
+        width: 4,
+        height: 4,
         color: '#9370DB',  // Purple
         workersNeeded: 4,  // Reduced from 8
         cost: 200,
         walkers: [
-            { type: 'service', max: 2, spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
+            { type: 'service', spawnInterval: 5, coverageType: 'religion', pathLength: 15 }
         ],
         desirability: { 1: 20, 2: 15, 3: 10, 4: 5 }
     },
@@ -244,8 +244,8 @@ export const BUILDING_TYPES = {
     farm: {
         id: 'farm',
         name: 'Farm',
-        width: 4,
-        height: 4,
+        width: 5,
+        height: 5,
         color: '#8B7355',  // Wheat/tan color
         workersNeeded: 3,  // Reduced from 6
         cost: 120,
@@ -256,15 +256,15 @@ export const BUILDING_TYPES = {
             emits: ['food']
         },
         walkers: [
-            { type: 'cart', max: 2, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
     fishing_wharf: {
         id: 'fishing_wharf',
         name: 'Fishing Wharf',
-        width: 2,
-        height: 2,
+        width: 4,
+        height: 4,
         color: '#1E90FF',  // Dodger blue
         workersNeeded: 2,
         cost: 80,
@@ -275,15 +275,15 @@ export const BUILDING_TYPES = {
             emits: ['fish']
         },
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -5 }
     },
     granary: {
         id: 'granary',
         name: 'Granary',
-        width: 3,
-        height: 3,
+        width: 4,
+        height: 4,
         color: '#B8860B',  // Dark goldenrod (food storage)
         workersNeeded: 2,
         cost: 100,
@@ -294,17 +294,17 @@ export const BUILDING_TYPES = {
         },
         deliveryPriority: 1,
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
     warehouse: {
         id: 'warehouse',
         name: 'Warehouse',
-        width: 3,
+        width: 4,
         height: 3,
         color: '#8B4513',  // Saddle brown
-        workersNeeded: 2,
+        workersNeeded: 4,
         cost: 100,
         goods: {
             receives: ['iron', 'utensils', 'clay', 'pottery', 'timber', 'furniture'],
@@ -313,7 +313,7 @@ export const BUILDING_TYPES = {
         },
         deliveryPriority: 1,
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
@@ -323,7 +323,7 @@ export const BUILDING_TYPES = {
         width: 3,
         height: 3,
         color: '#555555',  // Dark gray
-        workersNeeded: 4,  // Reduced from 8
+        workersNeeded: 5,  // Reduced from 8
         cost: 150,
         requiredResource: 'iron_ore',
         goods: {
@@ -332,28 +332,28 @@ export const BUILDING_TYPES = {
             emits: ['iron']
         },
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -30, 2: -20, 3: -10, 4: -5 }
     },
     tax_office: {
         id: 'tax_office',
         name: 'Tax Office',
-        width: 2,
-        height: 2,
+        width: 3,
+        height: 3,
         color: '#A52A2A',  // Brown
         workersNeeded: 2,  // Reduced from 4
         cost: 100,
         walkers: [
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
+            { type: 'service', spawnInterval: 5, coverageType: 'tax', pathLength: 15 }
         ],
         desirability: { 1: -5 }
     },
     workshop: {
         id: 'workshop',
         name: 'Workshop',
-        width: 3,
-        height: 3,
+        width: 4,
+        height: 4,
         color: '#CD853F',  // Peru (bronze-ish)
         workersNeeded: 3,  // Reduced from 6
         cost: 120,
@@ -367,15 +367,15 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -15, 2: -10, 3: -5 }
     },
     clay_pit: {
         id: 'clay_pit',
         name: 'Clay Pit',
-        width: 3,
-        height: 3,
+        width: 5,
+        height: 5,
         color: '#B4783C',  // Terracotta
         workersNeeded: 3,
         cost: 100,
@@ -386,14 +386,14 @@ export const BUILDING_TYPES = {
             emits: ['clay']
         },
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
     potter: {
         id: 'potter',
         name: 'Potter',
-        width: 2,
+        width: 3,
         height: 2,
         color: '#CD853F',  // Peru
         workersNeeded: 3,
@@ -408,15 +408,15 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
     lumber_camp: {
         id: 'lumber_camp',
         name: 'Lumber Camp',
-        width: 3,
-        height: 3,
+        width: 5,
+        height: 5,
         color: '#8B6914',  // Dark goldenrod
         workersNeeded: 3,
         cost: 100,
@@ -427,15 +427,15 @@ export const BUILDING_TYPES = {
             emits: ['timber']
         },
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -5 }
     },
     carpenter: {
         id: 'carpenter',
         name: 'Carpenter',
-        width: 2,
-        height: 2,
+        width: 3,
+        height: 3,
         color: '#DEB887',  // Burlywood
         workersNeeded: 3,
         cost: 120,
@@ -449,15 +449,15 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', max: 1, spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 8, speed: 1.5 }
         ],
         desirability: { 1: -5 }
     },
     bazaar: {
         id: 'bazaar',
         name: 'Bazaar',
-        width: 2,
-        height: 2,
+        width: 4,
+        height: 3,
         color: '#CD853F',  // Peru (craft/trade)
         workersNeeded: 3,
         cost: 80,
@@ -469,9 +469,9 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'utensils' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'pottery' },
-            { type: 'service', max: 1, spawnInterval: 5, coverageType: 'furniture' }
+            { type: 'service', spawnInterval: 5, coverageType: 'utensils' },
+            { type: 'service', spawnInterval: 5, coverageType: 'pottery' },
+            { type: 'service', spawnInterval: 5, coverageType: 'furniture' }
         ],
         desirability: { 1: -5 }
     }

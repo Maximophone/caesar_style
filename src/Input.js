@@ -180,6 +180,13 @@ export class Input {
             return;
         }
 
+        // Upgrade building: U key
+        if (e.key.toLowerCase() === 'u') {
+            const { x, y } = this.screenToTile(this.lastMouseClientX, this.lastMouseClientY);
+            this.game.upgradeBuilding(x, y);
+            return;
+        }
+
         // Pass key to building menu
         const handled = this.game.buildingMenu.handleKeyPress(e.key);
         if (handled) {

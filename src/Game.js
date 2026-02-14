@@ -17,8 +17,8 @@ export class Game {
 
         // Game settings
         this.tileSize = 24;
-        this.gridWidth = 60; // Increased map size
-        this.gridHeight = 60;
+        this.gridWidth = 100; // Increased map size
+        this.gridHeight = 100;
 
         // Set canvas size (Viewport: 800px map + 200px sidebar)
         this.canvas.width = 1000;
@@ -300,6 +300,24 @@ export class Game {
         if (building) {
             this.economy.spend(type.cost);
         }
+    }
+
+    upgradeBuilding(x, y) {
+        const tile = this.grid.getTile(x, y);
+        if (!tile || tile.type !== 'building') return;
+
+        const building = tile.building;
+        if (!building.canUpgrade()) return;
+
+        const cost = building.getUpgradeCost();
+        if (!this.economy.canAfford(cost)) {
+            this.showFlash(`Need ${cost} Dn to upgrade`);
+            return;
+        }
+
+        this.economy.spend(cost);
+        building.buildingLevel++;
+        this.showFlash(`${building.type.name} upgraded to L${building.buildingLevel}!`);
     }
 
     removeTile(x, y) {
