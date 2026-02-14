@@ -120,7 +120,7 @@ export class Game {
         const baseNames = [
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4',
             'well', 'fountain', 'market', 'temple', 'farm', 'warehouse',
-            'garden_small', 'garden_large', 'tax_office'
+            'garden_small', 'garden_large', 'tax_office', 'mine', 'workshop'
         ];
 
         const loadPromises = [];
