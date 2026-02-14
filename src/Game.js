@@ -8,6 +8,7 @@ import { Economy } from './Economy.js';
 import { ROAD_COST } from './world/BuildingTypes.js';
 import { AssetManager } from './AssetManager.js';
 import { BuildingMenu } from './ui/BuildingMenu.js';
+import { SaveManager } from './SaveManager.js';
 
 export class Game {
     constructor(canvas) {
@@ -48,6 +49,10 @@ export class Game {
             showOverlays: true,
             useSprites: true
         };
+
+        // Flash message (for save/load feedback)
+        this.flashMessage = null;
+        this.flashTimer = 0;
     }
 
     toggleOverlays() {
@@ -164,6 +169,14 @@ export class Game {
         this.buildingManager.update(deltaTime);
         this.entityManager.update(deltaTime, this.roadNetwork, this.grid, this.economy);
         this.economy.update(deltaTime, this.buildingManager.buildings);
+
+        // Flash message timer
+        if (this.flashTimer > 0) {
+            this.flashTimer -= deltaTime;
+            if (this.flashTimer <= 0) {
+                this.flashMessage = null;
+            }
+        }
     }
 
     handleCameraMovement(deltaTime) {
@@ -223,6 +236,11 @@ export class Game {
 
         // Render UI hints (fixed on screen)
         this.renderer.renderUI(this.input, this.economy, this.debug, this.buildingMenu);
+
+        // Render flash message
+        if (this.flashMessage && this.flashTimer > 0) {
+            this.renderer.renderFlashMessage(this.flashMessage, this.flashTimer);
+        }
     }
 
     // Called by Input when a tile is clicked
@@ -268,5 +286,44 @@ export class Game {
             }
             this.grid.setTile(x, y, null);
         }
+    }
+
+    // ===== SAVE / LOAD =====
+
+    showFlash(message, duration = 2) {
+        this.flashMessage = message;
+        this.flashTimer = duration;
+    }
+
+    saveGame() {
+        const ok = SaveManager.save(this);
+        this.showFlash(ok ? '💾 Game Saved!' : '❌ Save Failed!');
+    }
+
+    loadGame() {
+        const ok = SaveManager.load(this);
+        this.showFlash(ok ? '📂 Game Loaded!' : '❌ No Save Found');
+    }
+
+    newGame() {
+        // Clear everything
+        this.entityManager.entities = [];
+        this.entityManager.toRemove = [];
+        this.buildingManager.buildings = [];
+
+        // Fresh grid
+        this.grid = new Grid(this.gridWidth, this.gridHeight);
+        this.grid.generateResources();
+        this.roadNetwork = new RoadNetwork(this.grid);
+        this.buildingManager.grid = this.grid;
+        this.buildingManager.roadNetwork = this.roadNetwork;
+
+        // Fresh economy
+        this.economy = new Economy();
+
+        // Reset camera
+        this.camera = { x: 0, y: 0 };
+
+        this.showFlash('🏗️ New Game Started!');
     }
 }

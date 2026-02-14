@@ -15,6 +15,10 @@ export class Input {
         // Keyboard state
         this.keys = {};
 
+        // New game confirmation (double-press N within 2s)
+        this.newGamePending = false;
+        this.newGameTimer = null;
+
         this.setupEventListeners();
     }
 
@@ -125,6 +129,38 @@ export class Input {
         // Cheat: Press C for cash
         if (e.key.toLowerCase() === 'c') {
             this.game.economy.earn(500);
+            return;
+        }
+
+        // Save game: F5
+        if (e.key === 'F5') {
+            e.preventDefault(); // Prevent browser refresh
+            this.game.saveGame();
+            return;
+        }
+
+        // Load game: F9
+        if (e.key === 'F9') {
+            e.preventDefault();
+            this.game.loadGame();
+            return;
+        }
+
+        // New game: N (double-press to confirm)
+        if (e.key.toLowerCase() === 'n') {
+            if (this.newGamePending) {
+                // Second press — confirmed
+                clearTimeout(this.newGameTimer);
+                this.newGamePending = false;
+                this.game.newGame();
+            } else {
+                // First press — arm confirmation
+                this.newGamePending = true;
+                this.game.showFlash('⚠️ Press N again to start new game', 2);
+                this.newGameTimer = setTimeout(() => {
+                    this.newGamePending = false;
+                }, 2000);
+            }
             return;
         }
 

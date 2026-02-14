@@ -688,6 +688,9 @@ export class Renderer {
         debugText += '  [P] Sprites: ' + (debug && debug.useSprites ? 'ON' : 'OFF');
         ctx.fillText(debugText, 20, controlsY + 15);
 
+        // Save/Load hints
+        ctx.fillText('[F5] Save  [F9] Load  [N] New', 20, controlsY + 30);
+
         // Economy HUD (top-right)
         if (economy) {
             const hudWidth = 150;
@@ -707,5 +710,35 @@ export class Renderer {
             ctx.fillStyle = '#27ae60'; // Green for employed
             ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, hudX + 10, 70);
         }
+    }
+
+    renderFlashMessage(message, timer) {
+        const ctx = this.ctx;
+        const alpha = Math.min(1, timer); // Fade out during last second
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        const textWidth = ctx.measureText(message).width;
+        const boxW = Math.max(textWidth + 40, 200);
+        const boxH = 40;
+        const boxX = (ctx.canvas.width - boxW) / 2;
+        const boxY = ctx.canvas.height - 80;
+
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(boxX, boxY, boxW, boxH);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+        // Text
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(message, ctx.canvas.width / 2, boxY + 26);
+        ctx.textAlign = 'start'; // Reset
+
+        ctx.restore();
     }
 }

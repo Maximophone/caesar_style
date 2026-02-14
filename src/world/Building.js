@@ -390,9 +390,17 @@ export class Building {
         for (const [goodType, rate] of Object.entries(produces)) {
             let amount = rate * efficiency * deltaTime;
 
+            // Limit amount by available storage space
+            const maxStorage = this.getMaxStorage(goodType);
+            const currentStorage = this.storage[goodType] || 0;
+            const spaceAvailable = maxStorage - currentStorage;
+            if (amount > spaceAvailable) {
+                amount = Math.max(0, spaceAvailable);
+            }
+
             // Manufacturing: Check and consume production costs (inputs)
             const costs = this.type.goods?.productionCost;
-            if (costs) {
+            if (costs && amount > 0) {
                 // First pass: limit amount based on available inputs
                 for (const [inputGood, costPerUnit] of Object.entries(costs)) {
                     const inputNeeded = amount * costPerUnit;
@@ -409,12 +417,12 @@ export class Building {
                 }
             }
 
-            const maxStorage = this.getMaxStorage(goodType);
-
-            this.storage[goodType] = Math.min(
-                maxStorage,
-                (this.storage[goodType] || 0) + amount
-            );
+            if (amount > 0) {
+                this.storage[goodType] = Math.min(
+                    maxStorage,
+                    (this.storage[goodType] || 0) + amount
+                );
+            }
         }
     }
 
@@ -518,5 +526,78 @@ export class Building {
         const maxStorage = this.getMaxStorage(goodType);
         if (!this.storage || maxStorage <= 0) return 0;
         return (this.storage[goodType] || 0) / maxStorage;
+    }
+
+    // ===== SAVE / LOAD =====
+
+    /** Serialize this building to a plain object for saving. */
+    toJSON() {
+        const data = {
+            x: this.x,
+            y: this.y,
+            typeId: this.type.id,
+            doorX: this.doorX,
+            doorY: this.doorY,
+            roadAccessX: this.roadAccessX,
+            roadAccessY: this.roadAccessY,
+            rotation: this.rotation || 0,
+        };
+
+        // Walker slot timers (drop activeCount — walkers are transient)
+        data.walkerSlots = this.walkerSlots.map(s => ({
+            spawnTimer: s.spawnTimer,
+        }));
+
+        // House-specific state
+        if (this.coverageNeeds) {
+            data.coverageNeeds = { ...this.coverageNeeds };
+            data.level = this.level;
+            data.evolutionProgress = this.evolutionProgress;
+            data.taxCooldown = this.taxCooldown;
+        }
+
+        // Storage
+        if (this.storage) {
+            data.storage = { ...this.storage };
+        }
+
+        return data;
+    }
+
+    /**
+     * Create a Building from saved data.
+     * @param {object} data - Plain object from toJSON()
+     * @param {object} type - The BUILDING_TYPES entry matching data.typeId
+     */
+    static fromSaveData(data, type) {
+        const b = new Building(data.x, data.y, type);
+
+        b.doorX = data.doorX;
+        b.doorY = data.doorY;
+        b.roadAccessX = data.roadAccessX;
+        b.roadAccessY = data.roadAccessY;
+        b.rotation = data.rotation || 0;
+
+        // Restore walker slot timers (activeCount starts at 0 — no active walkers)
+        if (data.walkerSlots) {
+            for (let i = 0; i < b.walkerSlots.length && i < data.walkerSlots.length; i++) {
+                b.walkerSlots[i].spawnTimer = data.walkerSlots[i].spawnTimer;
+            }
+        }
+
+        // House-specific state
+        if (data.coverageNeeds) {
+            b.coverageNeeds = { ...data.coverageNeeds };
+            b.level = data.level;
+            b.evolutionProgress = data.evolutionProgress;
+            b.taxCooldown = data.taxCooldown || 0;
+        }
+
+        // Storage
+        if (data.storage) {
+            b.storage = { ...data.storage };
+        }
+
+        return b;
     }
 }
