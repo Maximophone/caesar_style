@@ -232,6 +232,9 @@ export class Game {
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities);
 
+        // Render placement preview
+        this.renderer.renderPlacementPreview(this.input, this.grid, this.buildingManager, this.economy);
+
         this.ctx.restore();
 
         // Render UI hints (fixed on screen)

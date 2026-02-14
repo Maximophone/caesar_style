@@ -741,4 +741,57 @@ export class Renderer {
 
         ctx.restore();
     }
+
+    renderPlacementPreview(input, grid, buildingManager, economy) {
+        if (input.mode === 'none') return;
+
+        const { x, y } = input.screenToTile(input.lastMouseClientX, input.lastMouseClientY);
+        const ts = this.tileSize;
+        const ctx = this.ctx;
+
+        let isValid = true;
+        let width = 1;
+        let height = 1;
+        let type = null;
+
+        if (input.mode === 'building') {
+            type = input.selectedBuildingType;
+            if (type) {
+                width = type.width;
+                height = type.height;
+
+                // Check empty area
+                if (!grid.isAreaEmpty(x, y, width, height)) isValid = false;
+
+                // Check road access
+                if (isValid && type.needsRoadAccess !== false) {
+                    if (!buildingManager.findDoorPosition(x, y, width, height)) isValid = false;
+                }
+
+                // Check economy
+                if (isValid && !economy.canAfford(type.cost)) isValid = false;
+            }
+        } else if (input.mode === 'road') {
+            const ROAD_COST = 5; // Should ideally come from BuildingTypes.js
+            if (grid.getTile(x, y) !== null) isValid = false;
+            if (isValid && !economy.canAfford(ROAD_COST)) isValid = false;
+        }
+
+        // Draw footprint highlight
+        ctx.save();
+        ctx.fillStyle = isValid ? 'rgba(46, 204, 113, 0.4)' : 'rgba(231, 76, 60, 0.4)';
+        ctx.fillRect(x * ts, y * ts, width * ts, height * ts);
+        ctx.strokeStyle = isValid ? 'rgba(46, 204, 113, 0.8)' : 'rgba(231, 76, 60, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x * ts, y * ts, width * ts, height * ts);
+
+        // If building mode, draw building "ghost"
+        if (input.mode === 'building' && type) {
+            ctx.globalAlpha = 0.5;
+            // Draw a simplified ghost using type color
+            ctx.fillStyle = type.color;
+            ctx.fillRect(x * ts + 2, y * ts + 2, width * ts - 4, height * ts - 4);
+        }
+        ctx.restore();
+    }
 }
