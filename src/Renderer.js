@@ -249,26 +249,30 @@ export class Renderer {
                 ctx.strokeRect(bx + 2, by + 2, bw - 4, bh - 4);
             }
 
-            // Door indicator (not sprites only)
+            // Door indicator with Building Emoji (only when not using sprites)
             if (building.doorX !== undefined && !drawn) {
                 ctx.fillStyle = '#5a3e1b';
-                const doorX = building.doorX * ts + ts / 4;
-                const doorY = building.doorY * ts + ts / 4;
-                ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
+                const doorSize = ts / 2;
+                const doorX = building.doorX * ts + (ts - doorSize) / 2;
+                const doorY = building.doorY * ts + (ts - doorSize) / 2;
+                ctx.fillRect(doorX, doorY, doorSize, doorSize);
+
+                // Draw Emoji centered in the door indicator
+                if (building.type.emoji) {
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#fff';
+                    // Center in the door indicator: doorX + doorSize/2, doorY + doorSize/2
+                    ctx.fillText(building.type.emoji, doorX + doorSize / 2, doorY + doorSize / 2 + 1);
+                    // Reset text alignment for other renders
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
+                }
             }
 
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
-                // Draw Building Emoji - positioned to avoid bars
-                if (building.type.emoji) {
-                    ctx.font = '8px sans-serif';
-                    ctx.fillStyle = '#fff';
-                    ctx.textAlign = 'right';
-                    // Move lower to avoid top employment bar (which is at Y=2..6)
-                    const emojiY = building.coverageNeeds ? by + 11 : by + 16;
-                    ctx.fillText(building.type.emoji, bx + bw - 4, emojiY);
-                    ctx.textAlign = 'left'; // Reset for other text
-                }
 
                 if (building.coverageNeeds) {
                     // --- HOUSE OVERLAY ---
