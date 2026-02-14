@@ -259,7 +259,7 @@ export class Renderer {
 
                 // Draw Emoji centered in the door indicator
                 if (building.type.emoji) {
-                    ctx.font = '10px sans-serif';
+                    ctx.font = '7px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#fff';
