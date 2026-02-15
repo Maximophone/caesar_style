@@ -371,14 +371,16 @@ export class Renderer {
             }
         }
 
-        // === HOVER DETAIL (second pass, always visible regardless of overlay toggle) ===
-        if (hoveredBuilding) {
-            const bx = hoveredBuilding.x * ts;
-            const by = hoveredBuilding.y * ts;
-            const bw = hoveredBuilding.width * ts;
-            const bh = hoveredBuilding.height * ts;
-            this.renderHoverDetail(ctx, hoveredBuilding, bx, by, bw, bh);
-        }
+    }
+
+    // Public entry point for hover detail (called from Game.render after entities)
+    renderBuildingHoverDetail(building) {
+        const ts = this.tileSize;
+        const bx = building.x * ts;
+        const by = building.y * ts;
+        const bw = building.width * ts;
+        const bh = building.height * ts;
+        this.renderHoverDetail(this.ctx, building, bx, by, bw, bh);
     }
 
     renderHoverDetail(ctx, building, bx, by, bw, bh) {

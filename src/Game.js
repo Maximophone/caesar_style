@@ -250,6 +250,11 @@ export class Game {
         // Render entities
         this.renderer.renderEntities(this.entityManager.entities, hoveredBuilding, this.debug);
 
+        // Render hover detail (above entities so walkers don't obscure the panel)
+        if (hoveredBuilding) {
+            this.renderer.renderBuildingHoverDetail(hoveredBuilding);
+        }
+
         // Render placement preview
         this.renderer.renderPlacementPreview(this.input, this.grid, this.buildingManager, this.economy);
 
