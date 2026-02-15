@@ -62,6 +62,12 @@ export class Building {
                 this.storage[goodType] = 0;
             }
         }
+
+        // Round-robin index for multi-good cart emission
+        this.lastEmitIndex = 0;
+
+        // Pending incoming deliveries (reservation system for cart walkers)
+        this.pendingIncoming = {};
     }
 
     update(deltaTime, grid) {
@@ -471,17 +477,21 @@ export class Building {
         return false;
     }
 
-    // Take goods from storage for cart walker
+    // Take goods from storage for cart walker (round-robin across emittable goods)
     takeGoodsForCart() {
         const emits = this.type.goods?.emits;
         if (!emits || !this.storage) return { type: null, amount: 0 };
 
-        // Find the first emittable good with enough stock
-        for (const goodType of emits) {
+        // Round-robin: start scanning from the next index after the last successful emit
+        const len = emits.length;
+        for (let i = 0; i < len; i++) {
+            const idx = (this.lastEmitIndex + i) % len;
+            const goodType = emits[idx];
             const available = this.storage[goodType] || 0;
             if (available >= GOODS_CONFIG.CART_CAPACITY) {
                 const amount = Math.min(available, GOODS_CONFIG.CART_CAPACITY);
                 this.storage[goodType] -= amount;
+                this.lastEmitIndex = (idx + 1) % len;  // Advance for next call
                 return { type: goodType, amount };
             }
         }

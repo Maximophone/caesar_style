@@ -283,17 +283,17 @@ export class BuildingManager {
 
     // Spawn a cart walker (A* targeted delivery)
     spawnCartWalker(building, slotIndex, config) {
-        // Determine what goods to emit
-        const emits = building.type.goods?.emits;
-        if (!emits || emits.length === 0) return;
+        // Take goods from storage (round-robin for multi-good emitters)
+        const cargo = building.takeGoodsForCart();
+        if (cargo.amount <= 0) return;
 
-        // Find the good type we have enough of
-        const goodType = emits.find(g => (building.storage?.[g] || 0) >= GOODS_CONFIG.CART_CAPACITY);
-        if (!goodType) return;
-
-        // Find best target building
-        const target = this.findAcceptingBuilding(goodType, building);
-        if (!target) return;
+        // Find best target building for this good type
+        const target = this.findAcceptingBuilding(cargo.type, building);
+        if (!target) {
+            // No valid target — return goods to storage
+            building.returnGoods(cargo.type, cargo.amount);
+            return;
+        }
 
         // Get path to target building
         const path = this.roadNetwork.findPath(
@@ -304,30 +304,35 @@ export class BuildingManager {
         );
 
         if (path && path.length >= 1) {
-            const cargo = building.takeGoodsForCart();
+            // Register pending delivery on target (reservation system)
+            target.pendingIncoming[cargo.type] = (target.pendingIncoming[cargo.type] || 0) + cargo.amount;
 
-            if (cargo.amount > 0) {
-                const cartWalker = new CartWalker(
-                    building.roadAccessX,
-                    building.roadAccessY,
-                    path,
-                    building,
-                    target,
-                    cargo,
-                    slotIndex,
-                    building.type.color
-                );
-                this.entityManager.addEntity(cartWalker);
-                building.onWalkerSpawned(slotIndex);
-            }
+            const cartWalker = new CartWalker(
+                building.roadAccessX,
+                building.roadAccessY,
+                path,
+                building,
+                target,
+                cargo,
+                slotIndex,
+                building.type.color
+            );
+            this.entityManager.addEntity(cartWalker);
+            building.onWalkerSpawned(slotIndex);
+        } else {
+            // No path — return goods to storage
+            building.returnGoods(cargo.type, cargo.amount);
         }
     }
 
-    // Find the building that accepts a given good type, prioritizing based on config
+    // Find the building that accepts a given good type, using a combined score
+    // that weighs delivery priority, fill level, and distance.
     findAcceptingBuilding(goodType, fromBuilding) {
         let bestBuilding = null;
-        let highestPriority = -Infinity;
-        let lowestFillAtHighestPriority = Infinity;
+        let bestScore = -Infinity;
+
+        const fromX = fromBuilding.roadAccessX;
+        const fromY = fromBuilding.roadAccessY;
 
         for (const building of this.buildings) {
             if (building === fromBuilding) continue;
@@ -339,10 +344,10 @@ export class BuildingManager {
             const fromAlsoReceives = fromBuilding.type.goods?.receives?.includes(goodType);
             if (fromAlsoReceives && building.type.goods?.emits?.includes(goodType)) continue;
 
-            // Check if building has space for goods
-            const current = building.storage?.[goodType] || 0;
+            // Check if building has space for goods (account for pending deliveries)
+            const current = (building.storage?.[goodType] || 0) + (building.pendingIncoming?.[goodType] || 0);
             const max = building.getMaxStorage(goodType);
-            if (current >= max) continue;  // Full, skip
+            if (current >= max) continue;  // Full (or will be), skip
 
             // Get priority (default to 0 if not specified)
             let priority = building.type.deliveryPriority || 0;
@@ -355,17 +360,18 @@ export class BuildingManager {
                 priority = 0;
             }
 
-            if (priority > highestPriority) {
-                // Found a higher priority building, reset best
-                highestPriority = priority;
-                lowestFillAtHighestPriority = fillPercent;
+            // Manhattan distance between road access points
+            const dist = Math.abs(building.roadAccessX - fromX) + Math.abs(building.roadAccessY - fromY);
+
+            // Combined score: priority dominates, then prefer emptier and closer
+            // priority * 1000  — keeps priority bands well-separated
+            // (1 - fillPercent) * 50 — prefer emptier targets (0-50 range)
+            // -dist * 0.5 — penalise distant targets (gentle; a 20-tile difference = -10)
+            const score = priority * 1000 + (1 - fillPercent) * 50 - dist * 0.5;
+
+            if (score > bestScore) {
+                bestScore = score;
                 bestBuilding = building;
-            } else if (priority === highestPriority) {
-                // Same priority, pick the emptiest one
-                if (fillPercent < lowestFillAtHighestPriority) {
-                    lowestFillAtHighestPriority = fillPercent;
-                    bestBuilding = building;
-                }
             }
         }
 

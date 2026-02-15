@@ -108,15 +108,33 @@ export class CartWalker {
     deliverGoods() {
         if (!this.targetBuilding || !this.cargo || this.delivered) return;
 
+        // Clear pending reservation (was registered for the full original cargo amount)
+        const pending = this.targetBuilding.pendingIncoming;
+        if (pending && pending[this.cargo.type]) {
+            pending[this.cargo.type] = Math.max(0, pending[this.cargo.type] - this.cargo.amount);
+        }
+
         const received = this.targetBuilding.receiveGoods(this.cargo.type, this.cargo.amount);
 
-        // If target couldn't accept all, we lose the excess (for simplicity)
-        this.cargo.amount = 0;
+        // Keep undelivered amount — will be returned to origin on the trip home
+        this.cargo.amount -= received;
         this.delivered = true;
     }
 
     onReturnHome(entityManager) {
+        // If we never delivered, clear the pending reservation on the target
+        if (!this.delivered && this.targetBuilding && this.cargo) {
+            const pending = this.targetBuilding.pendingIncoming;
+            if (pending && pending[this.cargo.type]) {
+                pending[this.cargo.type] = Math.max(0, pending[this.cargo.type] - this.cargo.amount);
+            }
+        }
+
         if (this.originBuilding) {
+            // Return leftover cargo back to origin building
+            if (this.cargo && this.cargo.amount > 0) {
+                this.originBuilding.returnGoods(this.cargo.type, this.cargo.amount);
+            }
             this.originBuilding.onWalkerReturned(this.slotIndex);
         }
         entityManager.removeEntity(this);
