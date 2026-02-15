@@ -357,20 +357,22 @@ export class Renderer {
                         const storageEntries = Object.entries(building.type.goods.storage);
                         let totalStored = 0;
                         let totalCapacity = 0;
+                        let totalPending = 0;
                         for (const [goodType, capacity] of storageEntries) {
                             totalStored += building.storage[goodType] || 0;
+                            totalPending += building.pendingIncoming?.[goodType] || 0;
                             totalCapacity += capacity;
                         }
                         if (totalCapacity > 0) {
-                            this.renderStorageIndicator(ctx, bx + 2, by + bh - 8, bw - 4, 6, totalStored, totalCapacity, '#DAA520');
+                            this.renderStorageIndicator(ctx, bx + 2, by + bh - 8, bw - 4, 6, totalStored, totalCapacity, '#DAA520', totalPending);
                         }
                     }
                 }
             }
         }
 
-        // === HOVER DETAIL (second pass, drawn on top of everything) ===
-        if (debug.showOverlays && hoveredBuilding) {
+        // === HOVER DETAIL (second pass, always visible regardless of overlay toggle) ===
+        if (hoveredBuilding) {
             const bx = hoveredBuilding.x * ts;
             const by = hoveredBuilding.y * ts;
             const bw = hoveredBuilding.width * ts;
@@ -413,6 +415,7 @@ export class Renderer {
             const meta = GOODS_META[goodType] || { emoji: '📦', color: '#888' };
             const current = building.storage[goodType] || 0;
             const max = building.getMaxStorage(goodType);
+            const pending = building.pendingIncoming?.[goodType] || 0;
 
             const rowY = py + 3 + i * rowH;
 
@@ -423,7 +426,7 @@ export class Renderer {
 
             // Bar
             const barX = px + emojiW + 2;
-            this.renderStorageIndicator(ctx, barX, rowY, barW, barH, current, max, meta.color);
+            this.renderStorageIndicator(ctx, barX, rowY, barW, barH, current, max, meta.color, pending);
         }
     }
 
@@ -644,7 +647,8 @@ export class Renderer {
     }
 
     // Render storage indicator bar with number inside
-    renderStorageIndicator(ctx, x, y, width, height, current, max, color = '#DAA520') {
+    // pending = amount reserved for incoming deliveries (shown as a lighter fill after current)
+    renderStorageIndicator(ctx, x, y, width, height, current, max, color = '#DAA520', pending = 0) {
         // Background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
         ctx.fillRect(x, y, width, height);
@@ -654,6 +658,17 @@ export class Renderer {
         if (fill > 0) {
             ctx.fillStyle = color;
             ctx.fillRect(x, y, width * fill, height);
+        }
+
+        // Pending delivery fill (striped/lighter, drawn after the current fill)
+        if (pending > 0 && max > 0) {
+            const pendingFill = Math.min(1 - fill, pending / max);
+            if (pendingFill > 0) {
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.35;
+                ctx.fillRect(x + width * fill, y, width * pendingFill, height);
+                ctx.globalAlpha = 1;
+            }
         }
 
         // Border
@@ -667,15 +682,47 @@ export class Renderer {
         ctx.fillText(`${Math.floor(current)}`, x + 2, y + height - 2);
     }
 
-    renderEntities(entities) {
+    renderEntities(entities, hoveredBuilding = null, debug = { showOverlays: true }) {
         const ctx = this.ctx;
         const ts = this.tileSize;
+
+        // Collect highlighted target buildings from cart walkers belonging to hovered building
+        const highlightedTargets = new Set();
+        if (hoveredBuilding) {
+            for (const entity of entities) {
+                if (entity.originBuilding === hoveredBuilding && entity.targetBuilding) {
+                    highlightedTargets.add(entity.targetBuilding);
+                }
+            }
+            // Draw target building highlights (below entities)
+            for (const target of highlightedTargets) {
+                const bx = target.x * ts;
+                const by = target.y * ts;
+                const bw = target.width * ts;
+                const bh = target.height * ts;
+                ctx.fillStyle = 'rgba(46, 204, 113, 0.25)';
+                ctx.fillRect(bx, by, bw, bh);
+                ctx.strokeStyle = 'rgba(46, 204, 113, 0.7)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(bx, by, bw, bh);
+            }
+        }
 
         for (const entity of entities) {
             // Entities use sub-tile positions for smooth movement
             const x = entity.x * ts + ts / 4;
             const y = entity.y * ts + ts / 4;
             const size = ts / 2;
+
+            // Check if this walker belongs to the hovered building
+            const isHighlighted = hoveredBuilding && entity.originBuilding === hoveredBuilding;
+
+            // Highlight ring behind the walker
+            if (isHighlighted) {
+                ctx.strokeStyle = 'rgba(255, 255, 100, 0.9)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x - 2, y - 2, size + 4, size + 4);
+            }
 
             // Use entity's color
             ctx.fillStyle = entity.color || '#e74c3c';
@@ -691,8 +738,8 @@ export class Renderer {
             ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // Cargo indicator for walkers carrying goods
-            if (entity.cargo && entity.cargo.amount > 0) {
+            // Cargo indicator for walkers carrying goods (only when overlays are on)
+            if (debug.showOverlays && entity.cargo && entity.cargo.amount > 0) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
                 ctx.fillRect(x - 2, y - 12, size + 4, 10);
 
