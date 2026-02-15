@@ -83,9 +83,8 @@ export class Building {
 
             // Decay non-food, non-static coverage over time
             for (const need of Object.keys(this.coverageNeeds)) {
-                // Water and Desirability use static coverage (reset each frame by BuildingManager)
-                // Food coverage is based on storage, not decay
-                if (need === 'water' || need === 'desirability' || need === 'food') continue;
+                // Water, Desirability, and Goods-based coverage use static levels or storage, not decay
+                if (['water', 'desirability', 'food', 'fish', 'pottery', 'utensils', 'furniture'].includes(need)) continue;
 
                 if (this.coverageNeeds[need] > 0) {
                     this.coverageNeeds[need] = Math.max(0, this.coverageNeeds[need] - this.coverageDecayRate * deltaTime);
