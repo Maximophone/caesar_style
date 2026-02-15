@@ -131,7 +131,7 @@ export const HOUSE_LEVELS = [
         color: '#2F1B14',  // Near-black brown
         population: 10,
         requirements: { water: 0.9, food: 0.7, religion: 0.6, utensils: 0.5, pottery: 0.4, furniture: 0.4, fish: 0.7, desirability: 0.6 },
-        upgradeThreshold: null,
+        upgradeThreshold: 0.95,
         taxMultiplier: 5,
         desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 },
         consumes: { food: 0.15, fish: 0.2, utensils: 0.05, pottery: 0.08, furniture: 0.08 }

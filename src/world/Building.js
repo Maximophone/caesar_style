@@ -173,17 +173,13 @@ export class Building {
             this.evolutionProgress -= evolutionSpeed * deltaTime;
         } else {
             // Meeting requirements - check if we're exceeding (upgrade progress)
-            // ONLY count surplus if we can actually upgrade (next level exists and requirements met)
-            const canUpgrade = this.level < maxLevel && this.meetsLevelRequirements(this.level + 1, levels);
-
-            if (canUpgrade) {
-                const surplus = this.calculateSurplus(this.level, levels);
-                if (surplus > 0) {
-                    // Doing better than needed AND can upgrade - bar fills
-                    this.evolutionProgress += evolutionSpeed * surplus * deltaTime;
-                }
+            // Evolution bar fills if we are exceeding current requirements, regardless of whether a next level exists
+            const surplus = this.calculateSurplus(this.level, levels);
+            if (surplus > 0) {
+                // Doing better than needed - bar fills
+                this.evolutionProgress += evolutionSpeed * surplus * deltaTime;
             }
-            // If we can't upgrade (missing next level's requirements), bar stays stable
+            // If we are exactly at requirements, bar stays stable
         }
 
         // Handle level changes
