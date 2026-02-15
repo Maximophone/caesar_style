@@ -108,10 +108,10 @@ export const HOUSE_LEVELS = [
         name: 'Stone House',
         color: '#654321',  // Dark brown
         population: 4,
-        requirements: { water: 0.6, food: 0.5, religion: 0.2, pottery: 0.2, fish: 0.3 },
+        requirements: { water: 0.6, food: 0.3, religion: 0.2, pottery: 0.1, fish: 0.3 },
         upgradeThreshold: 0.8,
         taxMultiplier: 2,
-        consumes: { food: 0.08, fish: 0.05, pottery: 0.05 }
+        consumes: { food: 0.08, fish: 0.05, pottery: 0.02 }
         // No desirability — neutral
     },
     {
@@ -119,18 +119,18 @@ export const HOUSE_LEVELS = [
         name: 'Villa',
         color: '#4A3728',  // Very dark brown
         population: 6,
-        requirements: { water: 0.8, food: 0.8, religion: 0.5, utensils: 0.1, pottery: 0.4, fish: 0.5, desirability: 0.4 },
+        requirements: { water: 0.8, food: 0.5, religion: 0.4, utensils: 0.1, pottery: 0.2, fish: 0.5, desirability: 0.4 },
         upgradeThreshold: 0.8,
         taxMultiplier: 3,
         desirability: { 1: 15, 2: 12, 3: 10, 4: 7, 5: 4, 6: 2 },
-        consumes: { food: 0.1, fish: 0.1, utensils: 0.05, pottery: 0.08 }
+        consumes: { food: 0.1, fish: 0.1, utensils: 0.05, pottery: 0.05 }
     },
     {
         // Level 5: Palace
         name: 'Palace',
         color: '#2F1B14',  // Near-black brown
         population: 10,
-        requirements: { water: 0.9, food: 0.9, religion: 0.7, utensils: 0.5, pottery: 0.6, furniture: 0.4, fish: 0.7, desirability: 0.6 },
+        requirements: { water: 0.9, food: 0.7, religion: 0.6, utensils: 0.5, pottery: 0.4, furniture: 0.4, fish: 0.7, desirability: 0.6 },
         upgradeThreshold: null,
         taxMultiplier: 5,
         desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 },
