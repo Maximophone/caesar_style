@@ -129,12 +129,12 @@ export const HOUSE_LEVELS = [
         // Level 5: Palace
         name: 'Palace',
         color: '#2F1B14',  // Near-black brown
-        population: 10,
+        population: 8,
         requirements: { water: 0.9, food: 0.6, religion: 0.6, utensils: 0.5, pottery: 0.4, furniture: 0.4, fish: 0.6, desirability: 0.6 },
         upgradeThreshold: 0.9,
         taxMultiplier: 5,
         desirability: { 1: 25, 2: 22, 3: 18, 4: 14, 5: 10, 6: 7, 7: 4, 8: 2 },
-        consumes: { food: 0.12, fish: 0.15, utensils: 0.05, pottery: 0.08, furniture: 0.08 }
+        consumes: { food: 0.12, fish: 0.15, utensils: 0.04, pottery: 0.06, furniture: 0.06 }
     }
 ];
 
@@ -299,7 +299,7 @@ export const BUILDING_TYPES = {
         },
         deliveryPriority: 1,
         walkers: [
-            { type: 'cart', spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 2, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
@@ -318,7 +318,7 @@ export const BUILDING_TYPES = {
         },
         deliveryPriority: 1,
         walkers: [
-            { type: 'cart', spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 2, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
@@ -372,7 +372,7 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 4, speed: 1.5 }
         ],
         desirability: { 1: -20, 2: -16, 3: -12, 4: -8, 5: -5, 6: -3, 7: -1 }
     },
@@ -413,7 +413,7 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 4, speed: 1.5 }
         ],
         desirability: { 1: -10, 2: -7, 3: -4, 4: -2, 5: -1 }
     },
@@ -454,7 +454,7 @@ export const BUILDING_TYPES = {
         deliveryPriority: 10,
         deliveryFillThreshold: 0.5,
         walkers: [
-            { type: 'cart', spawnInterval: 8, speed: 1.5 }
+            { type: 'cart', spawnInterval: 4, speed: 1.5 }
         ],
         desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
     },
