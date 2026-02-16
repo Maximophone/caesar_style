@@ -202,6 +202,26 @@ export class Renderer {
                 ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
             }
 
+            // === COLLAPSED BUILDING (ruins replace normal sprite, skip all overlays) ===
+            if (building.collapsed) {
+                // Try to draw a ruins sprite for this building size
+                const ruinsKey = `ruins_${building.width}x${building.height}`;
+                const ruinsImg = this.assetManager.getImage(ruinsKey);
+                if (ruinsImg) {
+                    ctx.drawImage(ruinsImg, bx, by, bw, bh);
+                } else {
+                    // Fallback: dark tint overlay + RUINS text
+                    ctx.fillStyle = 'rgba(60, 40, 20, 1)';
+                    ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+                    ctx.fillStyle = '#888';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('RUINS', bx + bw / 2, by + bh / 2 + 4);
+                    ctx.textAlign = 'start';
+                }
+                continue; // Skip normal sprite and all overlays
+            }
+
             // Check if we can draw a sprite for this building
             let drawn = false;
 
@@ -277,26 +297,6 @@ export class Renderer {
                 const doorX = building.doorX * ts + ts / 4;
                 const doorY = building.doorY * ts + ts / 4;
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
-            }
-
-            // === COLLAPSED BUILDING (ruins overlay, skip all other overlays) ===
-            if (building.collapsed) {
-                // Try to draw a ruins sprite for this building size
-                const ruinsKey = `ruins_${building.width}x${building.height}`;
-                const ruinsImg = this.assetManager.getImage(ruinsKey);
-                if (ruinsImg) {
-                    ctx.drawImage(ruinsImg, bx, by, bw, bh);
-                } else {
-                    // Fallback: dark tint overlay + RUINS text
-                    ctx.fillStyle = 'rgba(30, 20, 10, 0.7)';
-                    ctx.fillRect(bx, by, bw, bh);
-                    ctx.fillStyle = '#888';
-                    ctx.font = 'bold 10px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('RUINS', bx + bw / 2, by + bh / 2 + 4);
-                    ctx.textAlign = 'start';
-                }
-                continue; // Skip all overlays for collapsed buildings
             }
 
             // === OVERLAYS (within building bounds) ===
