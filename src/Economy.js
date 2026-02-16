@@ -44,8 +44,9 @@ export class Economy {
         }
 
         // Get buildings that need workers, sorted by cost (cheaper = higher priority)
+        // Collapsed buildings don't consume workers
         const needsWorkers = buildings
-            .filter(b => b.type.workersNeeded > 0)
+            .filter(b => b.type.workersNeeded > 0 && !b.collapsed)
             .sort((a, b) => a.type.cost - b.type.cost);
 
         // Assign workers from the labor pool

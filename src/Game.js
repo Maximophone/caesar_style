@@ -111,6 +111,17 @@ export class Game {
         // Try to load optional tile spritesheets (water, etc.)
         await this.assetManager.tryLoadImage('water_tiles', `assets/water_tiles.png?t=${t}`);
 
+        // Try to load optional ruins sprites (size-specific)
+        const ruinsSizes = ['1x1', '2x2', '3x3', '4x4', '5x5', '2x3', '3x2'];
+        await Promise.all(ruinsSizes.map(size =>
+            this.assetManager.tryLoadImage(`ruins_${size}`, `assets/ruins_${size}.png?t=${t}`).then(loaded => {
+                if (loaded) {
+                    this.assetManager.applyTransparencyFromCorner(`ruins_${size}`, 40);
+                    console.log(`Loaded ruins sprite: ruins_${size}`);
+                }
+            })
+        ));
+
         // Try to load optional directional sprites for buildings
         // These won't fail if they don't exist
         await this.loadOptionalDirectionalSprites();
@@ -129,7 +140,7 @@ export class Game {
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4', 'house_level_5',
             'well', 'fountain', 'market', 'temple', 'farm', 'fishing_wharf',
             'granary', 'warehouse', 'bazaar',
-            'garden_small', 'garden_large', 'tax_office', 'mine', 'forge',
+            'garden_small', 'garden_large', 'tax_office', 'engineer_post', 'mine', 'forge',
             'clay_pit', 'potter', 'lumber_camp', 'carpenter'
         ];
 

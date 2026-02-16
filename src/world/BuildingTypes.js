@@ -2,6 +2,13 @@
 // Upgrade threshold = next level's maintenance threshold for stability
 export const TAX_COOLDOWN = 10;
 
+// Collapse mechanic configuration
+export const COLLAPSE_CONFIG = {
+    RISK_PER_SECOND: 0.5,     // Collapse risk increases by 0.5 per second (~3.3 min to collapse)
+    MAX_RISK: 100,             // Building collapses when risk reaches this value
+    RUINS_DESIRABILITY: { 1: -20, 2: -15, 3: -10, 4: -6, 5: -3, 6: -1 },
+};
+
 // Terrain types — impassable tiles generated during map creation
 export const TERRAIN_TYPES = {
     water: {
@@ -146,7 +153,7 @@ export const BUILDING_CATEGORIES = {
     food: { key: '4', name: 'Food', buildings: ['farm', 'fishing_wharf', 'granary', 'market'] },
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
-    administration: { key: '7', name: 'Admin', buildings: ['tax_office'] },
+    administration: { key: '7', name: 'Admin', buildings: ['tax_office', 'engineer_post'] },
     industry: { key: '8', name: 'Industry', buildings: ['mine', 'forge', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] }
 };
 
@@ -353,6 +360,19 @@ export const BUILDING_TYPES = {
             { type: 'service', spawnInterval: 5, coverageType: 'tax' }
         ],
         desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
+    },
+    engineer_post: {
+        id: 'engineer_post',
+        name: 'Engineer Post',
+        width: 2,
+        height: 2,
+        color: '#8B7D6B',  // Warm gray-brown
+        workersNeeded: 2,
+        cost: 80,
+        walkers: [
+            { type: 'service', spawnInterval: 5, coverageType: 'engineer' }
+        ],
+        desirability: { 1: -3, 2: -2, 3: -1 }
     },
     forge: {
         id: 'forge',

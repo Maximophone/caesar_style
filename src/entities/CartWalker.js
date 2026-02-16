@@ -108,6 +108,17 @@ export class CartWalker {
     deliverGoods() {
         if (!this.targetBuilding || !this.cargo || this.delivered) return;
 
+        // If target collapsed mid-transit, skip delivery (goods returned on trip home)
+        if (this.targetBuilding.collapsed) {
+            // Clear pending reservation
+            const pending = this.targetBuilding.pendingIncoming;
+            if (pending && pending[this.cargo.type]) {
+                pending[this.cargo.type] = Math.max(0, pending[this.cargo.type] - this.cargo.amount);
+            }
+            this.delivered = true;
+            return;
+        }
+
         // Clear pending reservation (was registered for the full original cargo amount)
         const pending = this.targetBuilding.pendingIncoming;
         if (pending && pending[this.cargo.type]) {

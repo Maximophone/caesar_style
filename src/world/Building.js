@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG, TAX_COOLDOWN } from './BuildingTypes.js';
+import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG, TAX_COOLDOWN, COLLAPSE_CONFIG } from './BuildingTypes.js';
 
 export class Building {
     constructor(x, y, type = BUILDING_TYPES.house) {
@@ -68,9 +68,20 @@ export class Building {
 
         // Pending incoming deliveries (reservation system for cart walkers)
         this.pendingIncoming = {};
+
+        // Collapse risk (accumulates over time, reset by engineer visits)
+        this.collapseRisk = 0;
+        this.collapsed = false;
     }
 
     update(deltaTime, grid) {
+        if (this.collapsed) return;
+
+        // Accumulate collapse risk (exempt buildings like gardens skip this)
+        if (!this.isCollapseExempt()) {
+            this.collapseRisk += COLLAPSE_CONFIG.RISK_PER_SECOND * deltaTime;
+        }
+
         // Tick walker slot timers
         for (const slot of this.walkerSlots) {
             slot.spawnTimer -= deltaTime;
@@ -284,6 +295,8 @@ export class Building {
 
     // Check if a walker slot is ready to spawn
     isWalkerSlotReady(slotIndex) {
+        if (this.collapsed) return false;
+
         const slot = this.walkerSlots[slotIndex];
         if (!slot) return false;
 
@@ -365,6 +378,7 @@ export class Building {
 
     // Get population based on house level
     getPopulation() {
+        if (this.collapsed) return 0;
         if (!this.coverageNeeds) return 0; // Service buildings have no population
 
         // Must have water to have any population
@@ -404,6 +418,7 @@ export class Building {
 
     // Produce goods (for farms) - called each frame
     produceGoods(deltaTime, grid) {
+        if (this.collapsed) return;
         const produces = this.type.goods?.produces;
         if (!produces || !this.storage) return;
         if (!this.isStaffed()) return;
@@ -572,6 +587,28 @@ export class Building {
         return (this.storage[goodType] || 0) / maxStorage;
     }
 
+    // ===== COLLAPSE =====
+
+    // Buildings without road access (gardens) are exempt from collapse
+    isCollapseExempt() {
+        return this.type.needsRoadAccess === false;
+    }
+
+    // Reset collapse risk to 0 (called by engineer walkers)
+    resetCollapseRisk() {
+        this.collapseRisk = 0;
+    }
+
+    // Collapse the building into ruins
+    collapse() {
+        this.collapsed = true;
+        this.collapseRisk = COLLAPSE_CONFIG.MAX_RISK;
+        // Stop all walker slots
+        for (const slot of this.walkerSlots) {
+            slot.activeCount = 0;
+        }
+    }
+
     // ===== SAVE / LOAD =====
 
     /** Serialize this building to a plain object for saving. */
@@ -605,6 +642,10 @@ export class Building {
         if (this.storage) {
             data.storage = { ...this.storage };
         }
+
+        // Collapse state
+        data.collapseRisk = this.collapseRisk;
+        data.collapsed = this.collapsed;
 
         return data;
     }
@@ -643,6 +684,10 @@ export class Building {
         if (data.storage) {
             b.storage = { ...data.storage };
         }
+
+        // Collapse state (backwards compatible defaults)
+        b.collapseRisk = data.collapseRisk || 0;
+        b.collapsed = data.collapsed || false;
 
         return b;
     }

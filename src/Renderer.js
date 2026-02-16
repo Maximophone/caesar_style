@@ -1,5 +1,5 @@
 import { ColorSprite } from './sprites/Sprite.js';
-import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES, TERRAIN_TYPES, BRIDGE_COST } from './world/BuildingTypes.js';
+import { TAX_COOLDOWN, GOODS_META, RESOURCE_TYPES, TERRAIN_TYPES, BRIDGE_COST, COLLAPSE_CONFIG } from './world/BuildingTypes.js';
 
 export class Renderer {
     constructor(ctx, tileSize, assetManager) {
@@ -279,6 +279,26 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
+            // === COLLAPSED BUILDING (ruins overlay, skip all other overlays) ===
+            if (building.collapsed) {
+                // Try to draw a ruins sprite for this building size
+                const ruinsKey = `ruins_${building.width}x${building.height}`;
+                const ruinsImg = this.assetManager.getImage(ruinsKey);
+                if (ruinsImg) {
+                    ctx.drawImage(ruinsImg, bx, by, bw, bh);
+                } else {
+                    // Fallback: dark tint overlay + RUINS text
+                    ctx.fillStyle = 'rgba(30, 20, 10, 0.7)';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.fillStyle = '#888';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('RUINS', bx + bw / 2, by + bh / 2 + 4);
+                    ctx.textAlign = 'start';
+                }
+                continue; // Skip all overlays for collapsed buildings
+            }
+
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
                 if (building.coverageNeeds) {
@@ -335,6 +355,11 @@ export class Renderer {
                         ctx.fillRect(bx + 2, taxBarY, (bw - 4) * taxPct, taxBarH);
                     }
 
+                    // Collapse risk bar (above tax bar area)
+                    if (!building.isCollapseExempt() && building.collapseRisk > 0) {
+                        this.renderCollapseRiskBar(ctx, bx + 2, by + bh - 14, bw - 4, 3, building.collapseRisk);
+                    }
+
                 } else {
                     // --- SERVICE/PRODUCTION BUILDING OVERLAY ---
 
@@ -366,6 +391,11 @@ export class Renderer {
                         if (totalCapacity > 0) {
                             this.renderStorageIndicator(ctx, bx + 2, by + bh - 8, bw - 4, 6, totalStored, totalCapacity, '#DAA520', totalPending);
                         }
+                    }
+
+                    // Collapse risk bar (above storage bar area)
+                    if (!building.isCollapseExempt() && building.collapseRisk > 0) {
+                        this.renderCollapseRiskBar(ctx, bx + 2, by + bh - 16, bw - 4, 3, building.collapseRisk);
                     }
                 }
             }
@@ -682,6 +712,28 @@ export class Renderer {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 9px sans-serif';
         ctx.fillText(`${Math.floor(current)}`, x + 2, y + height - 2);
+    }
+
+    // Render collapse risk bar (green → yellow → red as risk increases)
+    renderCollapseRiskBar(ctx, x, y, width, height, risk) {
+        const fill = Math.min(1, risk / COLLAPSE_CONFIG.MAX_RISK);
+
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(x, y, width, height);
+
+        // Color gradient: green → yellow → red
+        let barColor;
+        if (fill < 0.5) {
+            barColor = '#27ae60'; // Green
+        } else if (fill < 0.75) {
+            barColor = '#f1c40f'; // Yellow
+        } else {
+            barColor = '#c0392b'; // Red
+        }
+
+        ctx.fillStyle = barColor;
+        ctx.fillRect(x, y, width * fill, height);
     }
 
     renderEntities(entities, hoveredBuilding = null, debug = { showOverlays: true }) {

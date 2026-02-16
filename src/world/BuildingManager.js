@@ -1,7 +1,7 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
 import { CartWalker } from '../entities/CartWalker.js';
-import { BUILDING_TYPES, GOODS_CONFIG, WALKER_CONFIG, HOUSE_LEVELS } from './BuildingTypes.js';
+import { BUILDING_TYPES, GOODS_CONFIG, WALKER_CONFIG, HOUSE_LEVELS, COLLAPSE_CONFIG } from './BuildingTypes.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -133,6 +133,15 @@ export class BuildingManager {
         for (const building of this.buildings) {
             building.update(deltaTime, this.grid);
 
+            // Check for collapse
+            if (!building.collapsed && !building.isCollapseExempt() &&
+                building.collapseRisk >= COLLAPSE_CONFIG.MAX_RISK) {
+                building.collapse();
+            }
+
+            // Skip walker spawning for collapsed buildings
+            if (building.collapsed) continue;
+
             // Check each walker slot for readiness
             for (let i = 0; i < building.walkerSlots.length; i++) {
                 if (building.isWalkerSlotReady(i)) {
@@ -155,6 +164,7 @@ export class BuildingManager {
 
         // Then apply coverage from each source (water from wells/fountains)
         for (const building of this.buildings) {
+            if (building.collapsed) continue; // Ruins don't provide coverage
             const staticCoverage = building.type.staticCoverage;
             if (!staticCoverage) continue;
 
@@ -197,12 +207,19 @@ export class BuildingManager {
     // Apply desirability emissions from all buildings to nearby houses
     applyDesirability() {
         for (const building of this.buildings) {
-            // Get desirability config: from HOUSE_LEVELS for houses, from type for others
-            let desirabilityMap = building.type.desirability;
-            if (building.coverageNeeds && building.level !== undefined) {
-                // House — use level-dependent desirability
-                const levelConfig = HOUSE_LEVELS[building.level];
-                desirabilityMap = levelConfig?.desirability;
+            let desirabilityMap;
+
+            if (building.collapsed) {
+                // Ruins emit strong negative desirability
+                desirabilityMap = COLLAPSE_CONFIG.RUINS_DESIRABILITY;
+            } else {
+                // Get desirability config: from HOUSE_LEVELS for houses, from type for others
+                desirabilityMap = building.type.desirability;
+                if (building.coverageNeeds && building.level !== undefined) {
+                    // House — use level-dependent desirability
+                    const levelConfig = HOUSE_LEVELS[building.level];
+                    desirabilityMap = levelConfig?.desirability;
+                }
             }
 
             if (!desirabilityMap) continue;
@@ -336,6 +353,7 @@ export class BuildingManager {
 
         for (const building of this.buildings) {
             if (building === fromBuilding) continue;
+            if (building.collapsed) continue;
             if (!building.type.goods?.receives?.includes(goodType)) continue;
             if (building.roadAccessX === undefined) continue;
 

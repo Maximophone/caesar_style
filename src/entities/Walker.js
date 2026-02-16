@@ -166,8 +166,15 @@ export class Walker {
     emitCoverage(grid, economy) {
         if (!grid || !this.coverageType) return;
 
-
         const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
+
+        // Engineer coverage affects ALL buildings (not just houses)
+        if (this.coverageType === 'engineer') {
+            for (const building of nearbyBuildings) {
+                building.resetCollapseRisk();
+            }
+            return;
+        }
 
         for (const building of nearbyBuildings) {
             // Only provide coverage to houses (buildings with coverageNeeds)
