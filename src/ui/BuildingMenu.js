@@ -78,6 +78,9 @@ export class BuildingMenu {
         } else if (buildingId === 'bridge') {
             this.placementMode = 'bridge';
             this.selectedBuilding = null;
+        } else if (buildingId === 'wall') {
+            this.placementMode = 'wall';
+            this.selectedBuilding = BUILDING_TYPES[buildingId];
         } else {
             this.placementMode = 'building';
             this.selectedBuilding = BUILDING_TYPES[buildingId];
@@ -122,6 +125,15 @@ export class BuildingMenu {
                         name: 'Bridge',
                         cost: BRIDGE_COST,
                         selected: this.placementMode === 'bridge'
+                    };
+                }
+                if (buildingId === 'wall') {
+                    const wallType = BUILDING_TYPES[buildingId];
+                    return {
+                        key: String(index + 1),
+                        name: wallType.name,
+                        cost: wallType.cost,
+                        selected: this.placementMode === 'wall'
                     };
                 }
                 const building = BUILDING_TYPES[buildingId];

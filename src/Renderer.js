@@ -299,6 +299,20 @@ export class Renderer {
                 ctx.fillRect(doorX, doorY, ts / 2, ts / 2);
             }
 
+            // === HP BAR (shown above building when damaged) ===
+            if (building.hp < building.maxHp) {
+                const hpBarW = bw - 4;
+                const hpBarH = 3;
+                const hpBarX = bx + 2;
+                const hpBarY = by - 6;
+                const hpFill = Math.max(0, building.hp / building.maxHp);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(hpBarX, hpBarY, hpBarW, hpBarH);
+                ctx.fillStyle = hpFill > 0.5 ? '#27ae60' : hpFill > 0.25 ? '#f1c40f' : '#c0392b';
+                ctx.fillRect(hpBarX, hpBarY, hpBarW * hpFill, hpBarH);
+            }
+
             // === OVERLAYS (within building bounds) ===
             if (debug.showOverlays) {
                 if (building.coverageNeeds) {
@@ -763,6 +777,15 @@ export class Renderer {
         }
 
         for (const entity of entities) {
+            // Projectiles: small dot, no direction indicator
+            if (entity.isProjectile) {
+                const px = entity.x * ts + ts / 2 - 2;
+                const py = entity.y * ts + ts / 2 - 2;
+                ctx.fillStyle = entity.color || '#FFA500';
+                ctx.fillRect(px, py, 4, 4);
+                continue;
+            }
+
             // Entities use sub-tile positions for smooth movement
             const x = entity.x * ts + ts / 4;
             const y = entity.y * ts + ts / 4;
@@ -792,6 +815,20 @@ export class Renderer {
             ctx.arc(cx + dx, cy + dy, 3, 0, Math.PI * 2);
             ctx.fill();
 
+            // Enemy HP bar
+            if (entity.isEnemy && entity.hp < entity.maxHp) {
+                const barW = size;
+                const barH = 3;
+                const barX = x;
+                const barY = y - 5;
+                const hpFill = Math.max(0, entity.hp / entity.maxHp);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, barY, barW, barH);
+                ctx.fillStyle = hpFill > 0.5 ? '#27ae60' : hpFill > 0.25 ? '#f1c40f' : '#c0392b';
+                ctx.fillRect(barX, barY, barW * hpFill, barH);
+            }
+
             // Cargo indicator for walkers carrying goods (only when overlays are on)
             if (debug.showOverlays && entity.cargo && entity.cargo.amount > 0) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -806,7 +843,7 @@ export class Renderer {
         }
     }
 
-    renderUI(input, economy, debug, buildingMenu) {
+    renderUI(input, economy, debug, buildingMenu, waveInfo = null) {
         const ctx = this.ctx;
         const sidebarX = 800;
         const sidebarW = 200;
@@ -894,7 +931,7 @@ export class Renderer {
         // --- Economy HUD (top of sidebar) ---
         if (economy) {
             const hudY = 10;
-            const hudH = 80;
+            const hudH = waveInfo ? 100 : 80;
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
             ctx.fillRect(sidebarX + 10, hudY, sidebarW - 20, hudH);
@@ -910,6 +947,17 @@ export class Renderer {
 
             ctx.fillStyle = '#27ae60'; // Green for employed
             ctx.fillText(`🔧 ${economy.employed}/${economy.population}`, sidebarX + 25, hudY + 65);
+
+            // Wave timer
+            if (waveInfo) {
+                const seconds = Math.ceil(waveInfo.waveTimer);
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+                const waveLabel = waveInfo.waveNumber === 0 ? `Wave 1 in ${timeStr}` : `Wave ${waveInfo.waveNumber + 1} in ${timeStr}`;
+                ctx.fillStyle = '#e74c3c'; // Red for enemies
+                ctx.fillText(`⚔️ ${waveLabel}`, sidebarX + 25, hudY + 85);
+            }
         }
     }
 
@@ -984,6 +1032,13 @@ export class Renderer {
             if (grid.getTile(x, y) !== null) isValid = false;
             if (isValid && grid.getTerrain(x, y) !== 'water') isValid = false;
             if (isValid && !economy.canAfford(BRIDGE_COST)) isValid = false;
+        } else if (input.mode === 'wall') {
+            type = input.selectedBuildingType;
+            if (type) {
+                if (grid.getTile(x, y) !== null) isValid = false;
+                if (isValid && grid.getTerrain(x, y) !== null) isValid = false;
+                if (isValid && !economy.canAfford(type.cost)) isValid = false;
+            }
         }
 
         // Draw footprint highlight
@@ -994,8 +1049,8 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(x * ts, y * ts, width * ts, height * ts);
 
-        // If building mode, draw building "ghost"
-        if (input.mode === 'building' && type) {
+        // If building/wall mode, draw building "ghost"
+        if ((input.mode === 'building' || input.mode === 'wall') && type) {
             ctx.globalAlpha = 0.5;
             // Draw a simplified ghost using type color
             ctx.fillStyle = type.color;

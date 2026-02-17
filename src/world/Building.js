@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG, TAX_COOLDOWN, COLLAPSE_CONFIG } from './BuildingTypes.js';
+import { BUILDING_TYPES, HOUSE_LEVELS, GOODS_CONFIG, TAX_COOLDOWN, COLLAPSE_CONFIG, HEALTH_CONFIG } from './BuildingTypes.js';
 
 export class Building {
     constructor(x, y, type = BUILDING_TYPES.house) {
@@ -72,6 +72,14 @@ export class Building {
         // Collapse risk (accumulates over time, reset by engineer visits)
         this.collapseRisk = 0;
         this.collapsed = false;
+
+        // Health system (damaged by enemies, healed by engineers)
+        const baseHp = type.isWall ? HEALTH_CONFIG.WALL_HP : HEALTH_CONFIG.DEFAULT_HP;
+        this.maxHp = baseHp;
+        this.hp = baseHp;
+
+        // Fire cooldown (used by towers)
+        this.fireCooldown = 0;
     }
 
     update(deltaTime, grid) {
@@ -85,6 +93,11 @@ export class Building {
         // Tick walker slot timers
         for (const slot of this.walkerSlots) {
             slot.spawnTimer -= deltaTime;
+        }
+
+        // Tick fire cooldown (towers)
+        if (this.fireCooldown > 0) {
+            this.fireCooldown -= deltaTime;
         }
 
         // Produce goods if this is a producer building
@@ -599,10 +612,21 @@ export class Building {
         this.collapseRisk = 0;
     }
 
+    // Heal HP (called by engineer walkers each frame they are nearby)
+    healHp(amount) {
+        this.hp = Math.min(this.maxHp, this.hp + amount);
+    }
+
+    // Take damage from enemies
+    takeDamage(amount) {
+        this.hp = Math.max(0, this.hp - amount);
+    }
+
     // Collapse the building into ruins
     collapse() {
         this.collapsed = true;
         this.collapseRisk = COLLAPSE_CONFIG.MAX_RISK;
+        this.hp = 0;
         // Stop all walker slots
         for (const slot of this.walkerSlots) {
             slot.activeCount = 0;
@@ -647,6 +671,10 @@ export class Building {
         data.collapseRisk = this.collapseRisk;
         data.collapsed = this.collapsed;
 
+        // Health
+        data.hp = this.hp;
+        data.maxHp = this.maxHp;
+
         return data;
     }
 
@@ -688,6 +716,12 @@ export class Building {
         // Collapse state (backwards compatible defaults)
         b.collapseRisk = data.collapseRisk || 0;
         b.collapsed = data.collapsed || false;
+
+        // Health (backwards compatible)
+        if (data.hp !== undefined) {
+            b.hp = data.hp;
+            b.maxHp = data.maxHp || b.maxHp;
+        }
 
         return b;
     }

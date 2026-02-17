@@ -1,7 +1,8 @@
 import { Building } from './Building.js';
 import { Walker } from '../entities/Walker.js';
 import { CartWalker } from '../entities/CartWalker.js';
-import { BUILDING_TYPES, GOODS_CONFIG, WALKER_CONFIG, HOUSE_LEVELS, COLLAPSE_CONFIG } from './BuildingTypes.js';
+import { BUILDING_TYPES, GOODS_CONFIG, WALKER_CONFIG, HOUSE_LEVELS, COLLAPSE_CONFIG, TOWER_CONFIG } from './BuildingTypes.js';
+import { Projectile } from '../entities/Projectile.js';
 
 export class BuildingManager {
     constructor(grid, roadNetwork, entityManager) {
@@ -133,9 +134,14 @@ export class BuildingManager {
         for (const building of this.buildings) {
             building.update(deltaTime, this.grid);
 
-            // Check for collapse
+            // Check for collapse from structural decay
             if (!building.collapsed && !building.isCollapseExempt() &&
                 building.collapseRisk >= COLLAPSE_CONFIG.MAX_RISK) {
+                building.collapse();
+            }
+
+            // Check for destruction from enemy damage (HP reaches 0)
+            if (!building.collapsed && building.hp <= 0) {
                 building.collapse();
             }
 
@@ -148,6 +154,38 @@ export class BuildingManager {
                     this.spawnWalkerFromSlot(building, i);
                 }
             }
+
+            // Tower shooting logic
+            if (building.type.id === 'tower' && building.isStaffed() && building.fireCooldown <= 0) {
+                this.towerShoot(building);
+            }
+        }
+    }
+
+    // Find nearest enemy in range and spawn a projectile
+    towerShoot(tower) {
+        const towerCX = tower.x + tower.width / 2;
+        const towerCY = tower.y + tower.height / 2;
+        const rangeSq = TOWER_CONFIG.RANGE * TOWER_CONFIG.RANGE;
+
+        let nearestEnemy = null;
+        let nearestDistSq = Infinity;
+
+        for (const entity of this.entityManager.entities) {
+            if (!entity.isEnemy) continue;
+            const dx = entity.x - towerCX;
+            const dy = entity.y - towerCY;
+            const distSq = dx * dx + dy * dy;
+            if (distSq <= rangeSq && distSq < nearestDistSq) {
+                nearestDistSq = distSq;
+                nearestEnemy = entity;
+            }
+        }
+
+        if (nearestEnemy) {
+            const projectile = new Projectile(towerCX, towerCY, nearestEnemy, TOWER_CONFIG.PROJECTILE_DAMAGE);
+            this.entityManager.addEntity(projectile);
+            tower.fireCooldown = TOWER_CONFIG.FIRE_INTERVAL;
         }
     }
 

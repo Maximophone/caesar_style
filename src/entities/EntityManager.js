@@ -12,10 +12,10 @@ export class EntityManager {
         this.toRemove.push(entity);
     }
 
-    update(deltaTime, roadNetwork, grid, economy) {
+    update(deltaTime, roadNetwork, grid, economy, buildings) {
         // Update all entities
         for (const entity of this.entities) {
-            entity.update(deltaTime, roadNetwork, this, grid, economy);
+            entity.update(deltaTime, roadNetwork, this, grid, economy, buildings);
         }
 
         // Remove marked entities

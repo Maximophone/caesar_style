@@ -5,7 +5,8 @@ import { RoadNetwork } from './world/RoadNetwork.js';
 import { EntityManager } from './entities/EntityManager.js';
 import { BuildingManager } from './world/BuildingManager.js';
 import { Economy } from './Economy.js';
-import { ROAD_COST, BRIDGE_COST } from './world/BuildingTypes.js';
+import { ROAD_COST, BRIDGE_COST, ENEMY_CONFIG } from './world/BuildingTypes.js';
+import { Enemy } from './entities/Enemy.js';
 import { AssetManager } from './AssetManager.js';
 import { BuildingMenu } from './ui/BuildingMenu.js';
 import { SaveManager } from './SaveManager.js';
@@ -54,6 +55,10 @@ export class Game {
         // Flash message (for save/load feedback)
         this.flashMessage = null;
         this.flashTimer = 0;
+
+        // Enemy wave system
+        this.waveTimer = ENEMY_CONFIG.FIRST_WAVE_DELAY;
+        this.waveNumber = 0;
     }
 
     toggleOverlays() {
@@ -140,7 +145,7 @@ export class Game {
             'house_level_1', 'house_level_2', 'house_level_3', 'house_level_4', 'house_level_5',
             'well', 'fountain', 'market', 'temple', 'farm', 'fishing_wharf',
             'granary', 'warehouse', 'bazaar',
-            'garden_small', 'garden_large', 'tax_office', 'engineer_post', 'mine', 'forge',
+            'garden_small', 'garden_large', 'tax_office', 'engineer_post', 'tower', 'wall', 'mine', 'forge',
             'clay_pit', 'potter', 'lumber_camp', 'carpenter'
         ];
 
@@ -188,8 +193,11 @@ export class Game {
     update(deltaTime) {
         this.handleCameraMovement(deltaTime);
         this.buildingManager.update(deltaTime);
-        this.entityManager.update(deltaTime, this.roadNetwork, this.grid, this.economy);
+        this.entityManager.update(deltaTime, this.roadNetwork, this.grid, this.economy, this.buildingManager.buildings);
         this.economy.update(deltaTime, this.buildingManager.buildings);
+
+        // Enemy wave spawning
+        this.updateWaves(deltaTime);
 
         // Flash message timer
         if (this.flashTimer > 0) {
@@ -272,7 +280,10 @@ export class Game {
         this.ctx.restore();
 
         // Render UI hints (fixed on screen)
-        this.renderer.renderUI(this.input, this.economy, this.debug, this.buildingMenu);
+        this.renderer.renderUI(this.input, this.economy, this.debug, this.buildingMenu, {
+            waveTimer: this.waveTimer,
+            waveNumber: this.waveNumber
+        });
 
         // Render flash message
         if (this.flashMessage && this.flashTimer > 0) {
@@ -287,6 +298,8 @@ export class Game {
                 this.placeRoad(x, y);
             } else if (this.input.mode === 'bridge') {
                 this.placeBridge(x, y);
+            } else if (this.input.mode === 'wall') {
+                this.placeWall(x, y);
             } else if (this.input.mode === 'building') {
                 this.placeBuilding(x, y);
             }
@@ -312,6 +325,17 @@ export class Game {
             this.economy.spend(BRIDGE_COST);
             this.grid.setTile(x, y, { type: 'bridge' });
             this.roadNetwork.addRoad(x, y); // Bridges join the road network for pathfinding
+        }
+    }
+
+    placeWall(x, y) {
+        const type = this.input.selectedBuildingType;
+        if (!type) return;
+        if (!this.economy.canAfford(type.cost)) return;
+
+        const building = this.buildingManager.placeBuilding(x, y, type);
+        if (building) {
+            this.economy.spend(type.cost);
         }
     }
 
@@ -392,6 +416,61 @@ export class Game {
         // Reset camera
         this.camera = { x: 0, y: 0 };
 
+        // Reset wave timer
+        this.waveTimer = ENEMY_CONFIG.FIRST_WAVE_DELAY;
+        this.waveNumber = 0;
+        this._edgePositions = null; // Invalidate edge position cache
+
         this.showFlash('🏗️ New Game Started!');
+    }
+
+    // ===== ENEMY WAVES =====
+
+    updateWaves(deltaTime) {
+        // Only spawn waves if there are buildings to attack
+        if (this.buildingManager.buildings.length === 0) return;
+
+        this.waveTimer -= deltaTime;
+        if (this.waveTimer <= 0) {
+            this.waveNumber++;
+            this.spawnWave();
+            this.waveTimer = ENEMY_CONFIG.WAVE_INTERVAL;
+        }
+    }
+
+    spawnWave() {
+        const count = ENEMY_CONFIG.WAVE_SIZE + Math.floor(this.waveNumber / 2);
+        let spawned = 0;
+
+        for (let i = 0; i < count; i++) {
+            const pos = this.getRandomEdgePosition();
+            if (pos) {
+                const enemy = new Enemy(pos.x, pos.y);
+                this.entityManager.addEntity(enemy);
+                spawned++;
+            }
+        }
+
+        console.log(`Wave ${this.waveNumber}: spawned ${spawned}/${count} enemies, edge positions available: ${this._edgePositions?.length || 0}`);
+        this.showFlash(`Wave ${this.waveNumber} — ${spawned} enemies incoming!`);
+    }
+
+    getRandomEdgePosition() {
+        // Build a list of all valid (non-water) edge tiles and pick one at random.
+        // Cache the list so we don't rebuild it every spawn (invalidate on new game).
+        if (!this._edgePositions) {
+            this._edgePositions = [];
+            for (let x = 0; x < this.gridWidth; x++) {
+                if (this.grid.getTerrain(x, 0) !== 'water') this._edgePositions.push({ x, y: 0 });
+                if (this.grid.getTerrain(x, this.gridHeight - 1) !== 'water') this._edgePositions.push({ x, y: this.gridHeight - 1 });
+            }
+            for (let y = 1; y < this.gridHeight - 1; y++) {
+                if (this.grid.getTerrain(0, y) !== 'water') this._edgePositions.push({ x: 0, y });
+                if (this.grid.getTerrain(this.gridWidth - 1, y) !== 'water') this._edgePositions.push({ x: this.gridWidth - 1, y });
+            }
+        }
+
+        if (this._edgePositions.length === 0) return null;
+        return this._edgePositions[Math.floor(Math.random() * this._edgePositions.length)];
     }
 }

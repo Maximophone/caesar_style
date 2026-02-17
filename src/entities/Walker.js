@@ -1,4 +1,4 @@
-import { GOODS_CONFIG, GOODS_META } from '../world/BuildingTypes.js';
+import { GOODS_CONFIG, GOODS_META, HEALTH_CONFIG } from '../world/BuildingTypes.js';
 
 export class Walker {
     constructor(x, y, maxSteps, originBuilding, slotIndex, coverageType = null, color = '#ff0000', cargo = null) {
@@ -55,7 +55,7 @@ export class Walker {
             this.y = this.targetY;
 
             // Emit coverage
-            this.emitCoverage(grid, economy);
+            this.emitCoverage(grid, economy, deltaTime);
 
             // Decide next move
             if (this.returning) {
@@ -163,7 +163,7 @@ export class Walker {
         }
     }
 
-    emitCoverage(grid, economy) {
+    emitCoverage(grid, economy, deltaTime = 0) {
         if (!grid || !this.coverageType) return;
 
         const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
@@ -172,6 +172,10 @@ export class Walker {
         if (this.coverageType === 'engineer') {
             for (const building of nearbyBuildings) {
                 building.resetCollapseRisk();
+                // Engineers also heal damaged buildings
+                if (building.hp < building.maxHp && deltaTime > 0) {
+                    building.healHp(HEALTH_CONFIG.ENGINEER_HEAL_RATE * deltaTime);
+                }
             }
             return;
         }

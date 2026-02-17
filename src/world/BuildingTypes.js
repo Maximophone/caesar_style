@@ -9,6 +9,34 @@ export const COLLAPSE_CONFIG = {
     RUINS_DESIRABILITY: { 1: -20, 2: -15, 3: -10, 4: -6, 5: -3, 6: -1 },
 };
 
+// Building health configuration (separate from collapse risk)
+export const HEALTH_CONFIG = {
+    DEFAULT_HP: 100,             // Default max HP for buildings
+    WALL_HP: 200,                // Max HP for walls (tougher)
+    ENGINEER_HEAL_RATE: 20,      // HP healed per second when engineer is nearby
+};
+
+// Enemy wave configuration
+export const ENEMY_CONFIG = {
+    HP: 50,
+    SPEED: 1,                    // tiles/sec
+    ATTACK_RANGE: 1.5,           // distance to building edge to start attacking
+    ATTACK_DAMAGE: 15,           // HP damage per hit
+    ATTACK_COOLDOWN: 1.5,        // seconds between hits
+    COLOR: '#e74c3c',            // red
+    WAVE_INTERVAL: 120,          // seconds between waves
+    WAVE_SIZE: 5,                // enemies per wave
+    FIRST_WAVE_DELAY: 180,       // seconds before first wave
+};
+
+// Tower configuration
+export const TOWER_CONFIG = {
+    RANGE: 6,                    // tiles
+    FIRE_INTERVAL: 2,            // seconds between shots
+    PROJECTILE_SPEED: 8,         // tiles/sec
+    PROJECTILE_DAMAGE: 25,       // HP per hit
+};
+
 // Terrain types — impassable tiles generated during map creation
 export const TERRAIN_TYPES = {
     water: {
@@ -154,7 +182,8 @@ export const BUILDING_CATEGORIES = {
     religion: { key: '5', name: 'Religion', buildings: ['temple'] },
     beautification: { key: '6', name: 'Beauty', buildings: ['small_garden', 'large_garden'] },
     administration: { key: '7', name: 'Admin', buildings: ['tax_office', 'engineer_post'] },
-    industry: { key: '8', name: 'Industry', buildings: ['mine', 'forge', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] }
+    industry: { key: '8', name: 'Industry', buildings: ['mine', 'forge', 'clay_pit', 'potter', 'lumber_camp', 'carpenter', 'warehouse', 'bazaar'] },
+    military: { key: '9', name: 'Military', buildings: ['tower', 'wall'] }
 };
 
 // Building type configurations
@@ -477,6 +506,27 @@ export const BUILDING_TYPES = {
             { type: 'cart', spawnInterval: 4, speed: 1.5 }
         ],
         desirability: { 1: -5, 2: -3, 3: -2, 4: -1 }
+    },
+    tower: {
+        id: 'tower',
+        name: 'Tower',
+        width: 2,
+        height: 2,
+        color: '#4A4A4A',  // Dark gray stone
+        workersNeeded: 2,
+        cost: 150,
+        walkers: [],
+        desirability: { 1: -4, 2: -3, 3: -1 }
+    },
+    wall: {
+        id: 'wall',
+        name: 'Wall',
+        width: 1,
+        height: 1,
+        color: '#7A7A7A',  // Gray stone
+        needsRoadAccess: false,
+        cost: 10,
+        isWall: true,       // Enemies navigate around walls rather than attack them
     },
     bazaar: {
         id: 'bazaar',
