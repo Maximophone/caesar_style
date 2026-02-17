@@ -13,7 +13,7 @@ export const COLLAPSE_CONFIG = {
 export const HEALTH_CONFIG = {
     DEFAULT_HP: 100,             // Default max HP for buildings
     WALL_HP: 200,                // Max HP for walls (tougher)
-    ENGINEER_HEAL_RATE: 20,      // HP healed per second when engineer is nearby
+    ENGINEER_HEAL_RATE: 5,       // HP healed per second when engineer is nearby
 };
 
 // Enemy wave configuration
@@ -511,8 +511,9 @@ export const BUILDING_TYPES = {
         id: 'tower',
         name: 'Tower',
         width: 2,
-        height: 2,
+        height: 3,
         color: '#4A4A4A',  // Dark gray stone
+        needsRoadAccess: false,
         workersNeeded: 2,
         cost: 150,
         walkers: [],

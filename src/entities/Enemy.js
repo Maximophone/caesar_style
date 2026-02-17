@@ -56,7 +56,9 @@ export class Enemy {
         // Calculate distance to nearest edge tile of target building
         const distToBuilding = this.distanceToBuildingEdge(this.targetBuilding);
 
-        if (distToBuilding <= ENEMY_CONFIG.ATTACK_RANGE) {
+        // Use a slightly larger range check than BFS goal range to account for
+        // float position drift (enemy stops at ~tile center but not exactly)
+        if (distToBuilding <= ENEMY_CONFIG.ATTACK_RANGE + 0.5) {
             // Face the building
             const cx = this.targetBuilding.x + this.targetBuilding.width / 2;
             const cy = this.targetBuilding.y + this.targetBuilding.height / 2;

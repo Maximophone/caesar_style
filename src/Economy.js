@@ -1,6 +1,6 @@
 // Economy configuration - all tuneable values in one place
 export const ECONOMY_CONFIG = {
-    startingMoney: 500,
+    startingMoney: 1500,
     taxRate: 0.5,           // coins per person per second
     taxInterval: 1,         // seconds between tax collection
 };

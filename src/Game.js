@@ -419,7 +419,6 @@ export class Game {
         // Reset wave timer
         this.waveTimer = ENEMY_CONFIG.FIRST_WAVE_DELAY;
         this.waveNumber = 0;
-        this._edgePositions = null; // Invalidate edge position cache
 
         this.showFlash('🏗️ New Game Started!');
     }
@@ -440,37 +439,32 @@ export class Game {
 
     spawnWave() {
         const count = ENEMY_CONFIG.WAVE_SIZE + Math.floor(this.waveNumber / 2);
+
+        // Build list of all non-water edge tiles fresh each wave
+        const edges = [];
+        for (let x = 0; x < this.gridWidth; x++) {
+            if (this.grid.getTerrain(x, 0) !== 'water') edges.push({ x, y: 0 });
+            if (this.grid.getTerrain(x, this.gridHeight - 1) !== 'water') edges.push({ x, y: this.gridHeight - 1 });
+        }
+        for (let y = 1; y < this.gridHeight - 1; y++) {
+            if (this.grid.getTerrain(0, y) !== 'water') edges.push({ x: 0, y });
+            if (this.grid.getTerrain(this.gridWidth - 1, y) !== 'water') edges.push({ x: this.gridWidth - 1, y });
+        }
+
+        // Shuffle and pick the first `count` positions
+        for (let i = edges.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [edges[i], edges[j]] = [edges[j], edges[i]];
+        }
+
         let spawned = 0;
-
-        for (let i = 0; i < count; i++) {
-            const pos = this.getRandomEdgePosition();
-            if (pos) {
-                const enemy = new Enemy(pos.x, pos.y);
-                this.entityManager.addEntity(enemy);
-                spawned++;
-            }
+        for (let i = 0; i < count && i < edges.length; i++) {
+            const pos = edges[i];
+            const enemy = new Enemy(pos.x, pos.y);
+            this.entityManager.addEntity(enemy);
+            spawned++;
         }
 
-        console.log(`Wave ${this.waveNumber}: spawned ${spawned}/${count} enemies, edge positions available: ${this._edgePositions?.length || 0}`);
         this.showFlash(`Wave ${this.waveNumber} — ${spawned} enemies incoming!`);
-    }
-
-    getRandomEdgePosition() {
-        // Build a list of all valid (non-water) edge tiles and pick one at random.
-        // Cache the list so we don't rebuild it every spawn (invalidate on new game).
-        if (!this._edgePositions) {
-            this._edgePositions = [];
-            for (let x = 0; x < this.gridWidth; x++) {
-                if (this.grid.getTerrain(x, 0) !== 'water') this._edgePositions.push({ x, y: 0 });
-                if (this.grid.getTerrain(x, this.gridHeight - 1) !== 'water') this._edgePositions.push({ x, y: this.gridHeight - 1 });
-            }
-            for (let y = 1; y < this.gridHeight - 1; y++) {
-                if (this.grid.getTerrain(0, y) !== 'water') this._edgePositions.push({ x: 0, y });
-                if (this.grid.getTerrain(this.gridWidth - 1, y) !== 'water') this._edgePositions.push({ x: this.gridWidth - 1, y });
-            }
-        }
-
-        if (this._edgePositions.length === 0) return null;
-        return this._edgePositions[Math.floor(Math.random() * this._edgePositions.length)];
     }
 }

@@ -78,6 +78,17 @@ export class Walker {
             // Update direction for rendering
             this.dx = toX / dist;
             this.dy = toY / dist;
+
+            // Engineers heal continuously while walking, not just at tile snaps
+            if (this.coverageType === 'engineer' && grid) {
+                const nearbyBuildings = grid.getBuildingsNear(this.x, this.y, this.coverageRadius);
+                for (const building of nearbyBuildings) {
+                    building.resetCollapseRisk();
+                    if (building.hp < building.maxHp) {
+                        building.healHp(HEALTH_CONFIG.ENGINEER_HEAL_RATE * deltaTime);
+                    }
+                }
+            }
         }
     }
 

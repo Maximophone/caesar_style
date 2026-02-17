@@ -38,6 +38,10 @@ export class SaveManager {
 
             // Camera
             camera: { x: game.camera.x, y: game.camera.y },
+
+            // Waves
+            waveTimer: game.waveTimer,
+            waveNumber: game.waveNumber,
         };
     }
 
@@ -122,6 +126,11 @@ export class SaveManager {
             game.camera.y = data.camera.y;
         }
 
+        // --- Waves ---
+        if (data.waveTimer !== undefined) {
+            game.waveTimer = data.waveTimer;
+            game.waveNumber = data.waveNumber || 0;
+        }
         return true;
     }
 
