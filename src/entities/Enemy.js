@@ -138,8 +138,11 @@ export class Enemy {
         }
 
         // BFS with 8-directional movement
-        const dirs = [
+        // Cardinal directions first, then diagonals
+        const cardinalDirs = [
             { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 },
+        ];
+        const diagonalDirs = [
             { dx: 1, dy: -1 }, { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 },
         ];
 
@@ -164,13 +167,32 @@ export class Enemy {
             const cx = current % grid.width;
             const cy = (current - cx) / grid.width;
 
-            for (const dir of dirs) {
+            // Cardinal moves
+            for (const dir of cardinalDirs) {
                 const nx = cx + dir.dx;
                 const ny = cy + dir.dy;
                 if (!grid.isInBounds(nx, ny)) continue;
                 const nKey = ny * grid.width + nx;
                 if (visited[nKey]) continue;
                 if (!this.isWalkable(nx, ny, grid)) continue;
+
+                visited[nKey] = 1;
+                cameFrom[nKey] = current;
+                queue.push(nKey);
+            }
+
+            // Diagonal moves — only allow if both adjacent cardinal tiles are walkable
+            // This prevents corner-cutting through wall gaps
+            for (const dir of diagonalDirs) {
+                const nx = cx + dir.dx;
+                const ny = cy + dir.dy;
+                if (!grid.isInBounds(nx, ny)) continue;
+                const nKey = ny * grid.width + nx;
+                if (visited[nKey]) continue;
+                if (!this.isWalkable(nx, ny, grid)) continue;
+                // Check both cardinal neighbors to prevent corner-cutting
+                if (!this.isWalkable(cx + dir.dx, cy, grid)) continue;
+                if (!this.isWalkable(cx, cy + dir.dy, grid)) continue;
 
                 visited[nKey] = 1;
                 cameFrom[nKey] = current;
@@ -231,18 +253,33 @@ export class Enemy {
         const newX = this.x + dirX * step;
         const newY = this.y + dirY * step;
 
-        if (this.isWalkable(Math.round(newX), Math.round(newY), grid)) {
-            this.x = newX;
-            this.y = newY;
-            this.dx = dirX;
-            this.dy = dirY;
-            return true;
+        const tileX = Math.round(newX);
+        const tileY = Math.round(newY);
+        const curTileX = Math.round(this.x);
+        const curTileY = Math.round(this.y);
+
+        // Check walkability of target tile
+        if (!this.isWalkable(tileX, tileY, grid)) {
+            this.path = [];
+            this.pathRecalcTimer = 0;
+            return false;
         }
 
-        // Path is stale, force recalculation
-        this.path = [];
-        this.pathRecalcTimer = 0;
-        return false;
+        // If moving diagonally, also check both cardinal neighbors
+        // to prevent corner-cutting through wall gaps
+        if (tileX !== curTileX && tileY !== curTileY) {
+            if (!this.isWalkable(tileX, curTileY, grid) || !this.isWalkable(curTileX, tileY, grid)) {
+                this.path = [];
+                this.pathRecalcTimer = 0;
+                return false;
+            }
+        }
+
+        this.x = newX;
+        this.y = newY;
+        this.dx = dirX;
+        this.dy = dirY;
+        return true;
     }
 
     findTarget(buildings) {
