@@ -902,7 +902,7 @@ export class Renderer {
         const padding = 15;
         const lineSpacing = 5;
         const contentX = sidebarX + padding;
-        let currentY = 100; // Start below Economy HUD
+        let currentY = waveInfo ? 120 : 100; // Start below Economy HUD
 
         // --- Render Text ---
         for (const line of lines) {
